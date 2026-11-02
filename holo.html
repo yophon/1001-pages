@@ -127,16 +127,25 @@
   .spec h3 { margin: 0; font: 600 13.5px/1.3 var(--sans); }
   .spec header span { font: 10px/1 var(--mono); letter-spacing: .14em; color: var(--faint); text-transform: uppercase; }
   .demo { flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 16px; min-height: 124px; padding: 16px 14px; }
-  .code { border-top: 1px solid var(--line); }
-  .code summary { cursor: pointer; list-style: none; padding: 9px 14px; font: 10.5px/1 var(--mono); letter-spacing: .16em; color: var(--faint); }
-  .code summary::-webkit-details-marker { display: none; }
-  .code summary::before { content: "+ "; }
-  .code[open] summary::before { content: "− "; }
-  .code summary:hover { color: var(--muted); }
-  .code pre { margin: 0; max-height: 360px; overflow: auto; padding: 0 14px 14px; font: 11.5px/1.65 var(--mono); color: #b7b6c4; tab-size: 2; }
+  .spec { scroll-margin-top: 16px; transition: border-color .4s; }
+  .spec:target { border-color: #4a4760; }
+  .spec header .acts { margin-left: auto; display: flex; gap: 2px; margin-top: -6px; margin-right: -6px; }
+  .cp {
+    display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px;
+    background: none; color: var(--faint); cursor: pointer; transition: color .2s, background-color .2s;
+  }
+  .cp:hover { color: var(--text); background: #1d1c24; }
+  .cp:focus-visible { outline: 2px solid #f2f1f7; outline-offset: 1px; }
+  .cp svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .cp .ok { display: none; }
+  .cp.done { color: #9be3b8; }
+  .cp.done .ok { display: block; }
+  .cp.done .ic { display: none; }
   .end { display: flex; justify-content: space-between; gap: 16px; max-width: 2000px; margin: 0 auto; padding: 28px clamp(16px, 3vw, 40px) 40px; font: 11.5px/1 var(--mono); letter-spacing: .12em; color: var(--faint); }
   .end a { color: var(--muted); text-decoration: none; }
   .end a:hover { color: var(--text); }
+  .end .gh { display: inline-flex; align-items: center; gap: 7px; }
+  .end .gh svg { width: 14px; height: 14px; }
   @media (max-width: 559px) {
     .lib { padding-top: 48px; }
     .grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; }
@@ -427,26 +436,24 @@
     </div>
   </div>
   <div class="grid">
-    <section class="spec" data-part="foil">
-      <header><h3>材质</h3><span>Foil</span></header>
+    <section class="spec" id="foil" data-part="foil">
+      <header><h3>材质</h3><span>Foil</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <figure class="sw"><span class="sw-a holo"><canvas class="fx" data-mat="film"></canvas></span><figcaption>银镭射</figcaption></figure>
         <figure class="sw"><span class="sw-a holo-seal" data-foil="seal" style="border-radius: 14px"><canvas class="fx" data-mat="star" data-light></canvas></span><figcaption>星芒</figcaption></figure>
         <figure class="sw"><span class="sw-a glitter" data-foil="glitter"><canvas class="fx" data-mat="glitter"></canvas></span><figcaption>碎钻</figcaption></figure>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="emboss" data-gl-only>
-      <header><h3>烫印</h3><span>Hot Foil</span></header>
+    <section class="spec" id="emboss" data-part="emboss" data-gl-only>
+      <header><h3>烫印</h3><span>Hot Foil</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <div class="plate"><canvas class="fx" data-mat="emboss" data-art="emboss"></canvas></div>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="seal">
-      <header><h3>防伪圆章</h3><span>Seal</span></header>
+    <section class="spec" id="seal" data-part="seal">
+      <header><h3>防伪圆章</h3><span>Seal</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <div class="seal" style="--r: -8deg">
           <span class="seal-disc holo-seal" data-foil="seal"><canvas class="fx" data-mat="star" data-light></canvas></span>
@@ -458,28 +465,25 @@
           </svg>
         </div>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="guilloche" data-gl-only>
-      <header><h3>扭索纹</h3><span>Guilloché</span></header>
+    <section class="spec" id="guilloche" data-part="guilloche" data-gl-only>
+      <header><h3>扭索纹</h3><span>Guilloché</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <div class="note-bill"><canvas class="fx" data-mat="guilloche" data-art="guilloche"></canvas></div>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="avatar" data-gl-only>
-      <header><h3>头像框</h3><span>Avatar</span></header>
+    <section class="spec" id="avatar" data-part="avatar" data-gl-only>
+      <header><h3>头像框</h3><span>Avatar</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <span class="avatar"><span class="av-ring"><canvas class="fx" data-mat="glitter"></canvas></span><span class="av-in"><canvas class="fx" data-mat="emboss" data-art="initial"></canvas></span></span>
         <span class="chip"><span class="avatar sm"><span class="av-ring"><canvas class="fx" data-mat="glitter"></canvas></span><span class="av-in"><canvas class="fx" data-mat="emboss" data-art="initial"></canvas></span></span><span><b class="bn">Lumen</b><small>收藏 42 张</small></span></span>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="card">
-      <header><h3>小卡</h3><span>Card</span></header>
+    <section class="spec" id="card" data-part="card">
+      <header><h3>小卡</h3><span>Card</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <div class="mini" tabindex="0" aria-label="一张小号镭射卡">
           <div class="mini-face" data-tilt>
@@ -493,22 +497,20 @@
           </div>
         </div>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="button">
-      <header><h3>按钮</h3><span>Button</span></header>
+    <section class="spec" id="button" data-part="button">
+      <header><h3>按钮</h3><span>Button</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <button class="btn holo light" type="button"><canvas class="fx" data-mat="film" data-light></canvas>开始收藏</button>
         <button class="btn btn-line" type="button"><span class="ring holo"><canvas class="fx" data-mat="film"></canvas></span>查看卡册</button>
         <button class="btn btn-icon holo light" type="button" aria-label="收藏"><canvas class="fx" data-mat="film" data-light></canvas><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.6l2.6 6.2 6.7.6-5.1 4.4 1.5 6.5L12 16.9l-5.7 3.4 1.5-6.5-5.1-4.4 6.7-.6z"/></svg></button>
         <button class="btn" type="button" disabled>已售罄</button>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="choice">
-      <header><h3>开关与选择</h3><span>Switch · Check · Radio</span></header>
+    <section class="spec" id="choice" data-part="choice">
+      <header><h3>开关与选择</h3><span>Switch · Check · Radio</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <div class="choices">
           <span class="opt"><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="sw-a"><span class="track holo"><canvas class="fx" data-mat="film"></canvas></span><span class="shade"></span><span class="knob"></span></button><span id="sw-a">反光</span></span>
@@ -519,30 +521,27 @@
           <label class="check radio"><input type="radio" name="edition"><span class="box"><span class="fill holo"><canvas class="fx" data-mat="film"></canvas></span></span>普通版</label>
         </div>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="slider">
-      <header><h3>滑杆</h3><span>Slider</span></header>
+    <section class="spec" id="slider" data-part="slider">
+      <header><h3>滑杆</h3><span>Slider</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <label class="slider" style="--v: 60%">
           <span class="sl-top"><span>倾角</span><output>18°</output></span>
           <span class="sl-track"><span class="sl-fill holo"><canvas class="fx" data-mat="film"></canvas></span><input type="range" min="0" max="30" value="18" aria-label="倾角"><span class="sl-thumb"></span></span>
         </label>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="field">
-      <header><h3>输入框</h3><span>Field</span></header>
+    <section class="spec" id="field" data-part="field">
+      <header><h3>输入框</h3><span>Field</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <label class="field"><input type="text" placeholder=" " autocomplete="off" spellcheck="false"><span class="fl">卡号</span><span class="fl-line holo"><canvas class="fx" data-mat="film"></canvas></span><span class="fl-hint">印在卡背右下角，比如 LM-26S3-0042</span></label>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="progress">
-      <header><h3>进度条</h3><span>Progress</span></header>
+    <section class="spec" id="progress" data-part="progress">
+      <header><h3>进度条</h3><span>Progress</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <div class="prog">
           <div class="pg-top"><span>第 03 季收集进度</span><b>7 / 12</b></div>
@@ -551,11 +550,10 @@
           <button class="pg-more" type="button">开一包 +1</button>
         </div>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
-    <section class="spec" data-part="badge">
-      <header><h3>徽章与贴纸</h3><span>Badge · Sticker</span></header>
+    <section class="spec" id="badge" data-part="badge">
+      <header><h3>徽章与贴纸</h3><span>Badge · Sticker</span><span class="acts"><button class="cp" type="button" data-copy="link" aria-label="复制这一格的链接" title="复制链接"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9"/><path d="M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button><button class="cp" type="button" data-copy="code" aria-label="复制这一格的代码" title="复制代码"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5V4.1c0-.9-.7-1.6-1.6-1.6H4.1c-.9 0-1.6.7-1.6 1.6v4.8c0 .9.7 1.6 1.6 1.6h1.4"/></svg><svg class="ok" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.6"/></svg></button></span></header>
       <div class="demo">
         <div class="row">
           <span class="badge holo light"><canvas class="fx" data-mat="film" data-light></canvas>限定</span>
@@ -567,36 +565,66 @@
           <span class="sticker sk-round" style="--r: 8deg"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34"/></svg><span class="sk-in holo light"><canvas class="fx" data-mat="film" data-light></canvas><b>限定</b><small>LIMITED</small></span></span>
         </div>
       </div>
-      <details class="code"><summary>代码</summary><pre><code></code></pre></details>
     </section>
 
   </div>
 </main>
 
-<footer class="end"><a href="index.html">← 一千零一页</a><span>002 · 镭射闪卡</span></footer>
+<footer class="end"><a href="index.html">← 一千零一页</a><a class="gh" href="https://github.com/yophon/1001-pages" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a><span>002 · 镭射闪卡</span></footer>
 
 <script>
-  // 每一格的“代码”：第一次展开时拼出这一格的 HTML、CSS 和脚本。HTML 取页面刚加载时的原样，不带运行时写进去的变量
+  // 每一格右上角两个按钮：复制链接（带这一格的定位），复制代码（这一格当前渲染方式下的 HTML、CSS 和脚本）。
+  // HTML 取页面刚加载时的原样，不带运行时写进去的变量
   (() => {
     const dedent = s => {
       const lines = s.replace(/^\s*\n/, '').replace(/\s+$/, '').split('\n');
       const ind = Math.min(...lines.filter(l => l.trim()).map(l => l.match(/^ */)[0].length));
       return lines.map(l => l.slice(ind)).join('\n');
     };
+    const pick = (sel, names) => names.flatMap(n => [...document.querySelectorAll(`${sel}[data-part="${n}"]`)]).map(s => dedent(s.textContent)).join('\n\n');
+    // WebGL 版：零件自己的样式 + .holo 打底 + 画布和渲染器；CSS 平替：零件自己的样式 + .holo，HTML 里去掉画布
+    const code = (part, raw) => {
+      const gl = document.documentElement.dataset.foil === 'gl', own = part === 'foil' ? [] : [part];
+      const html = gl ? raw : raw.replace(/\s*<canvas class="fx[^>]*><\/canvas>/g, '');
+      const css = pick('style', gl ? [...own, 'foil', 'foil-gl'] : [...own, 'foil']);
+      const js = pick('script', gl ? ['core', 'foil-gl', ...own] : ['core', 'foil', ...own]);
+      return `<!-- HTML -->\n${dedent(html)}\n\n<style>\n${css}\n</style>${js ? `\n\n<script>\n${js}\n</` + `script>` : ''}\n`;
+    };
+    // 剪贴板接口要安全上下文；本地打开的文件或者老浏览器上退回到选中一段文字再复制
+    const copy = text => (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).catch(() => {
+      const t = document.createElement('textarea');
+      t.value = text;
+      t.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.append(t);
+      t.select();
+      const ok = document.execCommand('copy');
+      t.remove();
+      if (!ok) throw new Error('复制失败');
+    });
     document.querySelectorAll('.spec').forEach(sp => {
-      const raw = sp.querySelector('.demo').innerHTML, det = sp.querySelector('.code'), out = det.querySelector('code'), part = sp.dataset.part;
-      det.addEventListener('toggle', () => {
-        if (!det.open || out.textContent) return;
-        // WebGL 版：零件自己的样式 + .holo 打底 + 画布；CSS 平替：零件自己的样式 + .holo，HTML 里去掉画布
-        const gl = document.documentElement.dataset.foil === 'gl';
-        const pick = (sel, names) => names.flatMap(n => [...document.querySelectorAll(`${sel}[data-part="${n}"]`)]).map(s => dedent(s.textContent)).join('\n\n');
-        const own = part === 'foil' ? [] : [part];
-        const html = gl ? raw : raw.replace(/\s*<canvas class="fx[^>]*><\/canvas>/g, '');
-        const css = pick('style', gl ? [...own, 'foil', 'foil-gl'] : [...own, 'foil']);
-        const js = pick('script', gl ? ['core', 'foil-gl', ...own] : ['core', 'foil', ...own]);
-        out.textContent = `<!-- HTML -->\n${dedent(html)}\n\n/* CSS */\n${css}${js ? `\n\n// JS\n${js}` : ''}`;
+      const raw = sp.querySelector('.demo').innerHTML, part = sp.dataset.part;
+      sp.querySelectorAll('.cp').forEach(btn => {
+        let tm;
+        btn.addEventListener('click', () => {
+          const text = btn.dataset.copy === 'link' ? `${location.origin === 'null' ? location.href.split('#')[0] : location.origin + location.pathname + location.search}#${sp.id}` : code(part, raw);
+          copy(text).then(() => {
+            btn.classList.add('done');
+            clearTimeout(tm);
+            tm = setTimeout(() => btn.classList.remove('done'), 1400);
+          }, () => {});
+        });
       });
     });
+    // 带着 #定位 打开时：大卡的高度要等字体到了才定下来，前几秒页面会变高，没动过滚动条就再对准一次
+    const target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (target && target.classList.contains('spec')) {
+      let moved = false;
+      const stop = () => { moved = true; };
+      ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(e => addEventListener(e, stop, { once: true, passive: true }));
+      const ro = new ResizeObserver(() => { if (!moved) target.scrollIntoView({ block: 'start' }); });
+      ro.observe(document.body);
+      setTimeout(() => ro.disconnect(), 4000);
+    }
   })();
 </script>
 
@@ -1210,8 +1238,6 @@ void main() {
       Foil.enabled = m === 'css';
       if (FoilGL) FoilGL.enabled = m === 'gl';
       btns.forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === m)));
-      // 展开着的代码按新的方式重拼
-      document.querySelectorAll('.spec .code').forEach(d => { d.querySelector('code').textContent = ''; if (d.open) d.dispatchEvent(new Event('toggle')); });
     };
     if (!FoilGL) { seg.hidden = true; set('css'); return; }
     btns.forEach(b => b.addEventListener('click', () => set(b.dataset.mode)));
