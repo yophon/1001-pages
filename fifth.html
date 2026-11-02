@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚第五批</title>
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --line: #26262b;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .back { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .bar .back:hover { color: var(--text); }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .bar input {
+    width: 150px; padding: 5px 9px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .bar nav { display: flex; gap: 2px; overflow-x: auto; margin-left: auto; max-width: 100%; scrollbar-width: none; }
+  .bar nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .bar nav a:hover { color: var(--text); background: var(--panel); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 112px 16px 24px; }
+  .hero h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p { color: var(--muted); margin: 0 0 12px; }
+
+  /* 每一节的“正文” */
+  .intro { position: relative; z-index: 1; background: var(--bg); padding: 96px 16px 80px; }
+  .intro > * { max-width: 720px; margin-inline: auto; }
+  .num { font: 900 64px/1 var(--sans); color: transparent; -webkit-text-stroke: 1px #44444c; }
+  .intro h2 { font-size: 28px; line-height: 1.3; margin-top: 12px; margin-bottom: 12px; }
+  .intro p { color: var(--muted); margin-top: 0; margin-bottom: 16px; }
+  .note { font-size: 14px; color: #f0b35a !important; }
+  .ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+  .ctrl button {
+    font: 13px/1 var(--sans); color: var(--text); cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+  }
+  .tips { padding-left: 20px; color: var(--muted); }
+  .tips li { margin-bottom: 10px; }
+  .tips b { color: var(--text); }
+
+  /* 页脚公共部分 */
+  .demo { position: relative; overflow: hidden; padding-top: 56px; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 28px 64px;
+    padding: 0 clamp(16px, 4vw, 48px); font-size: 14px;
+    position: relative; z-index: 1;
+  }
+  .links div { display: flex; flex-direction: column; gap: 4px; }
+  .links b { font-size: 12px; font-weight: 600; letter-spacing: .08em; opacity: .55; margin-bottom: 4px; }
+  .links span { opacity: .85; }
+  .links .copy { margin-left: auto; align-self: flex-end; font-size: 13px; opacity: .55; }
+  .mark-wrap { container-type: inline-size; padding-inline: clamp(8px, 2vw, 24px); margin-top: 48px; }
+  .mark {
+    display: block;
+    font: 900 22cqw/0.8 var(--sans);
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    margin-bottom: -0.15em;
+  }
+  .mark > span { display: inline-block; }
+  .stage-canvas { display: block; width: 100%; margin-top: 32px; touch-action: pan-y; }
+
+  /* 01 霓虹灯 */
+  .n1 { background: #0e0a10; color: #7a6a78; }
+  .neon-wall {
+    --glow: 0;
+    container-type: inline-size; display: flex; justify-content: center; padding: 8vh 2cqw 10vh;
+    background:
+      radial-gradient(55% 65% at 50% 55%, rgb(255 40 150 / var(--glow)), transparent 70%),
+      repeating-linear-gradient(0deg, transparent 0 46px, rgb(255 255 255 / .03) 46px 48px);
+  }
+  .neon { display: block; width: max-content; cursor: pointer; font: 300 20cqw/1 var(--sans); letter-spacing: .02em; white-space: nowrap; }
+  .neon span { color: #3c2635; }
+  .neon span.on {
+    color: #ffe9f5;
+    text-shadow: 0 0 .02em #fff, 0 0 .05em #ff4fb0, 0 0 .12em #ff2b9b, 0 0 .25em #ff1a8c, 0 0 .5em #ff0080;
+  }
+
+  /* 02 故障切片：白字切成横条各自错开，红、青两层在后面错位做色散 */
+  .n2 { background: #050506; color: #6b6b74; }
+  .glitch-wrap { position: relative; container-type: inline-size; display: flex; justify-content: center; padding: 8vh 2cqw 10vh; }
+  .glitch { position: relative; font: 900 20cqw/1 var(--sans); letter-spacing: -0.04em; white-space: nowrap; }
+  .glitch span { display: block; }
+  .glitch span + span { position: absolute; inset: 0; }
+  .g-size { visibility: hidden; }
+  .g-r { color: #ff1f4b; mix-blend-mode: screen; }
+  .g-c { color: #18e0ff; mix-blend-mode: screen; }
+  .g-s { color: #f2f2f2; }
+  .scan { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgb(0 0 0 / .35) 0 1px, transparent 1px 3px); }
+
+  /* 03 刮刮乐 */
+  .n3 { background: #1a1410; color: #8f7f6a; }
+  .scratch-wrap { display: flex; justify-content: center; padding: 48px clamp(16px, 4vw, 48px) 64px; }
+  .card {
+    position: relative; width: min(100%, 980px); aspect-ratio: 3 / 1; border-radius: 18px; overflow: hidden;
+    container-type: inline-size; box-shadow: 0 20px 40px rgb(0 0 0 / .45);
+    background: radial-gradient(120% 140% at 30% 20%, #ffe9a3, #e2a92c 55%, #9c6a12);
+  }
+  .prize { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 1cqw; color: #3b2400; text-align: center; }
+  .prize b { display: block; width: max-content; font: 900 16cqw/1 var(--sans); letter-spacing: -0.04em; white-space: nowrap; }
+  .prize span { font-size: max(14px, 2cqw); }
+  .card canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: pan-y; }
+  @media (max-width: 600px) { .card { aspect-ratio: 2 / 1; } }
+
+  /* 04 挂绳摆动 */
+  .n4 { background: #f6f1e7; color: #7b6f5c; }
+  .hang-stage { position: relative; margin-top: 24px; touch-action: pan-y; }
+  .hang-rod { position: absolute; top: 18px; height: 10px; border-radius: 5px; background: linear-gradient(#c39660, #7a5228); box-shadow: 0 3px 5px rgb(0 0 0 / .2); }
+  .hanger { position: absolute; width: 0; height: 0; transform-origin: 0 0; will-change: transform; }
+  .hanger i { position: absolute; left: -1px; top: 0; width: 2px; background: #6b5a44; }
+  .hanger b {
+    position: absolute; transform: translateX(-50%); padding: .1em .18em; line-height: 1;
+    font-weight: 900; font-family: var(--sans); color: #fff; white-space: nowrap; cursor: pointer;
+    border-radius: .12em; box-shadow: 0 .04em .08em rgb(0 0 0 / .2);
+  }
+  .hanger b::before {
+    content: ""; position: absolute; left: 50%; top: .05em; width: .1em; height: .1em; margin-left: -.05em;
+    border-radius: 50%; background: rgb(0 0 0 / .35);
+  }
+
+  /* 05 黏液融合：整块先模糊、再把透明度拉陡，边缘挨近的形状就会黏成一团 */
+  .n5 { background: #101012; color: #74747e; }
+  .goo-stage { container-type: inline-size; display: flex; justify-content: center; padding: 5vh 2cqw 7vh; }
+  .goo { position: relative; filter: url(#goo); color: #c8ff3d; padding: 5vh 3cqw; }
+  .goo-text { display: block; width: max-content; font: 900 20cqw/1 var(--sans); letter-spacing: -0.03em; white-space: nowrap; }
+  .goo i { position: absolute; left: 0; top: 0; border-radius: 50%; background: currentColor; will-change: transform; }
+
+  /* 06 放大镜 */
+  .n6 { background: #f2efe6; color: #5f6b5e; }
+  .n6 canvas { cursor: none; }
+
+  /* 07 折纸展开：每一片挂在上一片的下沿，交替往里、往外折 */
+  .n7 { background: #2b2f36; color: #8d939d; }
+  .fold-stage { position: relative; container-type: inline-size; perspective: 1400px; padding-top: 40px; }
+  .fold-measure { position: absolute; visibility: hidden; font: 900 20cqw/1 var(--sans); letter-spacing: -0.04em; white-space: nowrap; }
+  .fold-root { position: relative; margin: 0 auto; transform-style: preserve-3d; }
+  .fold { position: absolute; left: 0; width: 100%; transform-origin: 50% 0; transform-style: preserve-3d; }
+  .face { position: relative; overflow: hidden; background: #f4f1ea; }
+  .ink {
+    position: absolute; left: 0; width: 100%; text-align: center; color: #1a1a1a;
+    font-weight: 900; font-family: var(--sans); line-height: 1; letter-spacing: -0.04em; white-space: nowrap;
+  }
+  .shade { position: absolute; inset: 0; }
+
+  /* 08 生成海报 */
+  .n8 { background: #d9d4c7; color: #5f594c; }
+  .poster-wrap { padding: 44px clamp(16px, 4vw, 48px) 56px; }
+  .poster-wrap canvas { display: block; width: 100%; cursor: pointer; box-shadow: 0 18px 40px rgb(0 0 0 / .25); }
+  .poster-no { margin-top: 12px; font: 13px/1.4 Consolas, monospace; }
+
+  .f-end { background: var(--bg); color: #7a7a83; border-top: 1px solid var(--line); }
+  .f-end .mark { color: #26262c; }
+</style>
+</head>
+<body id="top">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="goo" x="-20%" y="-30%" width="140%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="b"/>
+    <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -11"/>
+  </filter>
+</svg>
+
+<div class="bar">
+  <a class="back" href="fourth.html">← 第四批</a>
+  <strong>第五批</strong>
+  <label>品牌名 <input id="brand" value="Lumen" maxlength="16" spellcheck="false"></label>
+  <nav>
+    <a href="overview.html">总览</a>
+    <a href="#c1">01 霓虹</a><a href="#c2">02 故障</a><a href="#c3">03 刮奖</a><a href="#c4">04 挂绳</a><a href="#c5">05 黏液</a><a href="#c6">06 放大镜</a><a href="#c7">07 折纸</a><a href="#c8">08 海报</a><a href="sixth.html">第六批 →</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <h1>巨字页脚，第五批</h1>
+  <p>这一批：招牌、信号、彩票、玩具、黏液、微缩印刷、纸艺、海报生成。用法和前几页一样，顶栏可以换品牌名，离开屏幕就暂停。</p>
+  <p class="note" id="reduced-note" hidden>你的系统开了“减少动画”：自动播放和闪烁的部分会停掉，鼠标触发的效果保留。</p>
+</header>
+
+<section id="c1">
+  <div class="intro">
+    <div class="num">01</div>
+    <h2>霓虹灯</h2>
+    <p>滚到这里时，招牌一个字一个字地“通电”，闪几下才亮稳；其中有一个字接触不良，隔一会儿就闪两下。点招牌可以开关。</p>
+    <p>灯管的光晕是几层不同半径的文字阴影叠出来的，单位用 em，所以字多大光晕就多大；墙上的反光跟着亮着的字数变。</p>
+    <div class="ctrl"><button type="button" id="neon-toggle">开 / 关</button></div>
+  </div>
+  <footer class="demo n1"></footer>
+</section>
+
+<section id="c2">
+  <div class="intro">
+    <div class="num">02</div>
+    <h2>故障切片</h2>
+    <p>像信号不好的屏幕：字被切成几条横带各自错开，边缘冒出红青两色的重影。鼠标划得越快、页面滚得越快，故障越厉害；平时也会隔几秒抽一下。</p>
+    <p>白字复制了 9 份，每份用 clip-path 只露出一条横带；红、青两份垫在下面，平时和白字完全重合看不见，错开时才露出来。</p>
+  </div>
+  <footer class="demo n2"></footer>
+</section>
+
+<section id="c3">
+  <div class="intro">
+    <div class="num">03</div>
+    <h2>刮刮乐</h2>
+    <p>页脚是一张刮奖卡：按住鼠标在银色涂层上来回刮，刮开一大半后涂层会自己褪掉。</p>
+    <p>涂层是一块画布，刮的时候用“擦除”模式画粗线；每刮几下抽样数一次透明像素，超过 55% 就算刮开。</p>
+    <div class="ctrl"><button type="button" id="rescratch">再来一张</button></div>
+  </div>
+  <footer class="demo n3"></footer>
+</section>
+
+<section id="c4">
+  <div class="intro">
+    <div class="num">04</div>
+    <h2>挂绳摆动</h2>
+    <p>每个字是一块挂在杆子上的小木牌，绳子长短不一。鼠标从牌子中间划过会把它拨得晃起来，点一下会被猛推一把；没人碰时也会被微风吹得轻轻晃。</p>
+    <p>每块牌子是一个单摆：按绳长算回复力，鼠标速度在摆动方向上的分量变成推力。</p>
+  </div>
+  <footer class="demo n4"></footer>
+</section>
+
+<section id="c5">
+  <div class="intro">
+    <div class="num">05</div>
+    <h2>黏液融合</h2>
+    <p>鼠标是一团黏液，靠近字时会和笔画黏连在一起，拉开时拉出细丝；还有几团小黏液自己在字周围漂，碰到字就黏上去。</p>
+    <p>经典的“goo”做法：字和圆点一起先高斯模糊，再把透明度拉得很陡，模糊后挨得近的形状就连成一片。字的拐角也会因此变圆，像融化了一点。</p>
+  </div>
+  <footer class="demo n5"></footer>
+</section>
+
+<section id="c6">
+  <div class="intro">
+    <div class="num">06</div>
+    <h2>放大镜</h2>
+    <p>远看是普通的大字，其实笔画是用极小的字一行行排出来的，像钞票上的微缩印刷。把鼠标移上去，放大镜底下才看得清；其中某个字的笔画里藏了一行红色的字，找找看。</p>
+    <p>先按 3 倍分辨率画好一张底图，平时缩小显示；放大镜里直接取底图对应的那一块，所以放大后依然清楚。</p>
+  </div>
+  <footer class="demo n6"></footer>
+</section>
+
+<section id="c7">
+  <div class="intro">
+    <div class="num">07</div>
+    <h2>折纸展开</h2>
+    <p>大字印在一张折成六折的纸上，往下滚时纸一折一折展开，朝下的折面会暗一些；往回滚又会折回去。</p>
+    <p>六片纸是嵌套的：每片挂在上一片的下沿，交替往里、往外转同一个角度，就是风琴折；每片只露出整行字的六分之一。</p>
+  </div>
+  <footer class="demo n7"></footer>
+</section>
+
+<section id="c8">
+  <div class="intro">
+    <div class="num">08</div>
+    <h2>生成海报</h2>
+    <p>每次随机生成一张用品牌名排的海报：叠排、巨字裁切、包豪斯色块、波浪四种版式，配色从八组里挑，右下角有编号。点海报或“换一张”重新生成，满意了可以下载成 PNG。</p>
+    <p>随机数是带种子的，同一个编号画出来永远是同一张，所以换窗口大小、换品牌名都会重画成同一个版式。</p>
+    <div class="ctrl"><button type="button" id="poster-next">换一张</button><button type="button" id="poster-dl">下载 PNG</button></div>
+  </div>
+  <footer class="demo n8"></footer>
+</section>
+
+<section id="end">
+  <div class="intro">
+    <div class="num">✓</div>
+    <h2>五页合起来</h2>
+    <ul class="tips">
+      <li><b>基础六种</b>：裁切、幕布、渐隐、手电筒、升起、透图。</li>
+      <li><b>进阶八种</b>：可变字体、跑马灯、橡皮筋、点阵、物理、粒子、液体、实时数据。</li>
+      <li><b>第三批</b>：立体、钻洞、光栅、天空、钢琴、终端、足迹、旗帜。</li>
+      <li><b>第四批</b>：签名、翻牌、镭射、投影、装水、积雪、眼睛、剪报。</li>
+      <li><b>这一批</b>：霓虹、故障、刮奖、挂绳、黏液、放大镜、折纸、海报。</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="demo f-end"></footer>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[(Math.random() * a.length) | 0];
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = () => Math.min(devicePixelRatio || 1, 2);
+  const SANS = '"Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+  const input = $('#brand');
+  let brand = input.value.trim() || 'Lumen';
+  if (REDUCED) $('#reduced-note').hidden = false;
+
+  const LINKS = `
+    <div class="links">
+      <div><b>产品</b><span>功能</span><span>价格</span><span>更新日志</span></div>
+      <div><b>公司</b><span>关于我们</span><span>招聘</span><span>联系</span></div>
+      <div><b>资源</b><span>文档</span><span>博客</span><span>社区</span></div>
+      <div class="copy">© 2026 <span class="bn"></span></div>
+    </div>`;
+  const MARK = `<div class="mark-wrap"><div class="mark" aria-hidden="true"><span></span></div></div>`;
+
+  function footer(sel, inner) {
+    const el = $(sel);
+    el.innerHTML = LINKS + inner;
+    el.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    return el;
+  }
+
+  // 让一个 width: max-content 的元素铺满容器宽度的 fill 倍，单位 cqw，再加一个高度上限
+  function fitWidth(node, fill, cap) {
+    node.style.fontSize = '100px';
+    const w = node.offsetWidth || 1;
+    node.style.fontSize = `min(${(10000 * fill / w).toFixed(3)}cqw, ${cap})`;
+  }
+
+  function fitMark(mark) {
+    const span = mark.firstElementChild;
+    span.textContent = brand;
+    mark.style.fontSize = '100px';
+    const w = span.getBoundingClientRect().width;
+    if (w) mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 60vh)`;
+  }
+
+  // canvas 上把文字居中铺进 w×h，返回 fillText 的坐标和字形高度
+  function fitText(ctx, text, w, h, fill = 1) {
+    ctx.font = `900 100px ${SANS}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(text);
+    const tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight || 1;
+    const th = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || 1;
+    const size = Math.min(fill * 100 * w / tw, fill * 100 * h / th);
+    const k = size / 100;
+    ctx.font = `900 ${size}px ${SANS}`;
+    return {
+      x: (w - tw * k) / 2 + m.actualBoundingBoxLeft * k,
+      y: (h - th * k) / 2 + m.actualBoundingBoxAscent * k,
+      asc: m.actualBoundingBoxAscent * k,
+      h: th * k,
+    };
+  }
+
+  function sizeCanvas(cv, ratio, min) {
+    const dpr = DPR(), W = cv.clientWidth;
+    const H = Math.round(clamp(W * ratio, min, Math.max(min, innerHeight * 0.6)));
+    cv.style.height = H + 'px';
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    return { W, H, dpr };
+  }
+
+  // 记录指针相对 target 的位置和每次移动的位移
+  function trackPointer(el, target) {
+    const p = { x: -1e9, y: -1e9, vx: 0, vy: 0, on: false };
+    el.addEventListener('pointermove', e => {
+      const r = target.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (p.on) { p.vx = x - p.x; p.vy = y - p.y; }
+      p.x = x; p.y = y; p.on = true;
+    });
+    el.addEventListener('pointerleave', () => { p.on = false; p.x = p.y = -1e9; p.vx = p.vy = 0; });
+    return p;
+  }
+
+  // 统一调度：只跑在屏幕上的效果
+  const demos = [];
+  const running = new Set();
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    const d = e.target.__demo;
+    if (e.isIntersecting) { running.add(d); d.enter?.(); } else running.delete(d);
+  }), { rootMargin: '80px 0px' });
+  function register(el, d) {
+    el.__demo = d;
+    demos.push(d);
+    io.observe(el);
+  }
+  let last = performance.now();
+  requestAnimationFrame(function loop(now) {
+    requestAnimationFrame(loop);   // 先排下一帧：某个效果出错也不会把整个循环拖停
+    const dt = Math.min(now - last, 50);
+    last = now;
+    running.forEach(d => {
+      try { d.frame?.(now, dt); } catch (err) { running.delete(d); console.error(err); }
+    });
+  });
+
+  /* ---------- 01 霓虹灯 ---------- */
+  (() => {
+    const el = footer('.n1', `<div class="neon-wall"><div class="neon" aria-hidden="true"></div></div>`);
+    const wall = $('.neon-wall', el), sign = $('.neon', el);
+    const FLICKER = [1, 0, 1, 1, 0, 0, 1, 0, 1, 1];
+    let letters = [], on = false, started = false, broken = 0, nextGlitch = 0;
+
+    const light = (L, v) => { if (L.lit !== v) { L.lit = v; L.el.classList.toggle('on', v); } };
+    // 通电：每个字错开一点时间，先按一段随机长度的闪烁序列跳几下，再亮稳
+    function turnOn(now) {
+      on = true;
+      letters.forEach((L, i) => {
+        L.t0 = now + i * 140 + rand(0, 220);
+        L.pat = REDUCED ? [1] : FLICKER.slice(0, 3 + ((Math.random() * 7) | 0)).concat(1);
+      });
+      nextGlitch = now + rand(2500, 5000);
+    }
+    function turnOff() {
+      on = false;
+      letters.forEach(L => { L.pat = null; light(L, false); });
+    }
+    const toggle = () => (on ? turnOff() : turnOn(performance.now()));
+    sign.addEventListener('click', toggle);
+    $('#neon-toggle').addEventListener('click', () => { started = true; toggle(); });
+
+    function setText() {
+      sign.textContent = '';
+      letters = Array.from(brand, ch => {
+        const s = document.createElement('span');
+        s.textContent = ch;
+        sign.append(s);
+        return { el: s, lit: false, pat: null, t0: 0 };
+      });
+      broken = (Math.random() * letters.length) | 0;
+      fitWidth(sign, 0.86, '40vh');
+      if (on) turnOn(performance.now());
+    }
+    register(el, {
+      setText,
+      frame(now) {
+        if (!started) {
+          if (wall.getBoundingClientRect().top > innerHeight * 0.85) return;
+          started = true;
+          turnOn(now);
+        }
+        if (on && !REDUCED && now > nextGlitch && letters[broken]) {   // 接触不良的那个字
+          letters[broken].pat = [0, 1, 0, 0, 1, 0, 1];
+          letters[broken].t0 = now;
+          nextGlitch = now + rand(2500, 6000);
+        }
+        let lit = 0;
+        for (const L of letters) {
+          if (L.pat) {
+            const k = Math.floor((now - L.t0) / 60);
+            if (k >= L.pat.length) { light(L, on); L.pat = null; }
+            else if (k >= 0) light(L, !!L.pat[k]);
+          }
+          if (L.lit) lit++;
+        }
+        wall.style.setProperty('--glow', (lit / Math.max(1, letters.length) * 0.22).toFixed(3));
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 02 故障切片 ---------- */
+  (() => {
+    const N = 9;
+    const el = footer('.n2', `<div class="glitch-wrap"><div class="glitch" aria-hidden="true"><span class="g-size"></span><span class="g-r"></span><span class="g-c"></span>${'<span class="g-s"></span>'.repeat(N)}</div><div class="scan"></div></div>`);
+    const wrap = $('.glitch-wrap', el), g = $('.glitch', el);
+    const size = $('.g-size', el), red = $('.g-r', el), cyan = $('.g-c', el), slices = [...el.querySelectorAll('.g-s')];
+    const P = trackPointer(el, wrap);
+    let I = 0, lastY = scrollY, nextBurst = 0, clean = true, tick = 0;
+
+    // 随机切出 N 条高矮不一的横带
+    function cut() {
+      const edges = [0, ...Array.from({ length: N - 1 }, () => Math.random() * 100).sort((a, b) => a - b), 100];
+      slices.forEach((s, i) => { s.style.clipPath = `inset(${edges[i].toFixed(1)}% 0 ${(100 - edges[i + 1]).toFixed(1)}% 0)`; });
+    }
+    function setText() {
+      [size, red, cyan, ...slices].forEach(s => { s.textContent = brand; });
+      g.style.fontSize = '100px';
+      const w = size.offsetWidth || 1;
+      g.style.fontSize = `min(${(10000 * 0.9 / w).toFixed(3)}cqw, 45vh)`;
+      cut();
+    }
+    register(el, {
+      setText,
+      enter() { lastY = scrollY; },
+      frame(now) {
+        if (REDUCED) return;
+        const sv = Math.abs(scrollY - lastY);
+        lastY = scrollY;
+        I = Math.max(I * 0.88, Math.min(1, Math.hypot(P.vx, P.vy) / 30), Math.min(1, sv / 40));
+        P.vx *= 0.5;
+        P.vy *= 0.5;
+        if (now > nextBurst) { I = Math.max(I, 0.9); nextBurst = now + rand(2200, 5000); }
+        if (I < 0.03) {
+          if (!clean) { [red, cyan, ...slices].forEach(s => { s.style.transform = ''; }); clean = true; }
+          return;
+        }
+        clean = false;
+        if (tick++ % 2) return;   // 每两帧抖一次，更像信号不稳
+        if (Math.random() < 0.3) cut();
+        slices.forEach(s => { s.style.transform = Math.random() < 0.55 ? `translateX(${((Math.random() - 0.5) * I * 0.16).toFixed(3)}em)` : ''; });
+        red.style.transform = `translate(${(-I * 0.035).toFixed(3)}em, ${((Math.random() - 0.5) * I * 0.02).toFixed(3)}em)`;
+        cyan.style.transform = `translate(${(I * 0.035).toFixed(3)}em, ${((Math.random() - 0.5) * I * 0.02).toFixed(3)}em)`;
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 03 刮刮乐 ---------- */
+  (() => {
+    const el = footer('.n3', `<div class="scratch-wrap"><div class="card"><div class="prize"><b></b><span>谢谢你一路看到了页脚</span></div><canvas aria-hidden="true"></canvas></div></div>`);
+    const card = $('.card', el), cv = $('canvas', el), ctx = cv.getContext('2d', { willReadFrequently: true }), prize = $('.prize b', el);
+    let W, H, drawing = false, last = null, moves = 0, done = false;
+
+    function paintFoil() {
+      const dpr = DPR();
+      W = card.clientWidth;
+      H = card.clientHeight;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, '#b9bcc4');
+      g.addColorStop(0.45, '#eceef2');
+      g.addColorStop(0.55, '#c7cad1');
+      g.addColorStop(1, '#9ea2ab');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      // 银漆上的颗粒感
+      const n = document.createElement('canvas');
+      n.width = n.height = 96;
+      const nc = n.getContext('2d'), img = nc.createImageData(96, 96);
+      for (let i = 0; i < img.data.length; i += 4) {
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = Math.random() * 255;
+        img.data[i + 3] = 26;
+      }
+      nc.putImageData(img, 0, 0);
+      ctx.fillStyle = ctx.createPattern(n, 'repeat');
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(70,72,82,0.55)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `700 ${Math.round(H * 0.16)}px ${SANS}`;
+      ctx.fillText('刮开这里', W / 2, H / 2);
+      ctx.font = `500 ${Math.max(12, Math.round(H * 0.06))}px ${SANS}`;
+      ctx.fillText('按住鼠标来回刮', W / 2, H / 2 + H * 0.16);
+      cv.style.transition = 'none';
+      cv.style.opacity = '1';
+      cv.style.pointerEvents = '';
+      done = false;
+      moves = 0;
+    }
+    // 每刮 10 下，隔 16 个像素抽样一次，透明的超过 55% 就算刮开
+    function check() {
+      const d = ctx.getImageData(0, 0, cv.width, cv.height).data;
+      let clear = 0, total = 0;
+      for (let i = 3; i < d.length; i += 64) { total++; if (d[i] < 20) clear++; }
+      if (clear / total > 0.55) {
+        done = true;
+        cv.style.transition = 'opacity .7s';
+        cv.style.opacity = '0';
+        cv.style.pointerEvents = 'none';
+      }
+    }
+    function scratchTo(p) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = Math.max(28, H * 0.14);
+      ctx.lineCap = ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      last = p;
+      if (++moves % 10 === 0) check();
+    }
+    const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    cv.addEventListener('pointerdown', e => {
+      if (done) return;
+      drawing = true;
+      last = pos(e);
+      cv.setPointerCapture(e.pointerId);
+      scratchTo({ x: last.x + 0.1, y: last.y });
+    });
+    cv.addEventListener('pointermove', e => { if (drawing) scratchTo(pos(e)); });
+    const stop = () => { drawing = false; };
+    cv.addEventListener('pointerup', stop);
+    cv.addEventListener('pointercancel', stop);
+    $('#rescratch').addEventListener('click', paintFoil);
+
+    function setText() {
+      prize.textContent = brand;
+      fitWidth(prize, 0.8, '22cqw');
+    }
+    register(el, { setText, resize: paintFoil });
+    setText();
+    paintFoil();
+  })();
+
+  /* ---------- 04 挂绳摆动 ---------- */
+  (() => {
+    const el = footer('.n4', `<div class="hang-stage" aria-hidden="true"><div class="hang-rod"></div></div>`);
+    const stage = $('.hang-stage', el), rod = $('.hang-rod', el);
+    const P = trackPointer(el, stage);
+    const COLORS = ['#ff6b4a', '#ffb627', '#3ec1d3', '#6a4cff', '#2bb673', '#ff5d8f', '#1f2a44'];
+    const G = 2400, ROD_Y = 26;   // 重力（px/s²）、挂点高度
+    const mctx = document.createElement('canvas').getContext('2d');
+    let items = [];
+
+    function build() {
+      stage.querySelectorAll('.hanger').forEach(n => n.remove());
+      const W = stage.clientWidth, H = Math.round(clamp(W * 0.45, 300, innerHeight * 0.7));
+      stage.style.height = H + 'px';
+      const chars = Array.from(brand).filter(c => c.trim());
+      mctx.font = `900 100px ${SANS}`;
+      const ws = chars.map(c => mctx.measureText(c).width + 36);   // 牌子左右各 0.18em 边
+      const total = ws.reduce((a, b) => a + b, 0) + (chars.length - 1) * 14;
+      const F = Math.min(100 * W * 0.86 / total, (H - ROD_Y) * 0.45);
+      const k = F / 100;
+      const x0 = (W - total * k) / 2;
+      rod.style.left = `${x0 - 24}px`;
+      rod.style.width = `${total * k + 48}px`;
+      let x = x0;
+      items = chars.map((ch, i) => {
+        const w = ws[i] * k, h = 1.2 * F, px = x + w / 2;
+        x += w + 14 * k;
+        const Ls = (H - ROD_Y - h - 16) * rand(0.12, 0.8);   // 绳长随机
+        const node = document.createElement('div');
+        node.className = 'hanger';
+        node.style.left = `${px}px`;
+        node.style.top = `${ROD_Y}px`;
+        node.innerHTML = `<i style="height:${Ls}px"></i><b style="font-size:${F}px;top:${Ls}px;background:${pick(COLORS)}"></b>`;
+        node.querySelector('b').textContent = ch;
+        stage.append(node);
+        return { node, px, Lc: Ls + h / 2, w, h, th: rand(-0.05, 0.05), om: 0 };
+      });
+    }
+    const centerOf = it => ({ x: it.px - it.Lc * Math.sin(it.th), y: ROD_Y + it.Lc * Math.cos(it.th) });
+    stage.addEventListener('pointerdown', e => {
+      const r = stage.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      const it = items.find(it => { const c = centerOf(it); return Math.abs(x - c.x) < it.w / 2 && Math.abs(y - c.y) < it.h / 2; });
+      if (it) it.om += (x < centerOf(it).x ? -1 : 1) * rand(3, 5);   // 角度变小是往右摆：点左边往右甩，点右边往左甩
+    });
+    register(el, {
+      setText: build, resize: build,
+      frame(now, dt) {
+        const s = dt / 1000;
+        for (const it of items) {
+          if (P.on) {
+            const c = centerOf(it);
+            if (Math.abs(P.x - c.x) < it.w * 0.6 && Math.abs(P.y - c.y) < it.h * 0.6) {
+              // 指针速度在摆动切线方向 (-cosθ, -sinθ) 上的分量，变成角速度
+              it.om += (-P.vx * Math.cos(it.th) - P.vy * Math.sin(it.th)) / it.Lc * 0.8;
+            }
+          }
+          it.om = clamp(it.om, -4, 4);   // 再快的划动也只拨到四五十度，不会甩飞
+          if (!REDUCED) it.om += (Math.random() - 0.5) * 0.02;   // 微风
+          it.om += -(G / it.Lc) * Math.sin(it.th) * s;
+          it.om *= 0.992;
+          it.th = clamp(it.th + it.om * s, -1.3, 1.3);
+          it.node.style.transform = `rotate(${it.th.toFixed(4)}rad)`;
+        }
+        P.vx *= 0.6;   // 同一次划动只推一下，不会停在牌子上一直推
+        P.vy *= 0.6;
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 05 黏液融合 ---------- */
+  (() => {
+    const el = footer('.n5', `<div class="goo-stage"><div class="goo" aria-hidden="true"><span class="goo-text"></span>${'<i></i>'.repeat(6)}</div></div>`);
+    const goo = $('.goo', el), text = $('.goo-text', el), blur = $('#goo feGaussianBlur');
+    const blobs = [...goo.querySelectorAll('i')];   // 第一个跟着鼠标，其余自己漂
+    const P = trackPointer(el, goo);
+    const seeds = blobs.map(() => ({ ax: rand(0.2, 0.45), ay: rand(0.2, 0.4), fx: rand(0.25, 0.5), fy: rand(0.3, 0.6), ph: rand(0, 6.28), r: rand(0.05, 0.1) }));
+    let fs = 100, R = 16;
+    const cur = { x: 0, y: 0, s: 0 };
+    const place = (b, x, y, r) => { b.style.transform = `translate(${(x - R).toFixed(1)}px, ${(y - R).toFixed(1)}px) scale(${(r / R).toFixed(3)})`; };
+
+    function setText() {
+      text.textContent = brand;
+      fitWidth(text, 0.84, '40vh');
+      fs = parseFloat(getComputedStyle(text).fontSize);
+      R = fs * 0.16;   // 圆点按最大尺寸建好，之后只缩放
+      blobs.forEach(b => { b.style.width = b.style.height = `${R * 2}px`; });
+      blur.setAttribute('stdDeviation', (fs * 0.045).toFixed(1));   // 模糊半径跟着字号走，黏连程度才一致
+    }
+    register(el, {
+      setText,
+      frame(now) {
+        const W = goo.clientWidth, H = goo.clientHeight, t = REDUCED ? 0 : now / 1000;
+        if (P.on) {
+          if (cur.s < 0.05) { cur.x = P.x; cur.y = P.y; }
+          cur.x += (P.x - cur.x) * 0.18;
+          cur.y += (P.y - cur.y) * 0.18;
+        }
+        cur.s += ((P.on ? 1 : 0) - cur.s) * 0.12;
+        place(blobs[0], cur.x, cur.y, R * cur.s);
+        for (let i = 1; i < blobs.length; i++) {
+          const d = seeds[i];
+          place(blobs[i], W * (0.5 + d.ax * Math.sin(t * d.fx + d.ph)), H * (0.55 + d.ay * Math.sin(t * d.fy + d.ph * 2)), fs * d.r);
+        }
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 06 放大镜 ---------- */
+  (() => {
+    const el = footer('.n6', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const M = 3, LENS = 90, SECRET = '你找到藏起来的这行字了';
+    let W, H, dpr, ts, tex, lx = 0, ly = 0, shown = 0;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      ts = Math.min(M * dpr, 4);   // 底图分辨率：放大 3 倍后仍是一比一
+      tex = document.createElement('canvas');
+      tex.width = Math.round(W * ts);
+      tex.height = Math.round(H * ts);
+      const t = tex.getContext('2d');
+      t.scale(ts, ts);
+      const f = fitText(t, brand, W, H, 0.9), font = t.font;
+
+      // 用 1 倍的遮罩找一个能藏下那行字的位置：某个字的中心，左右都落在笔画里
+      const mk = document.createElement('canvas');
+      mk.width = W; mk.height = H;
+      const mc = mk.getContext('2d', { willReadFrequently: true });
+      mc.font = font;
+      mc.fillText(brand, f.x, f.y);
+      const data = mc.getImageData(0, 0, W, H).data;
+      const ink = (x, y) => x >= 0 && y >= 0 && x < W && y < H && data[((y | 0) * W + (x | 0)) * 4 + 3] > 128;
+
+      const micro = document.createElement('canvas');
+      micro.width = tex.width; micro.height = tex.height;
+      const m = micro.getContext('2d');
+      m.scale(ts, ts);
+      m.font = `600 4px ${SANS}`;
+      const sw = m.measureText(SECRET).width;
+      const chars = Array.from(brand);
+      let spot = null;
+      for (let i = 0; i < chars.length && !spot; i++) {
+        mc.font = font;
+        const cx = f.x + mc.measureText(chars.slice(0, i).join('')).width + mc.measureText(chars[i]).width / 2;
+        for (const fy of [0.5, 0.35, 0.65, 0.8, 0.2]) {
+          const cy = f.y - f.asc + f.h * fy;
+          if ([-0.5, -0.25, 0, 0.25, 0.5].every(k => ink(cx + sw * k, cy) && ink(cx + sw * k, cy - 4))) { spot = { x: cx, y: cy }; break; }
+        }
+      }
+      // 微缩字：一行行重复品牌名，奇数行错开半个单元
+      m.fillStyle = '#1f4a36';
+      const unit = `${brand.toUpperCase()} · `, uw = m.measureText(unit).width;
+      for (let y = 4, row = 0; y < H + 4; y += 4.8, row++) {
+        if (spot && Math.abs(y - spot.y) < 2.4) continue;   // 藏字的那一行留空
+        for (let x = -(row % 2) * uw / 2; x < W; x += uw) m.fillText(unit, x, y);
+      }
+      if (spot) {
+        m.fillStyle = '#c0392b';
+        m.fillText(SECRET, spot.x - sw / 2, spot.y);
+        let x = spot.x + sw / 2 + 2;   // 这一行剩下的地方照常排
+        m.fillStyle = '#1f4a36';
+        for (; x < W; x += uw) m.fillText(unit, x, spot.y);
+        for (x = spot.x - sw / 2 - 2 - uw; x > -uw; x -= uw) m.fillText(unit, x, spot.y);
+      }
+      m.globalCompositeOperation = 'destination-in';
+      m.font = font;
+      m.fillText(brand, f.x, f.y);
+
+      t.fillStyle = '#f2efe6';
+      t.fillRect(0, 0, W, H);
+      t.font = font;
+      t.fillStyle = '#e3dccb';
+      t.fillText(brand, f.x, f.y);
+      t.drawImage(micro, 0, 0, W, H);
+      t.lineWidth = 0.6;
+      t.strokeStyle = 'rgba(31,74,54,0.3)';
+      t.strokeText(brand, f.x, f.y);
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame() {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(tex, 0, 0, cv.width, cv.height);
+        shown += ((P.on ? 1 : 0) - shown) * 0.2;
+        if (shown < 0.02) return;
+        if (P.on) {
+          if (shown < 0.3) { lx = P.x; ly = P.y; }
+          lx += (P.x - lx) * 0.35;
+          ly += (P.y - ly) * 0.35;
+        }
+        const r = LENS * shown;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 24;
+        ctx.shadowOffsetY = 10;
+        ctx.fillStyle = '#f2efe6';
+        ctx.beginPath();
+        ctx.arc(lx, ly, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(lx, ly, r, 0, Math.PI * 2);
+        ctx.clip();
+        const s = 2 * r / M * ts;   // 从底图里取的那一块（底图像素）
+        ctx.drawImage(tex, lx * ts - s / 2, ly * ts - s / 2, s, s, lx - r, ly - r, 2 * r, 2 * r);
+        const glare = ctx.createRadialGradient(lx - r * 0.35, ly - r * 0.45, 0, lx - r * 0.35, ly - r * 0.45, r * 1.1);
+        glare.addColorStop(0, 'rgba(255,255,255,0.35)');
+        glare.addColorStop(0.4, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glare;
+        ctx.fillRect(lx - r, ly - r, 2 * r, 2 * r);
+        ctx.restore();
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = '#2b2b2b';
+        ctx.beginPath();
+        ctx.arc(lx, ly, r, 0, Math.PI * 2);
+        ctx.stroke();
+        if (r > 8) {   // 镜片缩回去时半径会很小，内圈高光不画了
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.beginPath();
+          ctx.arc(lx, ly, r - 4, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 07 折纸展开 ---------- */
+  (() => {
+    const N = 6;
+    const el = footer('.n7', `<div class="fold-stage" aria-hidden="true"><div class="fold-measure"></div><div class="fold-root"></div></div>`);
+    const stage = $('.fold-stage', el), measure = $('.fold-measure', el), root = $('.fold-root', el);
+    let folds = [], lastP = -1;
+
+    function setText() {
+      measure.textContent = brand;
+      fitWidth(measure, 0.84, '38vh');
+      const fsz = measure.style.fontSize, h = measure.offsetHeight, ph = h / N;
+      root.style.width = `${measure.offsetWidth * 1.08}px`;
+      stage.style.height = `${h + 100}px`;
+      root.textContent = '';
+      folds = [];
+      let parent = root;
+      for (let i = 0; i < N; i++) {
+        const f = document.createElement('div');
+        f.className = 'fold';
+        f.style.top = i ? `${ph}px` : '0';
+        f.innerHTML = `<div class="face" style="height:${ph}px"><div class="ink" style="top:${-i * ph}px;font-size:${fsz}"></div><i class="shade"></i></div>`;
+        f.querySelector('.ink').textContent = brand;
+        parent.append(f);
+        folds.push({ f, shade: f.querySelector('.shade') });
+        parent = f;
+      }
+      lastP = -1;
+    }
+    register(el, {
+      setText,
+      frame() {
+        const r = stage.getBoundingClientRect();
+        const p = REDUCED ? 1 : clamp((innerHeight - r.top) / (innerHeight * 0.55), 0, 1);   // 露头时全折着，顶到屏幕 45% 处全展开
+        if (Math.abs(p - lastP) < 1e-3) return;
+        lastP = p;
+        const a = (1 - smooth(p)) * 88;
+        folds.forEach(({ f, shade }, i) => {
+          f.style.transform = `rotateX(${(i === 0 ? -a : i % 2 ? 2 * a : -2 * a).toFixed(2)}deg)`;
+          // 相对屏幕的朝向是 -a、+a 交替：一面迎着光，一面背着光
+          shade.style.background = i % 2 ? `rgb(0 0 0 / ${(a / 88 * 0.45).toFixed(3)})` : `rgb(255 255 255 / ${(a / 88 * 0.2).toFixed(3)})`;
+        });
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 08 生成海报 ---------- */
+  (() => {
+    const el = footer('.n8', `<div class="poster-wrap"><canvas aria-hidden="true"></canvas><div class="poster-no"></div></div>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d'), no = $('.poster-no', el);
+    const PALETTES = [
+      ['#f2efe6', '#111111', '#e63b2e'], ['#111111', '#f2efe6', '#ffcc00'], ['#e63b2e', '#f6f1e7', '#111111'], ['#1d3fbb', '#f6f1e7', '#ff9f1c'],
+      ['#f6f1e7', '#1d3fbb', '#ff5d8f'], ['#0f5132', '#f2efe6', '#f4d35e'], ['#ffcc00', '#111111', '#1d3fbb'], ['#ff5d8f', '#1b1b1b', '#f6f1e7'],
+    ];
+    let seed = 1 + ((Math.random() * 9999) | 0), W, H, dpr;
+    // 带种子的随机数（mulberry32）：同一个编号永远画出同一张
+    const rng = s => () => {
+      s = (s + 0x6D2B79F5) | 0;
+      let t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    function stack(r, [, fg, ac]) {
+      const rows = 3 + ((r() * 4) | 0), rh = H / rows, hi = (r() * rows) | 0;
+      for (let i = 0; i < rows; i++) {
+        const size = rh * 1.05;
+        ctx.font = `900 ${size}px ${SANS}`;
+        const unit = `${brand}  `, uw = ctx.measureText(unit).width;
+        ctx.fillStyle = ctx.strokeStyle = i === hi ? ac : fg;
+        ctx.lineWidth = Math.max(1, size * 0.02);
+        for (let x = -r() * uw; x < W; x += uw) i % 2 ? ctx.strokeText(unit, x, (i + 1) * rh - rh * 0.12) : ctx.fillText(unit, x, (i + 1) * rh - rh * 0.12);
+      }
+    }
+    stack.label = '叠排';
+    function giant(r, [, fg, ac]) {
+      ctx.fillStyle = ac;
+      ctx.beginPath();
+      ctx.arc(W * (0.2 + r() * 0.6), H * (0.2 + r() * 0.6), H * (0.25 + r() * 0.3), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = fg;
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 1;
+      for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.moveTo(W * k / 6, 0); ctx.lineTo(W * k / 6, H); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate((r() - 0.5) * 0.35);
+      const f = fitText(ctx, brand, W * 1.25, H * 1.5);   // 比画面还大，四边被裁掉
+      ctx.fillStyle = fg;
+      ctx.fillText(brand, f.x - W * 0.625, f.y - H * 0.75 + H * 0.12);
+      ctx.restore();
+    }
+    giant.label = '巨字裁切';
+    function grid(r, cols) {
+      const chars = Array.from(brand).filter(c => c.trim()).slice(0, 12);
+      const rowsN = chars.length > 6 ? 2 : 1, colsN = Math.ceil(chars.length / rowsN), cw = W / colsN, ch = H / rowsN;
+      chars.forEach((c, i) => {
+        // 格子边界取整，不然相邻两格之间会漏出一条半像素的缝
+        const x = Math.round((i % colsN) * cw), y = Math.round(Math.floor(i / colsN) * ch);
+        const bi = (r() * 3) | 0, li = (bi + 1 + ((r() * 2) | 0)) % 3;   // 底色、字色、形状色各取一个，互不相同
+        ctx.fillStyle = cols[bi];
+        ctx.fillRect(x, y, cw + 1, ch + 1);
+        ctx.fillStyle = cols[3 - bi - li];
+        const s = (r() * 4) | 0, rad = Math.min(cw, ch);
+        ctx.beginPath();
+        if (s === 0) ctx.arc(x + cw / 2, y + ch / 2, rad * 0.42, 0, Math.PI * 2);
+        else if (s === 1) { ctx.moveTo(x, y + ch); ctx.arc(x, y + ch, rad * 0.9, -Math.PI / 2, 0); }
+        else if (s === 2) ctx.arc(x + cw / 2, y + ch, rad * 0.45, Math.PI, 0);
+        else { ctx.moveTo(x, y + ch); ctx.lineTo(x + cw, y + ch); ctx.lineTo(x + cw, y); }
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = cols[li];
+        const f = fitText(ctx, c, cw * 0.8, ch * 0.7);
+        ctx.fillText(c, x + cw * 0.1 + f.x, y + ch * 0.15 + f.y);
+      });
+    }
+    grid.label = '包豪斯色块';
+    function wave(r, [, fg, ac]) {
+      const chars = Array.from(brand), n = chars.length;
+      const amp = H * (0.12 + r() * 0.15), freq = 1 + r() * 2, ph = r() * 6.28;
+      const size = Math.min(W / (n * 0.75), H * 0.45);
+      ctx.font = `900 ${size}px ${SANS}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      [[ac, true, size * 0.08], [fg, false, 0]].forEach(([col, outline, off]) => {
+        chars.forEach((c, i) => {
+          const t = (i + 0.5) / n, a = t * Math.PI * 2 * freq + ph;
+          ctx.save();
+          ctx.translate(W * (0.06 + 0.88 * t) + off, H / 2 + Math.sin(a) * amp + off);
+          ctx.rotate(Math.cos(a) * 0.35);
+          ctx.fillStyle = ctx.strokeStyle = col;
+          ctx.lineWidth = size * 0.03;
+          outline ? ctx.strokeText(c, 0, 0) : ctx.fillText(c, 0, 0);
+          ctx.restore();
+        });
+      });
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    }
+    wave.label = '波浪';
+
+    function draw() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.42, 260));
+      const r = rng(seed), pal = PALETTES[(r() * PALETTES.length) | 0];
+      const layout = [stack, giant, grid, wave][(r() * 4) | 0];
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = pal[0];
+      ctx.fillRect(0, 0, W, H);
+      layout(r, pal);
+      // 角上的小字垫一块底色，版式压到角落时也看得清
+      const tag = `No.${String(seed).padStart(4, '0')}`, fsz = Math.max(10, H * 0.035);
+      ctx.font = `600 ${fsz}px Consolas, monospace`;
+      const label = (text, x, y, align) => {
+        const w = ctx.measureText(text).width, left = align === 'right' ? x - w : x;
+        ctx.fillStyle = pal[0];
+        ctx.fillRect(left - 6, y - fsz, w + 12, fsz * 1.4);
+        ctx.fillStyle = pal[1];
+        ctx.fillText(text, left, y);
+      };
+      label(`${brand.toUpperCase()} — ${tag}`, 14, H - 14);
+      label(new Date().toISOString().slice(0, 10), W - 14, 24, 'right');
+      no.textContent = `${tag} · ${layout.label}`;
+    }
+    const next = () => { seed = 1 + ((Math.random() * 9999) | 0); draw(); };
+    cv.addEventListener('click', next);
+    $('#poster-next').addEventListener('click', next);
+    $('#poster-dl').addEventListener('click', () => cv.toBlob(b => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = `${brand}-poster-${seed}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }));
+    register(el, { setText: draw, resize: draw });
+    draw();
+  })();
+
+  /* ---------- 页面最底 ---------- */
+  (() => {
+    const el = footer('.f-end', MARK);
+    const mark = $('.mark', el);
+    register(el, { setText: () => fitMark(mark), resize: () => fitMark(mark) });
+    fitMark(mark);
+  })();
+
+  // 换品牌名、改窗口宽度、字体加载完成时重排
+  let textTimer, resizeTimer, lastW = innerWidth;
+  input.addEventListener('input', () => {
+    brand = input.value.trim() || 'Lumen';
+    document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    clearTimeout(textTimer);
+    textTimer = setTimeout(() => demos.forEach(d => d.setText?.()), 150);
+  });
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => demos.forEach(d => (d.resize || d.setText)?.()), 150);
+  });
+  document.fonts.ready.then(() => demos.forEach(d => d.setText?.()));
+</script>
+</body>
+</html>

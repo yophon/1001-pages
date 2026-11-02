@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚进阶</title>
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --line: #26262b;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .back { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .bar .back:hover { color: var(--text); }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .bar input {
+    width: 150px; padding: 5px 9px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .bar nav { display: flex; gap: 2px; overflow-x: auto; margin-left: auto; max-width: 100%; scrollbar-width: none; }
+  .bar nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .bar nav a:hover { color: var(--text); background: var(--panel); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 112px 16px 24px; }
+  .hero h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p { color: var(--muted); margin: 0 0 12px; }
+
+  /* 每一节的“正文” */
+  .intro { position: relative; z-index: 1; background: var(--bg); padding: 96px 16px 80px; }
+  .intro > * { max-width: 720px; margin-inline: auto; }
+  .num { font: 900 64px/1 var(--sans); color: transparent; -webkit-text-stroke: 1px #44444c; }
+  .intro h2 { font-size: 28px; line-height: 1.3; margin-top: 12px; margin-bottom: 12px; }
+  .intro p { color: var(--muted); margin-top: 0; margin-bottom: 16px; }
+  .note { font-size: 14px; color: #f0b35a !important; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .btns button {
+    font: 13px/1 var(--sans); color: var(--text); cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+  }
+  .tips { padding-left: 20px; color: var(--muted); }
+  .tips li { margin-bottom: 10px; }
+  .tips b { color: var(--text); }
+
+  /* 页脚公共部分 */
+  .demo { position: relative; overflow: hidden; padding-top: 56px; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 28px 64px;
+    padding: 0 clamp(16px, 4vw, 48px); font-size: 14px;
+    position: relative; z-index: 1;   /* 大字被拉长、扭动时从链接后面穿过 */
+  }
+  .links div { display: flex; flex-direction: column; gap: 4px; }
+  .links b { font-size: 12px; font-weight: 600; letter-spacing: .08em; opacity: .55; margin-bottom: 4px; }
+  .links span { opacity: .85; }
+  .links .copy { margin-left: auto; align-self: flex-end; font-size: 13px; opacity: .55; }
+  .mark-wrap { container-type: inline-size; padding-inline: clamp(8px, 2vw, 24px); margin-top: 48px; }
+  .mark {
+    display: block;
+    font: 900 22cqw/0.8 var(--sans);
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    margin-bottom: -0.15em;
+  }
+  .mark > span { display: inline-block; }
+  .stage-canvas { display: block; width: 100%; margin-top: 32px; touch-action: pan-y; }
+
+  /* 01 可变字体磁场：Roboto Flex，OFL 授权，只含拉丁字符 */
+  @font-face {
+    font-family: "Roboto Flex";
+    src: url(lib/roboto-flex-latin-standard.woff2) format("woff2-variations"),
+         url(lib/roboto-flex-latin-standard.woff2) format("woff2");
+    font-weight: 100 1000;
+    font-stretch: 25% 151%;
+    font-display: block;
+  }
+  .g1 { background: #e9e6df; color: #6b675f; }
+  .g1 .mark {
+    font-family: "Roboto Flex", "Microsoft YaHei", sans-serif;
+    font-weight: 400; line-height: .9; letter-spacing: 0; margin-bottom: -0.15em; color: #1a1a1a;
+  }
+  .g1 .mark > span { text-align: center; white-space: pre; }
+
+  /* 02 速度跑马灯 */
+  .g2 { background: #ff5a1f; color: #4a1806; }
+  .marquee { container-type: inline-size; padding: 48px 0 32px; overflow: hidden; }
+  .marquee .row { white-space: nowrap; }
+  .marquee .track { display: inline-flex; will-change: transform; }
+  .marquee .track span { white-space: pre; }
+  .marquee .r1 { font: 900 17cqw/.9 var(--sans); letter-spacing: -0.04em; color: #140701; }
+  .marquee .r2 { font: 800 7cqw/1.2 var(--sans); color: transparent; -webkit-text-stroke: 1.5px #140701; }
+
+  /* 03 橡皮筋 */
+  .window { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 16px 96px; }
+  .window-inner {
+    height: min(72vh, 680px); display: flex; flex-direction: column;
+    border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  }
+  .win-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #1b1b1f; font-size: 12px; color: var(--muted); }
+  .win-bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3a40; }
+  .win-bar span { margin-left: 8px; }
+  .win-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; background: #f6f5f0; }
+  .win-page { padding: 32px 24px 48px; }
+  .sk { height: 14px; border-radius: 7px; background: #e3e1da; margin: 12px 0; }
+  .sk.h { height: 28px; width: 50%; background: #d6d3ca; margin-bottom: 24px; }
+  .sk.img { height: 180px; border-radius: 10px; margin: 24px 0; }
+  .sk.short { width: 70%; }
+  .g3 { background: #c6f432; color: #34440a; }
+  .g3 .mark, .g-end .mark { transform-origin: 50% 100%; }
+  .g3 .mark { color: #0b0f00; }
+
+  /* 04 ASCII */
+  .g4 { background: #0b0803; color: #8a6a2c; }
+
+  /* 05 物理掉落 */
+  .g5 { background: #f4f1ea; color: #6d685f; }
+  .pit {
+    position: relative; height: clamp(320px, 62vh, 620px); margin-top: 24px;
+    overflow: hidden; user-select: none; -webkit-user-select: none; cursor: grab;
+  }
+  .pit:active { cursor: grabbing; }
+  .pit > div { position: absolute; left: 0; top: 0; visibility: hidden; will-change: transform; }
+  .pit .letter { font: 900 100px/0 var(--sans); color: #151515; }
+  .pit .letter span { position: absolute; line-height: 0; white-space: pre; }
+  .pit .tag {
+    font: 600 16px/1 var(--sans); padding: 12px 20px; border-radius: 999px;
+    background: #151515; color: #f4f1ea; white-space: nowrap;
+  }
+  .pit .tag.c1 { background: #ff5a1f; }
+  .pit .tag.c2 { background: #2433ff; }
+  .pit .tag.c3 { background: transparent; color: #151515; box-shadow: inset 0 0 0 2px #151515; }
+
+  /* 06 粒子 */
+  .g6 { background: #05060c; color: #6f7690; }
+
+  /* 07 WebGL */
+  .g7 { background: #04161b; color: #5f8e98; }
+  .g7 .mark { color: #e6fbff; }
+
+  /* 08 实时数据 */
+  .g8 { background: #101418; color: #8f99a3; }
+  .live {
+    display: flex; flex-wrap: wrap; gap: 1px;
+    margin: 40px clamp(16px, 4vw, 48px) 0; background: #222a31; border: 1px solid #222a31; border-radius: 12px; overflow: hidden;
+  }
+  .live .cell { flex: 1 1 150px; background: #101418; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; min-height: 120px; }
+  .live b { font-size: 12px; font-weight: 600; letter-spacing: .06em; opacity: .7; }
+  .live strong { font: 600 22px/1.2 var(--sans); white-space: nowrap; color: #e8edf2; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 10px; }
+  .live small { font-size: 12px; opacity: .7; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #5b6570; flex: none; }
+  .dot.ok { background: #3ddc84; box-shadow: 0 0 0 4px rgb(61 220 132 / .15); }
+  .dot.warn { background: #ffc145; box-shadow: 0 0 0 4px rgb(255 193 69 / .15); }
+  .dot.bad { background: #ff5a5a; box-shadow: 0 0 0 4px rgb(255 90 90 / .15); }
+  .year-bar { height: 4px; border-radius: 2px; background: #222a31; margin-top: 8px; overflow: hidden; }
+  .year-bar i { display: block; height: 100%; width: 0; background: #e8edf2; }
+  .g8 .mark { color: #192027; }
+
+  /* 页面最底：03 的橡皮筋 */
+  .g-end { background: var(--bg); color: #7a7a83; border-top: 1px solid var(--line); }
+  .g-end .mark { color: #26262c; }
+</style>
+</head>
+<body id="top">
+
+<div class="bar">
+  <a class="back" href="index.html">← 基础六种</a>
+  <strong>进阶八种</strong>
+  <label>品牌名 <input id="brand" value="Lumen" maxlength="16" spellcheck="false"></label>
+  <nav>
+    <a href="overview.html">总览</a>
+    <a href="#c1">01 磁场</a><a href="#c2">02 跑马灯</a><a href="#c3">03 橡皮筋</a><a href="#c4">04 点阵</a><a href="#c5">05 掉落</a><a href="#c6">06 粒子</a><a href="#c7">07 液体</a><a href="#c8">08 实时</a><a href="extra.html">第三批 →</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <h1>巨字页脚，进阶八种</h1>
+  <p>和基础版一样：每节上半部分是正文，往下滚是页脚，顶栏可以换品牌名。这一版每个效果都在离开屏幕时暂停，同时在屏幕上的最多两三个，不会一起占着 CPU 和显卡。</p>
+  <p>源码都在这个 HTML 里，每个效果是一段独立的代码，用注释标好了编号。</p>
+  <p class="note" id="reduced-note" hidden>你的系统开了“减少动画”：自动播放的部分（波浪、跑马灯、闪烁、雨滴、下落过程）会停掉，鼠标触发的效果保留。</p>
+</header>
+
+<section id="c1">
+  <div class="intro">
+    <div class="num">01</div>
+    <h2>可变字体“磁场”</h2>
+    <p>鼠标附近的字母变粗、变宽，其余字母同时变细、变窄，整行宽度始终不变，像被磁铁挤开。鼠标不在的时候，粗细会像波浪一样慢慢流过去。</p>
+    <p>字体是 Roboto Flex（OFL 开源授权，字重 100–1000、字宽 25–151），只取了拉丁字符，约 250KB，放在本地 lib 目录。最初用的是 Windows 自带的 Bahnschrift，结果 Chrome 对系统里的可变字体不做插值，只会在几个预设字重之间跳。中文不在这个字体里，用描边加粗加横向缩放来模拟，变化是连续的，但只是近似。</p>
+  </div>
+  <footer class="demo g1"></footer>
+</section>
+
+<section id="c2">
+  <div class="intro">
+    <div class="num">02</div>
+    <h2>速度跑马灯</h2>
+    <p>品牌名横向无限循环。页面滚得越快，跑得越快，还会顺着方向倾斜；往回滚，方向也跟着反过来。在这一节附近上下快速滚动试试。</p>
+  </div>
+  <footer class="demo g2"></footer>
+</section>
+
+<section id="c3">
+  <div class="intro">
+    <div class="num">03</div>
+    <h2>橡皮筋拉伸</h2>
+    <p>已经到底了还继续往下滚，大字就被往上拉长，松手后弹回去，还会晃一下。这个效果只在“滚到底”的时候成立，所以下面放了一个模拟窗口：在窗口里滚到底，再继续滚。整页最底下的真页脚也是同样的效果。</p>
+    <p>触控板、鼠标滚轮、触屏都可以。macOS 和 iOS 自带的回弹会叠在上面，真上线要在那边再调手感。</p>
+  </div>
+  <div class="window">
+    <div class="window-inner">
+      <div class="win-bar"><i></i><i></i><i></i><span>模拟页面：在这里滚到底，再继续往下滚</span></div>
+      <div class="win-scroll">
+        <div class="win-page">
+          <div class="sk h"></div>
+          <div class="sk"></div><div class="sk"></div><div class="sk short"></div>
+          <div class="sk img"></div>
+          <div class="sk"></div><div class="sk"></div><div class="sk short"></div>
+          <div class="sk img"></div>
+          <div class="sk"></div><div class="sk short"></div>
+        </div>
+        <footer class="demo g3"></footer>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="c4">
+  <div class="intro">
+    <div class="num">04</div>
+    <h2>ASCII 点阵屏</h2>
+    <p>logo 用字符画出来，像琥珀色的老终端。光标附近的字符会乱翻、变亮，空白处会露出点阵网格，移开后慢慢恢复。没人动的时候也会零星闪几个字。</p>
+    <p>每帧要画两三千个格子，所以先把字符预渲染成一张图集，再一块块贴上去，不逐个调用 fillText。</p>
+  </div>
+  <footer class="demo g4"></footer>
+</section>
+
+<section id="c5">
+  <div class="intro">
+    <div class="num">05</div>
+    <h2>物理掉落</h2>
+    <p>滚到这里时，品牌字母和一堆标签从上面掉下来，堆在底部。可以用鼠标拎起来甩，也可以把它们垒起来。</p>
+    <div class="btns"><button id="redrop" type="button">再掉一次</button></div>
+    <p>物理引擎是 Matter.js 0.20.0，已经放在本地 lib 目录里。手机上只有按住某个元素才会拖拽，按在空白处还是正常滚动页面，避免和滚动抢手势。</p>
+    <p class="note" id="no-matter" hidden>lib/matter.min.js 没加载成功，这一节显示不了。</p>
+  </div>
+  <footer class="demo g5"></footer>
+</section>
+
+<section id="c6">
+  <div class="intro">
+    <div class="num">06</div>
+    <h2>粒子 logo</h2>
+    <p>大字由几千个粒子组成。鼠标划过像风吹沙，划得越快吹得越远，移开后粒子会飞回原位重新拼好。每次滚进屏幕都会从散开的状态重新拼一次。</p>
+    <p>粒子数按屏幕大小自动调整，上限 8000 左右；画布按设备像素比绘制，高分屏也不糊。</p>
+  </div>
+  <footer class="demo g6"></footer>
+</section>
+
+<section id="c7">
+  <div class="intro">
+    <div class="num">07</div>
+    <h2>WebGL 液体扭曲</h2>
+    <p>页脚像一层水面，鼠标划过会留下涟漪，大字跟着扭曲，边缘有 RGB 色散。没人动的时候会偶尔落下一滴“雨”。</p>
+    <p>用的是原生 WebGL2，没有引入 three.js：一个着色器模拟水波的高度场，另一个按高度场的坡度去偏移文字纹理。显卡不支持时退回普通大字。</p>
+    <p class="note" id="no-gl" hidden>你的浏览器或显卡不支持这里用到的 WebGL2 浮点纹理，下面显示的是退回后的普通大字。</p>
+  </div>
+  <footer class="demo g7"></footer>
+</section>
+
+<section id="c8">
+  <div class="intro">
+    <div class="num">08</div>
+    <h2>带实时数据的页脚</h2>
+    <p>不靠特效，靠真实数据：上海此刻的时间和天气、系统状态、今年已经过去多少、你在本页停留了多久。</p>
+    <p>天气接的是 Open-Meteo，系统状态接的是 GitHub 的公开状态页，只用来演示接法。两个接口失败时都有兜底文字，页脚不会空一块；天气结果缓存 20 分钟。</p>
+  </div>
+  <footer class="demo g8"></footer>
+</section>
+
+<section id="end">
+  <div class="intro">
+    <div class="num">✓</div>
+    <h2>这一版额外做的几件事</h2>
+    <ul class="tips">
+      <li><b>离开屏幕就暂停。</b>所有动画共用一个 requestAnimationFrame 循环，只跑当前在屏幕上的效果。</li>
+      <li><b>尊重“减少动画”。</b>开了这个系统设置时，自动播放的部分都会停，鼠标触发的保留。</li>
+      <li><b>都有兜底。</b>WebGL 不支持、物理引擎没加载、接口失败，都退回普通大字或文字。</li>
+    </ul>
+    <p>最底下这个页脚就是 03 的橡皮筋：滚到底以后再继续往下滚。</p>
+  </div>
+</section>
+
+<footer class="demo g-end"></footer>
+
+<script src="lib/matter.min.js"></script>
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = () => Math.min(devicePixelRatio || 1, 2);
+  const SANS = '"Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+  const input = $('#brand');
+  let brand = input.value.trim() || 'Lumen';
+  if (REDUCED) $('#reduced-note').hidden = false;
+
+  const LINKS = `
+    <div class="links">
+      <div><b>产品</b><span>功能</span><span>价格</span><span>更新日志</span></div>
+      <div><b>公司</b><span>关于我们</span><span>招聘</span><span>联系</span></div>
+      <div><b>资源</b><span>文档</span><span>博客</span><span>社区</span></div>
+      <div class="copy">© 2026 <span class="bn"></span></div>
+    </div>`;
+  const MARK = `<div class="mark-wrap"><div class="mark" aria-hidden="true"><span></span></div></div>`;
+
+  function footer(sel, inner) {
+    const el = $(sel);
+    el.innerHTML = LINKS + inner;
+    el.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    return el;
+  }
+
+  // 大字铺满容器：100px 下量宽度，换算成 cqw
+  function fitMark(mark) {
+    const span = mark.firstElementChild;
+    span.textContent = brand;
+    mark.style.fontSize = '100px';
+    const w = span.getBoundingClientRect().width;
+    if (w) mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 60vh)`;
+  }
+
+  // canvas 上把文字居中铺进 w×h，返回 fillText 的坐标
+  function fitText(ctx, text, w, h, fill = 1) {
+    ctx.font = `900 100px ${SANS}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(text);
+    const tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight || 1;
+    const th = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || 1;
+    const size = Math.min(fill * 100 * w / tw, fill * 100 * h / th);
+    const k = size / 100;
+    ctx.font = `900 ${size}px ${SANS}`;
+    return { x: (w - tw * k) / 2 + m.actualBoundingBoxLeft * k, y: (h - th * k) / 2 + m.actualBoundingBoxAscent * k };
+  }
+
+  function sizeCanvas(cv, ratio, min) {
+    const dpr = DPR(), W = cv.clientWidth;
+    const H = Math.round(clamp(W * ratio, min, Math.max(min, innerHeight * 0.6)));
+    cv.style.height = H + 'px';
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    return { W, H, dpr };
+  }
+
+  // 记录指针相对 target 的位置和每次移动的位移
+  function trackPointer(el, target) {
+    const p = { x: -1e9, y: -1e9, vx: 0, vy: 0, on: false };
+    el.addEventListener('pointermove', e => {
+      const r = target.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (p.on) { p.vx = x - p.x; p.vy = y - p.y; }
+      p.x = x; p.y = y; p.on = true;
+    });
+    el.addEventListener('pointerleave', () => { p.on = false; p.x = p.y = -1e9; p.vx = p.vy = 0; });
+    return p;
+  }
+
+  // 统一调度：只跑在屏幕上的效果
+  const demos = [];
+  const running = new Set();
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    const d = e.target.__demo;
+    if (e.isIntersecting) { running.add(d); d.enter?.(); } else running.delete(d);
+  }), { rootMargin: '80px 0px' });
+  function register(el, d) {
+    el.__demo = d;
+    demos.push(d);
+    io.observe(el);
+  }
+  let last = performance.now();
+  requestAnimationFrame(function loop(now) {
+    requestAnimationFrame(loop);   // 先排下一帧：某个效果出错也不会把整个循环拖停
+    const dt = Math.min(now - last, 50);
+    last = now;
+    running.forEach(d => {
+      try { d.frame?.(now, dt); } catch (err) { running.delete(d); console.error(err); }
+    });
+  });
+
+  /* ---------- 01 可变字体磁场 ---------- */
+  (() => {
+    const el = footer('.g1', `<div class="mark-wrap"><div class="mark" aria-hidden="true"></div></div>`);
+    const mark = $('.mark', el);
+    const P = trackPointer(el, mark);
+    const SAMPLES = [0, 0.25, 0.5, 0.75, 1];
+    const AMP = 1.2;
+    // 只动可变轴，不碰 font-weight：改 font-weight 会让浏览器重新挑字形，就是跳变的来源
+    const axes = t => `"wght" ${(200 + 800 * t).toFixed(1)}, "wdth" ${(50 + 100 * t).toFixed(1)}`;
+    // Roboto Flex 只含拉丁字符；其他字符（比如中文）用描边加粗 + 横向缩放模拟，同样连续
+    const fake = t => 0.75 + 0.5 * t;
+    let letters = [], targetEm = 1, fsPx = 100, lineH = 90;
+
+    // 100px 字号下某个形态的宽度，按 5 个采样点线性插值
+    function widthAt(L, t) {
+      const x = t * (SAMPLES.length - 1), i = Math.min(Math.floor(x), SAMPLES.length - 2);
+      return L.w[i] + (L.w[i + 1] - L.w[i]) * (x - i);
+    }
+    function apply(L, t) {
+      const s = L.span;
+      s.style.width = L.wEm.toFixed(4) + 'em';
+      if (L.vf) s.style.fontVariationSettings = axes(t);
+      else {
+        s.style.transform = `scaleX(${fake(t).toFixed(3)})`;
+        s.style.webkitTextStroke = `${(0.035 * t).toFixed(4)}em currentColor`;
+      }
+      s.style.color = `color-mix(in oklab, #111 ${Math.round(30 + 70 * t)}%, #bdb9ae)`;
+    }
+    function measure() {
+      fsPx = parseFloat(getComputedStyle(mark).fontSize);
+      lineH = mark.clientHeight;
+    }
+    function setText() {
+      mark.textContent = '';
+      mark.style.fontSize = '100px';
+      letters = Array.from(brand, ch => {
+        const span = document.createElement('span');
+        span.textContent = ch;
+        const L = { span, vf: ch.codePointAt(0) <= 0xff, cur: 0, w: [], wEm: 0 };
+        if (!L.vf) span.className = 'fake';
+        mark.append(span);
+        if (L.vf) {
+          SAMPLES.forEach(t => { span.style.fontVariationSettings = axes(t); L.w.push(span.getBoundingClientRect().width); });
+        } else {
+          const w = span.getBoundingClientRect().width;
+          SAMPLES.forEach(t => L.w.push(w * fake(t)));
+        }
+        return L;
+      });
+      // 以“所有字母都是中间形态”时的总宽为准，算出铺满容器的字号
+      targetEm = letters.reduce((a, L) => a + widthAt(L, 0.5), 0) / 100 || 1;
+      mark.style.fontSize = `min(${(100 / targetEm).toFixed(3)}cqw, 55vh)`;
+      letters.forEach(L => { L.wEm = widthAt(L, 0.5) / 100; apply(L, 0.5); });
+      measure();
+    }
+
+    register(el, {
+      setText, resize: measure,
+      frame(now) {
+        // 1. 每个字母的“隆起量”：鼠标在时按距离算，不在时是一道慢慢流过去的波
+        const R = fsPx * targetEm * 0.2;
+        let x = 0;
+        letters.forEach((L, i) => {
+          const c = (x + L.wEm / 2) * fsPx;
+          x += L.wEm;
+          let bump;
+          if (P.on) {
+            const d = Math.max(0, 1 - Math.hypot((P.x - c) / R, (P.y - lineH / 2) / (R * 1.5)));
+            bump = d * d * (3 - 2 * d);
+          } else {
+            bump = REDUCED ? 0 : 0.5 + 0.5 * Math.sin(now / 650 - i * 0.9);
+          }
+          L.cur += (bump - L.cur) * 0.12;
+        });
+        // 2. 二分出一个整体基准 b，让总宽恒等于目标：隆起的字母变宽，其余的一起变窄
+        const tOf = (L, b) => clamp(b + L.cur * AMP, 0, 1);
+        const total = b => letters.reduce((a, L) => a + widthAt(L, tOf(L, b)), 0);
+        let lo = -1.2, hi = 1;
+        for (let k = 0; k < 18; k++) {
+          const mid = (lo + hi) / 2;
+          if (total(mid) < targetEm * 100) lo = mid; else hi = mid;
+        }
+        const b = (lo + hi) / 2;
+        const s = targetEm * 100 / (total(b) || 1);   // 解不出来的极端情况（全部顶到头）用缩放兜底
+        letters.forEach(L => {
+          const t = tOf(L, b);
+          L.wEm = widthAt(L, t) / 100 * s;
+          apply(L, t);
+        });
+      },
+    });
+    setText();
+    document.fonts.load('100px "Roboto Flex"').then(setText);   // 字体到了再按真实字形重新量宽度
+  })();
+
+  /* ---------- 02 速度跑马灯 ---------- */
+  (() => {
+    const el = footer('.g2', `<div class="marquee"><div class="row r1"><div class="track"></div></div><div class="row r2"><div class="track"></div></div></div>`);
+    const rows = [...el.querySelectorAll('.row')].map((row, i) => ({
+      row, track: row.firstElementChild, x: 0, w: 1, dir: i ? -1 : 1, sep: i ? '  —  ' : '  ✦  ',
+    }));
+    let v = 0, lastY = scrollY, skew = 0, sign = 1;
+
+    function build() {
+      rows.forEach(r => {
+        r.track.textContent = '';
+        const unit = document.createElement('span');
+        unit.textContent = brand + r.sep;
+        r.track.append(unit);
+        const uw = unit.getBoundingClientRect().width || 1;
+        const n = Math.ceil(r.row.clientWidth / uw) + 1;
+        for (let i = 1; i < n * 2; i++) r.track.append(unit.cloneNode(true));
+        r.w = r.track.getBoundingClientRect().width / 2;   // 一半正好是一整份，用来无缝回绕
+        r.x = 0;
+      });
+    }
+    register(el, {
+      setText: build, resize: build,
+      enter() { lastY = scrollY; },
+      frame(now, dt) {
+        const y = scrollY;
+        v += ((y - lastY) / Math.max(dt, 1) - v) * 0.2;   // 滚动速度，px/ms
+        lastY = y;
+        if (Math.abs(v) > 0.05) sign = Math.sign(v);
+        const speed = REDUCED ? 0 : 0.06 + Math.min(Math.abs(v), 6) * 0.5;
+        skew += ((REDUCED ? 0 : clamp(-v * 4, -14, 14)) - skew) * 0.1;
+        rows.forEach(r => {
+          r.x = (((r.x + r.dir * sign * speed * dt) % r.w) + r.w) % r.w;
+          r.track.style.transform = `translate3d(${-r.x}px, 0, 0) skewX(${skew.toFixed(2)}deg)`;
+        });
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 03 橡皮筋（模拟窗口 + 整页最底） ---------- */
+  function rubber(footerEl, scrollEl) {
+    const mark = $('.mark', footerEl);
+    const target = scrollEl || window;
+    const se = scrollEl || document.scrollingElement;
+    let pull = 0, x = 0, vel = 0, holding = false, timer, touchY = null;
+    const atBottom = () => se.scrollTop + se.clientHeight >= se.scrollHeight - 2;
+    const release = () => { holding = false; pull = 0; };
+
+    target.addEventListener('wheel', e => {
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : 1);
+      if (dy > 0 && atBottom()) {
+        pull += dy;
+        holding = true;
+        clearTimeout(timer);
+        timer = setTimeout(release, 140);   // 滚轮停 140ms 视为松手
+      }
+    }, { passive: true });
+    target.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
+    target.addEventListener('touchmove', e => {
+      if (touchY === null) return;
+      const y = e.touches[0].clientY;
+      if (!atBottom()) { touchY = y; return; }   // 到底之前的滑动不算
+      const dy = touchY - y;
+      if (dy > 0) { pull = dy * 1.5; holding = true; }
+    }, { passive: true });
+    target.addEventListener('touchend', () => { touchY = null; release(); });
+
+    return () => {
+      const goal = 0.9 * (1 - Math.exp(-pull / 300));   // 越拉越费劲，最多拉长 90%
+      if (holding) { vel = (goal - x) * 0.3; x += vel; }
+      else { vel = (vel - 0.09 * x) * 0.75; x += vel; }   // 阻尼弹簧，会轻微过冲一下
+      if (Math.abs(x) < 1e-4 && Math.abs(vel) < 1e-4) { x = 0; vel = 0; }
+      mark.style.transform = x ? `scale(${(1 - x * 0.12).toFixed(4)}, ${(1 + x).toFixed(4)})` : '';
+    };
+  }
+  (() => {
+    const el = footer('.g3', MARK);
+    const mark = $('.mark', el);
+    const frame = rubber(el, $('.win-scroll'));
+    register($('.window'), { frame, setText: () => fitMark(mark), resize: () => fitMark(mark) });
+    fitMark(mark);
+  })();
+
+  /* ---------- 04 ASCII 点阵屏 ---------- */
+  (() => {
+    const el = footer('.g4', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const RAMP = ' .:-=+*#%@';
+    const NOISE = '01<>/\\{}[]$&?!';
+    const CHARS = [...new Set(RAMP + NOISE)].join('');
+    const rampIdx = [...RAMP].map(c => CHARS.indexOf(c));
+    const noiseIdx = [...NOISE].map(c => CHARS.indexOf(c));
+    const dotIdx = CHARS.indexOf('.');
+    let W, H, dpr, cw, ch, cols, rows, ox, oy, bright, heat, atlas, gw, gh;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.32, 200));
+      cw = clamp(W / 110, 6, 10);
+      ch = cw * 1.6;
+      cols = Math.floor(W / cw);
+      rows = Math.floor(H / ch);
+      ox = (W - cols * cw) / 2;
+      oy = (H - rows * ch) / 2;
+
+      // 离屏画出大字，每格取 3×3 个采样点的平均透明度当亮度
+      const off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      const o = off.getContext('2d', { willReadFrequently: true });
+      const f = fitText(o, brand, W, H, 0.92);
+      o.fillStyle = '#fff';
+      o.fillText(brand, f.x, f.y);
+      const data = o.getImageData(0, 0, W, H).data;
+      bright = new Float32Array(cols * rows);
+      heat = new Float32Array(cols * rows);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        let sum = 0;
+        for (let sy = 0; sy < 3; sy++) for (let sx = 0; sx < 3; sx++) {
+          const px = Math.floor(ox + (c + (sx + 0.5) / 3) * cw);
+          const py = Math.floor(oy + (r + (sy + 0.5) / 3) * ch);
+          sum += data[(py * W + px) * 4 + 3];
+        }
+        bright[r * cols + c] = sum / (9 * 255);
+      }
+
+      // 字符图集：两行，普通色和高亮色
+      gw = Math.ceil(cw * dpr);
+      gh = Math.ceil(ch * dpr);
+      atlas = document.createElement('canvas');
+      atlas.width = gw * CHARS.length;
+      atlas.height = gh * 2;
+      const a = atlas.getContext('2d');
+      a.font = `600 ${Math.round(ch * 0.78 * dpr)}px Consolas, "Cascadia Code", monospace`;
+      a.textAlign = 'center';
+      a.textBaseline = 'middle';
+      ['#ffb000', '#fff4d6'].forEach((color, row) => {
+        a.fillStyle = color;
+        for (let i = 0; i < CHARS.length; i++) a.fillText(CHARS[i], i * gw + gw / 2, row * gh + gh / 2);
+      });
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame() {
+        if (P.on) {
+          const R = Math.max(70, W * 0.08);
+          const c0 = Math.max(0, Math.floor((P.x - ox - R) / cw)), c1 = Math.min(cols - 1, Math.ceil((P.x - ox + R) / cw));
+          const r0 = Math.max(0, Math.floor((P.y - oy - R) / ch)), r1 = Math.min(rows - 1, Math.ceil((P.y - oy + R) / ch));
+          for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+            const d = Math.hypot(ox + (c + 0.5) * cw - P.x, oy + (r + 0.5) * ch - P.y);
+            if (d < R) { const i = r * cols + c; heat[i] = Math.max(heat[i], 1 - d / R); }
+          }
+        }
+        if (!REDUCED) for (let k = 0; k < 3; k++) {
+          const i = (Math.random() * bright.length) | 0;
+          if (bright[i] > 0.3) heat[i] = Math.max(heat[i], 0.7);
+        }
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        for (let i = 0; i < bright.length; i++) {
+          const b = bright[i], h = heat[i];
+          if (b < 0.05 && h < 0.03) continue;
+          let ci, row = 0, alpha;
+          if (h > 0.05 && Math.random() < h * 0.7) {
+            ci = noiseIdx[(Math.random() * noiseIdx.length) | 0]; row = 1; alpha = 0.4 + 0.6 * h;
+          } else if (b >= 0.05) {
+            ci = rampIdx[Math.min(RAMP.length - 1, Math.floor(b * RAMP.length))]; row = h > 0.25 ? 1 : 0; alpha = 0.35 + 0.65 * b;
+          } else {
+            ci = dotIdx; alpha = h * 0.8;   // 空白处被光标照到时露出网格
+          }
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(atlas, ci * gw, row * gh, gw, gh,
+            (ox + (i % cols) * cw) * dpr, (oy + ((i / cols) | 0) * ch) * dpr, gw, gh);
+          heat[i] *= 0.93;
+        }
+        ctx.globalAlpha = 1;
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 05 物理掉落 ---------- */
+  (() => {
+    const el = footer('.g5', `<div class="pit"></div>`);
+    if (!window.Matter) { $('#no-matter').hidden = false; return; }
+    const { Engine, Bodies, Composite, Mouse, MouseConstraint, Query } = Matter;
+    const pit = $('.pit', el);
+    const TAGS = ['品牌', '设计', '开发', '动效', '增长', '内容', '咨询', 'WebGL', '交互', '策略', '摄影', '视频'];
+    const STEP = 1000 / 60;
+    const mctx = document.createElement('canvas').getContext('2d');
+    let engine, items = [], queue = [], nextAt = 0, dropped = false;
+
+    // 鼠标只建一次：去掉 Matter 自带的滚轮拦截和触摸监听，触摸改成“按住元素才拖”
+    const mouse = Mouse.create(pit);
+    pit.removeEventListener('wheel', mouse.mousewheel);
+    pit.removeEventListener('touchstart', mouse.mousedown);
+    pit.removeEventListener('touchmove', mouse.mousemove);
+    pit.removeEventListener('touchend', mouse.mouseup);
+    let grabbing = false;
+    pit.addEventListener('touchstart', e => {
+      const r = pit.getBoundingClientRect(), t = e.touches[0];
+      const hit = Query.point(items.filter(it => it.live).map(it => it.body), { x: t.clientX - r.left, y: t.clientY - r.top });
+      if (hit.length) { grabbing = true; mouse.mousedown(e); }
+    }, { passive: true });
+    pit.addEventListener('touchmove', e => { if (grabbing) mouse.mousemove(e); }, { passive: false });
+    pit.addEventListener('touchend', e => { if (grabbing) { grabbing = false; mouse.mouseup(e); } });
+    addEventListener('mouseup', e => { if (mouse.button === 0 && !pit.contains(e.target)) mouse.mouseup(e); });
+
+    function build() {
+      pit.textContent = '';
+      items = []; queue = [];
+      engine = Engine.create();
+      engine.gravity.y = 1.1;
+      const W = pit.clientWidth, H = pit.clientHeight;
+      const wall = { isStatic: true };
+      Composite.add(engine.world, [
+        Bodies.rectangle(W / 2, H + 50, W * 3, 100, wall),
+        Bodies.rectangle(-50, -H, 100, H * 4, wall),
+        Bodies.rectangle(W + 50, -H, 100, H * 4, wall),
+      ]);
+      Composite.add(engine.world, MouseConstraint.create(engine, { mouse, constraint: { stiffness: 0.2, render: { visible: false } } }));
+
+      const make = (type, text, cls = '') => {
+        const d = document.createElement('div');
+        d.className = `${type} ${cls}`;
+        d.textContent = text;
+        pit.append(d);
+        const it = { type, el: d };
+        items.push(it);
+        return it;
+      };
+      // 字母的刚体按字形实际墨迹定大小，不然行高留出的空白会让字母互相“悬空”
+      const chars = Array.from(brand).filter(c => c.trim());
+      mctx.font = `900 100px ${SANS}`;
+      const ms = chars.map(c => mctx.measureText(c));
+      const inkW = m => m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+      const inkH = m => m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+      const k = Math.min(W * 0.7 / (ms.reduce((a, m) => a + inkW(m), 0) || 1), H * 0.45 / Math.max(1, ...ms.map(inkH)));
+      chars.forEach((c, i) => {
+        const m = ms[i], it = make('letter', '');
+        const span = document.createElement('span');
+        span.textContent = c;
+        // line-height 为 0 时基线在盒子顶部往下 (ascent - descent) / 2 处，据此把墨迹左上角对齐到盒子左上角
+        span.style.left = m.actualBoundingBoxLeft * k + 'px';
+        span.style.top = (m.actualBoundingBoxAscent - (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2) * k + 'px';
+        it.el.style.fontSize = 100 * k + 'px';
+        it.el.style.width = inkW(m) * k + 'px';
+        it.el.style.height = inkH(m) * k + 'px';
+        it.el.append(span);
+      });
+      TAGS.forEach((t, i) => make('tag', t, ['', 'c1', 'c2', 'c3'][i % 4]));
+
+      items.forEach(it => {
+        it.w = it.el.offsetWidth;
+        it.h = it.el.offsetHeight;
+        it.body = Bodies.rectangle(rand(it.w / 2, W - it.w / 2), -it.h - rand(0, H * 0.3), it.w, it.h, {
+          chamfer: { radius: it.type === 'tag' ? it.h / 2 : 4 },
+          restitution: 0.3, friction: 0.4, angle: rand(-0.4, 0.4),
+        });
+        it.live = false;
+      });
+    }
+    function startDrop() {
+      dropped = true;
+      items.forEach(it => { it.live = false; it.el.style.visibility = 'hidden'; });
+      queue = [...items.filter(it => it.type === 'letter'), ...items.filter(it => it.type === 'tag').sort(() => Math.random() - 0.5)];
+      nextAt = 0;
+      if (REDUCED) {   // 不播下落过程，直接算出堆好的样子
+        queue.forEach(it => { Composite.add(engine.world, it.body); it.live = true; it.el.style.visibility = 'visible'; });
+        queue = [];
+        for (let i = 0; i < 400; i++) Engine.update(engine, STEP);
+        paint();
+      }
+    }
+    function paint() {
+      items.forEach(it => {
+        if (!it.live) return;
+        const b = it.body;
+        it.el.style.transform = `translate(${b.position.x - it.w / 2}px, ${b.position.y - it.h / 2}px) rotate(${b.angle}rad)`;
+      });
+    }
+    const rebuild = () => { build(); if (dropped) startDrop(); };
+    $('#redrop').addEventListener('click', () => { build(); startDrop(); pit.scrollIntoView({ block: 'end', behavior: 'smooth' }); });
+
+    register(el, {
+      setText: rebuild, resize: rebuild,
+      frame(now, dt) {
+        if (!dropped) {
+          if (pit.getBoundingClientRect().top < innerHeight * 0.75) startDrop();
+          else return;
+        }
+        if (queue.length && now >= nextAt) {
+          const it = queue.shift();
+          Composite.add(engine.world, it.body);
+          it.live = true;
+          it.el.style.visibility = 'visible';
+          nextAt = now + (it.type === 'letter' ? 140 : 90);
+        }
+        const steps = clamp(Math.round(dt / STEP), 1, 3);
+        for (let s = 0; s < steps; s++) Engine.update(engine, STEP);
+        paint();
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 06 粒子 logo ---------- */
+  (() => {
+    const el = footer('.g6', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const COLORS = ['#dfe8ff', '#7aa2ff', '#ff7ab6'];
+    let W, H, dpr, n = 0, size = 2, px, py, vx, vy, tx, ty, split;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.34, 220));
+      const off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      const o = off.getContext('2d', { willReadFrequently: true });
+      const f = fitText(o, brand, W, H, 0.92);
+      o.fillStyle = '#fff';
+      o.fillText(brand, f.x, f.y);
+      const data = o.getImageData(0, 0, W, H).data;
+      let gap = 3, pts;
+      for (;;) {   // 间距从 3px 起，粒子超过 8000 就放宽
+        pts = [];
+        for (let y = 0; y < H; y += gap) for (let x = 0; x < W; x += gap) {
+          if (data[(y * W + x) * 4 + 3] > 128) pts.push(x, y);
+        }
+        if (pts.length / 2 <= 8000 || gap >= 8) break;
+        gap++;
+      }
+      n = pts.length / 2;
+      for (let i = n - 1; i > 0; i--) {   // 打乱顺序，颜色按区间分组，画的时候一种颜色一次 fill
+        const j = (Math.random() * (i + 1)) | 0;
+        [pts[2 * i], pts[2 * j]] = [pts[2 * j], pts[2 * i]];
+        [pts[2 * i + 1], pts[2 * j + 1]] = [pts[2 * j + 1], pts[2 * i + 1]];
+      }
+      size = Math.max(1.2, gap * 0.6);
+      split = [0, Math.floor(n * 0.62), Math.floor(n * 0.9), n];
+      tx = new Float32Array(n); ty = new Float32Array(n);
+      px = new Float32Array(n); py = new Float32Array(n);
+      vx = new Float32Array(n); vy = new Float32Array(n);
+      for (let i = 0; i < n; i++) { tx[i] = pts[2 * i]; ty[i] = pts[2 * i + 1]; }
+      scatter();
+    }
+    function scatter() {
+      for (let i = 0; i < n; i++) {
+        px[i] = REDUCED ? tx[i] : rand(-W * 0.1, W * 1.1);
+        py[i] = REDUCED ? ty[i] : rand(-H * 0.3, H * 1.3);
+        vx[i] = vy[i] = 0;
+      }
+    }
+
+    register(el, {
+      setText: build, resize: build, enter: scatter,
+      frame() {
+        const R = Math.max(80, W * 0.09), R2 = R * R;
+        const wx = clamp(P.vx, -40, 40), wy = clamp(P.vy, -40, 40);
+        P.vx *= 0.85; P.vy *= 0.85;
+        const jitter = REDUCED ? 0 : 0.06;
+        for (let i = 0; i < n; i++) {
+          let ax = (tx[i] - px[i]) * 0.045, ay = (ty[i] - py[i]) * 0.045;
+          const dx = px[i] - P.x, dy = py[i] - P.y, d2 = dx * dx + dy * dy;
+          if (d2 < R2) {
+            const d = Math.sqrt(d2) || 1, f = 1 - d / R;
+            ax += (dx / d) * f * 6 + wx * f * 0.6;   // 推开 + 顺着划动方向吹走
+            ay += (dy / d) * f * 6 + wy * f * 0.6;
+          }
+          vx[i] = (vx[i] + ax + (Math.random() - 0.5) * jitter) * 0.86;
+          vy[i] = (vy[i] + ay + (Math.random() - 0.5) * jitter) * 0.86;
+          px[i] += vx[i];
+          py[i] += vy[i];
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+        for (let g = 0; g < 3; g++) {
+          ctx.fillStyle = COLORS[g];
+          ctx.beginPath();
+          for (let i = split[g]; i < split[g + 1]; i++) ctx.rect(px[i], py[i], size, size);
+          ctx.fill();
+        }
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 07 WebGL 液体扭曲 ---------- */
+  (() => {
+    const el = footer('.g7', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el);
+    const gl = cv.getContext('webgl2', { antialias: false, premultipliedAlpha: false });
+    const ok = gl && (gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+
+    function fallback() {
+      $('#no-gl').hidden = false;
+      cv.remove();
+      el.insertAdjacentHTML('beforeend', MARK);
+      const mark = $('.mark', el);
+      register(el, { setText: () => fitMark(mark), resize: () => fitMark(mark) });
+      fitMark(mark);
+    }
+    if (!ok) { fallback(); return; }
+
+    const VS = `#version 300 es
+      in vec2 p; out vec2 uv;
+      void main() { uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }`;
+    // 水波：r = 当前高度，g = 上一帧高度
+    const SIM = `#version 300 es
+      precision highp float;
+      in vec2 uv; out vec4 o;
+      uniform sampler2D s; uniform vec2 px; uniform vec3 drop; uniform float aspect;
+      void main() {
+        vec2 st = texture(s, uv).rg;
+        float sum = texture(s, uv + vec2(px.x, 0.0)).r + texture(s, uv - vec2(px.x, 0.0)).r
+                  + texture(s, uv + vec2(0.0, px.y)).r + texture(s, uv - vec2(0.0, px.y)).r;
+        float h = (sum * 0.5 - st.g) * 0.985;
+        float d = length((uv - drop.xy) * vec2(aspect, 1.0));
+        h += drop.z * smoothstep(0.05, 0.0, d);
+        o = vec4(h, st.r, 0.0, 1.0);
+      }`;
+    // 按坡度偏移文字纹理，三个颜色通道偏移量不同就是色散；坡度再拿来打一点光
+    const RENDER = `#version 300 es
+      precision highp float;
+      in vec2 uv; out vec4 o;
+      uniform sampler2D s; uniform sampler2D t; uniform vec2 px; uniform vec3 bg; uniform vec3 fg;
+      void main() {
+        float l = texture(s, uv - vec2(px.x, 0.0)).r, r = texture(s, uv + vec2(px.x, 0.0)).r;
+        float d = texture(s, uv - vec2(0.0, px.y)).r, u = texture(s, uv + vec2(0.0, px.y)).r;
+        vec2 g = vec2(r - l, u - d);
+        vec2 off = g * 0.05;
+        vec3 a = vec3(texture(t, uv + off).a, texture(t, uv + off * 1.4).a, texture(t, uv + off * 1.8).a);
+        vec3 col = mix(bg, fg, a);
+        vec3 n = normalize(vec3(-g * 6.0, 1.0));
+        vec3 L = normalize(vec3(-0.5, 0.7, 1.0));
+        col += (dot(n, L) - L.z) * 0.9;   // 减去水面平静时的值，平的地方不改变颜色
+        o = vec4(col, 1.0);
+      }`;
+
+    function shader(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+      return s;
+    }
+    function program(fs) {
+      const p = gl.createProgram();
+      gl.attachShader(p, shader(gl.VERTEX_SHADER, VS));
+      gl.attachShader(p, shader(gl.FRAGMENT_SHADER, fs));
+      gl.bindAttribLocation(p, 0, 'p');
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+      const u = {};
+      for (let i = 0; i < gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); i++) {
+        const name = gl.getActiveUniform(p, i).name;
+        u[name] = gl.getUniformLocation(p, name);
+      }
+      return { p, u };
+    }
+    function texture(w, h, internal, format, type, data) {
+      const t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, data);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return t;
+    }
+    function target(w, h) {
+      const t = texture(w, h, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null);
+      const fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('framebuffer incomplete');
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return { t, fb };
+    }
+
+    let sim, ren;
+    try { sim = program(SIM); ren = program(RENDER); } catch (err) { console.warn(err); fallback(); return; }
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    const P = trackPointer(el, cv);
+    const drop = { x: 0, y: 0, z: 0 };
+    let W, H, dpr, simW, simH, A, B, textTex, nextRain = 0;
+    const BG = [0.016, 0.086, 0.106], FG = [0.9, 0.98, 1.0];
+
+    function drawText() {
+      const c = document.createElement('canvas');
+      c.width = cv.width; c.height = cv.height;
+      const x = c.getContext('2d');
+      x.scale(dpr, dpr);
+      const f = fitText(x, brand, W, H, 0.9);
+      x.fillStyle = '#fff';
+      x.fillText(brand, f.x, f.y);
+      if (textTex) gl.deleteTexture(textTex);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      textTex = texture(c.width, c.height, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    }
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.34, 220));
+      simW = Math.max(64, Math.round(W / 3));
+      simH = Math.max(32, Math.round(H / 3));
+      [A, B].forEach(b => { if (b) { gl.deleteTexture(b.t); gl.deleteFramebuffer(b.fb); } });
+      try { A = target(simW, simH); B = target(simW, simH); } catch (err) { console.warn(err); return false; }
+      drawText();
+      return true;
+    }
+
+    el.addEventListener('pointermove', () => {
+      if (!P.on) return;
+      const speed = Math.hypot(P.vx, P.vy);
+      drop.x = P.x / W;
+      drop.y = 1 - P.y / H;
+      drop.z = Math.max(drop.z, Math.min(speed / 25, 1) * 0.5);
+    });
+
+    register(el, {
+      setText: drawText, resize: build,
+      frame(now) {
+        if (!REDUCED && now > nextRain && drop.z === 0) {
+          drop.x = Math.random(); drop.y = Math.random(); drop.z = 0.8;
+          nextRain = now + rand(500, 1100);
+        }
+        gl.viewport(0, 0, simW, simH);
+        gl.useProgram(sim.p);
+        gl.uniform1i(sim.u.s, 0);
+        gl.uniform2f(sim.u.px, 1 / simW, 1 / simH);
+        gl.uniform1f(sim.u.aspect, W / H);
+        gl.activeTexture(gl.TEXTURE0);
+        for (let k = 0; k < 2; k++) {   // 每帧推进两步，波传得快一些
+          gl.bindFramebuffer(gl.FRAMEBUFFER, B.fb);
+          gl.bindTexture(gl.TEXTURE_2D, A.t);
+          gl.uniform3f(sim.u.drop, drop.x, drop.y, k ? 0 : drop.z);
+          gl.drawArrays(gl.TRIANGLES, 0, 3);
+          [A, B] = [B, A];
+        }
+        drop.z = 0;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, cv.width, cv.height);
+        gl.useProgram(ren.p);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, A.t);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, textTex);
+        gl.uniform1i(ren.u.s, 0);
+        gl.uniform1i(ren.u.t, 1);
+        gl.uniform2f(ren.u.px, 1 / simW, 1 / simH);
+        gl.uniform3f(ren.u.bg, ...BG);
+        gl.uniform3f(ren.u.fg, ...FG);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      },
+    });
+    if (!build()) { fallback(); }
+  })();
+
+  /* ---------- 08 实时数据 ---------- */
+  (() => {
+    const el = footer('.g8', `
+      <div class="live">
+        <div class="cell"><b>上海 · 此刻</b><strong id="clock">--:--:--</strong><small id="tz"></small></div>
+        <div class="cell"><b>上海 · 天气</b><strong id="weather">查询中…</strong><small id="weather-note">Open-Meteo 实时数据</small></div>
+        <div class="cell"><b>系统状态 · GitHub 示例</b><strong><i class="dot" id="dot"></i><span id="status">查询中…</span></strong><small id="status-note"></small></div>
+        <div class="cell"><b>今年已经过去</b><strong id="year">--</strong><div class="year-bar"><i id="year-bar"></i></div></div>
+        <div class="cell"><b>你已在本页停留</b><strong id="stay">0:00</strong><small>本页最后修改于 <span id="mod"></span></small></div>
+      </div>` + MARK);
+    const mark = $('.mark', el);
+    const fmt = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const t0 = Date.now();
+    let lastSec = -1;
+
+    const diff = -new Date().getTimezoneOffset() - 480;
+    $('#tz').textContent = diff === 0 ? '和你在同一个时区' : `比你那边${diff > 0 ? '慢' : '快'} ${Math.abs(diff / 60)} 小时`;
+    $('#mod').textContent = new Date(document.lastModified).toLocaleString('zh-CN', { hour12: false });
+
+    const WMO = c => c === 0 ? '晴' : c <= 2 ? '少云' : c === 3 ? '阴' : c <= 48 ? '雾' : c <= 57 ? '毛毛雨'
+      : c <= 67 ? '雨' : c <= 77 ? '雪' : c <= 82 ? '阵雨' : c <= 86 ? '阵雪' : '雷雨';
+    async function getJSON(url) {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 6000);
+      try {
+        const r = await fetch(url, { signal: ctl.signal });
+        if (!r.ok) throw new Error(r.status);
+        return await r.json();
+      } finally { clearTimeout(timer); }
+    }
+    async function weather() {
+      let cached;
+      try { cached = JSON.parse(localStorage.getItem('fw-weather')); } catch {}
+      if (cached && Date.now() - cached.t < 20 * 60e3) return showWeather(cached.v, true);
+      try {
+        const j = await getJSON('https://api.open-meteo.com/v1/forecast?latitude=31.23&longitude=121.47&current=temperature_2m,weather_code,wind_speed_10m&timezone=Asia%2FShanghai');
+        const v = { temp: j.current.temperature_2m, code: j.current.weather_code, wind: j.current.wind_speed_10m };
+        try { localStorage.setItem('fw-weather', JSON.stringify({ t: Date.now(), v })); } catch {}
+        showWeather(v, false);
+      } catch {
+        $('#weather').textContent = '暂时取不到';
+        $('#weather-note').textContent = '接口失败时的兜底文字';
+      }
+    }
+    function showWeather(v, cached) {
+      $('#weather').textContent = `${WMO(v.code)} ${Math.round(v.temp)}°C`;
+      $('#weather-note').textContent = `风速 ${Math.round(v.wind)} km/h · ${cached ? '缓存数据' : 'Open-Meteo 实时数据'}`;
+    }
+    async function status() {
+      const dot = $('#dot');
+      try {
+        const j = await getJSON('https://www.githubstatus.com/api/v2/status.json');
+        const map = { none: ['ok', '全部正常'], minor: ['warn', '部分降级'], major: ['bad', '重大故障'], critical: ['bad', '严重故障'] };
+        const [cls, text] = map[j.status.indicator] || ['', j.status.description];
+        dot.className = `dot ${cls}`;
+        $('#status').textContent = text;
+        $('#status-note').textContent = `每分钟刷新 · ${fmt.format(new Date())}`;
+      } catch {
+        dot.className = 'dot';
+        $('#status').textContent = '状态未知';
+        $('#status-note').textContent = '接口失败时的兜底文字';
+      }
+    }
+    weather();
+    status();
+    setInterval(() => { if (running.has(el.__demo)) status(); }, 60e3);
+
+    register(el, {
+      setText: () => fitMark(mark), resize: () => fitMark(mark),
+      frame() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const start = new Date(y, 0, 1), end = new Date(y + 1, 0, 1);
+        const pct = (now - start) / (end - start) * 100;
+        $('#year').textContent = pct.toFixed(6) + '%';
+        $('#year-bar').style.width = pct + '%';
+        const sec = Math.floor(now / 1000);
+        if (sec !== lastSec) {
+          lastSec = sec;
+          $('#clock').textContent = fmt.format(now);
+          const s = Math.floor((Date.now() - t0) / 1000);
+          $('#stay').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        }
+      },
+    });
+    fitMark(mark);
+  })();
+
+  /* ---------- 页面最底：橡皮筋 ---------- */
+  (() => {
+    const el = footer('.g-end', MARK);
+    const mark = $('.mark', el);
+    register(el, { frame: rubber(el, null), setText: () => fitMark(mark), resize: () => fitMark(mark) });
+    fitMark(mark);
+  })();
+
+  // 换品牌名、改窗口宽度、字体加载完成时重排
+  let textTimer, resizeTimer, lastW = innerWidth;
+  input.addEventListener('input', () => {
+    brand = input.value.trim() || 'Lumen';
+    document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    clearTimeout(textTimer);
+    textTimer = setTimeout(() => demos.forEach(d => d.setText?.()), 150);
+  });
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => demos.forEach(d => d.resize?.()), 150);
+  });
+  document.fonts.ready.then(() => demos.forEach(d => d.setText?.()));
+</script>
+</body>
+</html>

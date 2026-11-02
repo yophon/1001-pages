@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚第三批</title>
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --line: #26262b;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --mono: "Cascadia Code", Consolas, "SFMono-Regular", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .back { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .bar .back:hover { color: var(--text); }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .bar input {
+    width: 150px; padding: 5px 9px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .bar nav { display: flex; gap: 2px; overflow-x: auto; margin-left: auto; max-width: 100%; scrollbar-width: none; }
+  .bar nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .bar nav a:hover { color: var(--text); background: var(--panel); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 112px 16px 24px; }
+  .hero h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p { color: var(--muted); margin: 0 0 12px; }
+
+  /* 每一节的“正文” */
+  .intro { position: relative; z-index: 1; background: var(--bg); padding: 96px 16px 80px; }
+  .intro > * { max-width: 720px; margin-inline: auto; }
+  .num { font: 900 64px/1 var(--sans); color: transparent; -webkit-text-stroke: 1px #44444c; }
+  .intro h2 { font-size: 28px; line-height: 1.3; margin-top: 12px; margin-bottom: 12px; }
+  .intro p { color: var(--muted); margin-top: 0; margin-bottom: 16px; }
+  .note { font-size: 14px; color: #f0b35a !important; }
+  .ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+  .ctrl label { display: flex; align-items: center; gap: 8px; }
+  .ctrl input[type="text"] {
+    width: 160px; padding: 6px 10px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .ctrl input[type="range"] { width: min(320px, 100%); accent-color: #ffcf6a; }
+  .ctrl output { color: var(--text); font-variant-numeric: tabular-nums; }
+  .ctrl button {
+    font: 13px/1 var(--sans); color: var(--text); cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+  }
+  .tips { padding-left: 20px; color: var(--muted); }
+  .tips li { margin-bottom: 10px; }
+  .tips b { color: var(--text); }
+
+  /* 页脚公共部分 */
+  .demo { position: relative; overflow: hidden; padding-top: 56px; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 28px 64px;
+    padding: 0 clamp(16px, 4vw, 48px); font-size: 14px;
+    position: relative; z-index: 1;
+  }
+  .links div { display: flex; flex-direction: column; gap: 4px; }
+  .links b { font-size: 12px; font-weight: 600; letter-spacing: .08em; opacity: .55; margin-bottom: 4px; }
+  .links span { opacity: .85; }
+  .links .copy { margin-left: auto; align-self: flex-end; font-size: 13px; opacity: .55; }
+  .mark-wrap { container-type: inline-size; padding-inline: clamp(8px, 2vw, 24px); margin-top: 48px; }
+  .mark {
+    display: block;
+    font: 900 22cqw/0.8 var(--sans);
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    margin-bottom: -0.15em;
+  }
+  .mark > span { display: inline-block; }
+  .stage-canvas { display: block; width: 100%; margin-top: 32px; touch-action: pan-y; }
+
+  /* 01 立体字 */
+  .e1 { background: radial-gradient(120% 90% at 50% 100%, #2a2112, #0e0b06 70%); color: #8a7650; }
+  .extrude-stage { container-type: inline-size; perspective: 1600px; display: flex; justify-content: center; padding: 8vh 0 10vh; }
+  .extrude {
+    position: relative; transform-style: preserve-3d; will-change: transform;
+    font: 900 20cqw/1 var(--sans); letter-spacing: -0.04em; white-space: nowrap;
+  }
+  .extrude span { display: block; }
+  .extrude span + span { position: absolute; inset: 0; }
+
+  /* 02 钻进字母 */
+  .zoom-track { height: 320vh; }
+  .e2 { position: sticky; top: 0; height: 100vh; background: #0f0f12; color: #8b8b94; }
+  .e2 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .zoom-cta {
+    position: absolute; inset: 0; z-index: 3; padding: 16px;
+    display: grid; place-content: center; justify-items: center; gap: 12px;
+    text-align: center; color: #1f0b03; opacity: 0; pointer-events: none;
+  }
+  .zoom-cta h3 { font: 900 clamp(44px, 9vw, 112px)/1 var(--sans); letter-spacing: -0.03em; margin: 0; }
+  .zoom-cta p { margin: 0; font-size: 18px; }
+  .zoom-cta span { margin-top: 12px; padding: 12px 22px; border-radius: 999px; background: #1f0b03; color: #ff5a1f; font-weight: 700; }
+
+  /* 03 光栅卡：两面用 6px 一组的竖条纹遮罩交错，--f 是正面占的比例 */
+  .e3 { background: #1b1814; color: #8d8578; }
+  .lenti { position: relative; display: grid; container-type: inline-size; margin-top: 40px; --f: 1; }
+  .face { grid-area: 1 / 1; display: flex; align-items: flex-end; justify-content: center; padding: 5cqw 2cqw 0; overflow: hidden; }
+  .face span {
+    display: block; width: max-content;
+    font: 900 20cqw/.8 var(--sans); letter-spacing: -0.05em; white-space: nowrap; margin-bottom: -0.12em;
+  }
+  .fa {
+    background: #efe9dc; color: #161310;
+    -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 calc(var(--f) * 6px), transparent calc(var(--f) * 6px) 6px);
+    mask-image: repeating-linear-gradient(90deg, #000 0 calc(var(--f) * 6px), transparent calc(var(--f) * 6px) 6px);
+  }
+  .fb {
+    background: #14110d; color: #ffcf3a;
+    -webkit-mask-image: repeating-linear-gradient(90deg, transparent 0 calc(var(--f) * 6px), #000 calc(var(--f) * 6px) 6px);
+    mask-image: repeating-linear-gradient(90deg, transparent 0 calc(var(--f) * 6px), #000 calc(var(--f) * 6px) 6px);
+  }
+  .ridges {
+    grid-area: 1 / 1; pointer-events: none;
+    background: repeating-linear-gradient(90deg, rgb(255 255 255 / .09) 0 1px, transparent 1px 3px, rgb(0 0 0 / .12) 3px 4px, transparent 4px 6px);
+  }
+
+  /* 04 天空 */
+  .e4 { color: rgb(234 240 255 / .9); }
+  .e4 .sky { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .sky-space { height: clamp(240px, 34vw, 520px); }
+
+  /* 05 字母钢琴 */
+  .e5 { background: #0d0f1a; color: #7f86a8; }
+  .piano-bar {
+    position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+    margin: 36px clamp(16px, 4vw, 48px) 0; font-size: 13px;
+  }
+  .sound-btn {
+    font: 600 13px/1 var(--sans); color: #e9e7ff; cursor: pointer;
+    background: #1b1f36; border: 1px solid #2e3458; border-radius: 999px; padding: 10px 16px;
+  }
+  .sound-btn[aria-pressed="true"] { background: #8f7bff; border-color: #8f7bff; color: #0d0f1a; }
+  .e5 .mark { color: #e9e7ff; cursor: pointer; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .music-note {
+    position: absolute; z-index: 2; pointer-events: none; color: #b6a8ff; font-size: 28px;
+    animation: note-rise 1.2s ease-out forwards;
+  }
+  @keyframes note-rise {
+    from { transform: translate(-50%, 0) scale(.6); opacity: 0; }
+    15% { opacity: 1; }
+    to { transform: translate(-50%, -120px) scale(1.2); opacity: 0; }
+  }
+
+  /* 06 终端 */
+  .e6 { background: #070907; color: #5f7a5c; }
+  .term {
+    position: relative; z-index: 1; margin: 40px clamp(16px, 4vw, 48px) 0;
+    border: 1px solid #1f2a1f; border-radius: 10px; overflow: hidden; background: #0b0e0b; --c: #9be28f;
+  }
+  .term.amber { --c: #ffb000; }
+  .term-bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; background: #121812; font: 12px/1 var(--mono); color: #6f866b; }
+  .term-bar i { width: 10px; height: 10px; border-radius: 50%; background: #2a332a; }
+  .term-bar span { margin-left: 8px; }
+  .term-body { height: 280px; overflow-y: auto; padding: 14px 16px; font: 14px/1.6 var(--mono); color: var(--c); cursor: text; }
+  .term-out div { white-space: pre-wrap; word-break: break-all; }
+  .term-out .cmd { color: #e8f5e5; }
+  .term-out .dim { opacity: .6; }
+  .term-out .logo { line-height: 1; white-space: pre; word-break: normal; overflow: hidden; }
+  .term-line { display: flex; gap: 8px; }
+  .term-line .prompt { color: #e8f5e5; white-space: nowrap; }
+  .term-in { flex: 1; min-width: 0; padding: 0; background: transparent; border: 0; outline: 0; color: var(--c); font: inherit; caret-color: var(--c); }
+  .e6 .mark { color: #111811; }
+
+  /* 07 足迹墙 */
+  .e7 { background: #08080b; color: #6c6c78; }
+  .wall { position: relative; }
+  .wall canvas { cursor: crosshair; }
+  .wall-hud { position: absolute; right: clamp(16px, 4vw, 48px); top: 8px; font-size: 13px; color: #9a9aa6; pointer-events: none; }
+
+  /* 08 旗 */
+  .e8 { background: linear-gradient(#9fc4e8, #dfeaf3); color: #2d4256; }
+  .flag-stage { position: relative; margin-top: 24px; }
+  .flag-stage canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+  .flag-stage canvas:active { cursor: grabbing; }
+  .rod {
+    position: absolute; height: 10px; border-radius: 5px; pointer-events: none;
+    background: linear-gradient(#e9e3d6, #8a8275 60%, #5d564b); box-shadow: 0 3px 6px rgb(0 0 0 / .25);
+  }
+
+  .f-end { background: var(--bg); color: #7a7a83; border-top: 1px solid var(--line); }
+  .f-end .mark { color: #26262c; }
+</style>
+</head>
+<body id="top">
+
+<div class="bar">
+  <a class="back" href="more.html">← 进阶八种</a>
+  <strong>第三批</strong>
+  <label>品牌名 <input id="brand" value="Lumen" maxlength="16" spellcheck="false"></label>
+  <nav>
+    <a href="overview.html">总览</a>
+    <a href="#c1">01 立体</a><a href="#c2">02 钻洞</a><a href="#c3">03 光栅</a><a href="#c4">04 天空</a><a href="#c5">05 钢琴</a><a href="#c6">06 终端</a><a href="#c7">07 足迹</a><a href="#c8">08 旗帜</a><a href="fourth.html">第四批 →</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <h1>巨字页脚，第三批</h1>
+  <p>这一批换了几个方向：转场、声音、游戏化、社交。用法和前两页一样，顶栏可以换品牌名，每个效果离开屏幕就暂停。</p>
+  <p class="note" id="reduced-note" hidden>你的系统开了“减少动画”：自动播放的部分会停掉，鼠标触发的效果保留。</p>
+</header>
+
+<section id="c1">
+  <div class="intro">
+    <div class="num">01</div>
+    <h2>立体字跟着鼠标转</h2>
+    <p>大字是一块有厚度的金属字，鼠标一动，整块字就跟着转，正面的亮度随朝向变化。鼠标不在的时候会自己慢慢晃。</p>
+    <p>没用 WebGL：同一行字叠了 24 层，每层往后退一点、颜色逐层变暗，外面套一层透视。</p>
+  </div>
+  <footer class="demo e1"></footer>
+</section>
+
+<section id="c2">
+  <div class="intro">
+    <div class="num">02</div>
+    <h2>钻进字母里</h2>
+    <p>注意大字里那一点橙色的光，那是字母的空心。往下滚，镜头会朝它推进去，最后从洞里钻出来，露出下一屏的内容。这一节占三屏高，给滚动留出距离。</p>
+    <p>空心是自动找的：先把字画到离屏画布上，从四周往里“灌水”，灌不到的空白就是字母内部；再取离笔画最远的那一点当镜头中心。换成中文也能找到，比如“口”“日”里的空心。品牌名里没有带空心的字时，就对准字的中间。</p>
+  </div>
+  <div class="zoom-track"><footer class="demo e2"></footer></div>
+</section>
+
+<section id="c3">
+  <div class="intro">
+    <div class="num">03</div>
+    <h2>光栅卡</h2>
+    <p>鼠标左右移动，大字在正反两面之间翻：一面是品牌名，一面是下面输入框里的字。中间那一小段能看到两面交错的条纹，和真的光栅卡一样。鼠标不在的时候会自己慢慢来回翻。</p>
+    <div class="ctrl"><label>背面的字 <input type="text" id="back-text" value="你好" maxlength="16" spellcheck="false"></label></div>
+  </div>
+  <footer class="demo e3"></footer>
+</section>
+
+<section id="c4">
+  <div class="intro">
+    <div class="num">04</div>
+    <h2>跟着时间变的天空</h2>
+    <p>天空跟着你的当地时间走：白天蓝天，傍晚晚霞，夜里出星星；大字变成城市剪影，夜里字里的窗户一格格亮起来。不想等到晚上，就拖滑块或者点“播放一整天”。</p>
+    <div class="ctrl">
+      <input type="range" id="hour" min="0" max="24" step="0.05" value="12" aria-label="时间">
+      <output id="hour-label">--:--</output>
+      <label><input type="checkbox" id="follow" checked> 跟随真实时间</label>
+      <button type="button" id="play-day">播放一整天</button>
+    </div>
+  </div>
+  <footer class="demo e4"></footer>
+</section>
+
+<section id="c5">
+  <div class="intro">
+    <div class="num">05</div>
+    <h2>字母钢琴</h2>
+    <p>每个字母是一个琴键，鼠标划过就弹一个音，从左划到右是一段五声音阶，怎么乱划都不难听。先点页脚里的“开声音”：浏览器不允许网页没经过点击就自己出声。</p>
+    <p>音色是用 Web Audio 现场合成的（三角波加一点泛音，再过一道回声），没有用音频文件。</p>
+  </div>
+  <footer class="demo e5"></footer>
+</section>
+
+<section id="c6">
+  <div class="intro">
+    <div class="num">06</div>
+    <h2>终端页脚</h2>
+    <p>点一下终端，输入 help 开始。可以试试 ls -a、cat、logo、theme；Tab 补全、上下键翻历史、Ctrl+L 清屏都支持。</p>
+    <p>里面的公司介绍、邮箱、职位都是占位内容。</p>
+  </div>
+  <footer class="demo e6"></footer>
+</section>
+
+<section id="c7">
+  <div class="intro">
+    <div class="num">07</div>
+    <h2>访客足迹墙</h2>
+    <p>在大字上点一下，就留下一个光点；点在字上的更亮，点多了整个字会被慢慢点亮。</p>
+    <div class="ctrl"><button type="button" id="sim200">模拟 200 个访客</button><button type="button" id="wall-clear">清空</button></div>
+    <p>真上线需要一个后端存所有人的点。这里先用浏览器本地存储模拟，所以只看得到你自己点的；模拟出来的访客用蓝色单独标出，不和真实的混在一起。数据只保留 7 天。</p>
+  </div>
+  <footer class="demo e7"></footer>
+</section>
+
+<section id="c8">
+  <div class="intro">
+    <div class="num">08</div>
+    <h2>会飘的旗</h2>
+    <p>大字印在一面挂着的布上，在风里飘。可以用鼠标抓住布的任何地方往外拽，松手后它会荡回去。</p>
+    <p>布是 600 个点的 Verlet 模拟：每帧把点投影到屏幕上，用 WebGL 把带字的贴图贴上去，明暗按每个点的朝向算。手机上只能横着拖，竖着拖会变成滚动页面。</p>
+    <p class="note" id="no-gl" hidden>你的浏览器不支持 WebGL，下面显示的是静止的旗。</p>
+  </div>
+  <footer class="demo e8"></footer>
+</section>
+
+<section id="end">
+  <div class="intro">
+    <div class="num">✓</div>
+    <h2>三页合起来</h2>
+    <ul class="tips">
+      <li><b>基础六种</b>：裁切、幕布、渐隐、手电筒、升起、透图，几乎只靠 CSS。</li>
+      <li><b>进阶八种</b>：可变字体、跑马灯、橡皮筋、点阵、物理、粒子、液体、实时数据。</li>
+      <li><b>这一批</b>：立体、钻洞、光栅、天空、钢琴、终端、足迹、旗帜。</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="demo f-end"></footer>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = () => Math.min(devicePixelRatio || 1, 2);
+  const SANS = '"Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+  const input = $('#brand');
+  let brand = input.value.trim() || 'Lumen';
+  if (REDUCED) $('#reduced-note').hidden = false;
+
+  const LINKS = `
+    <div class="links">
+      <div><b>产品</b><span>功能</span><span>价格</span><span>更新日志</span></div>
+      <div><b>公司</b><span>关于我们</span><span>招聘</span><span>联系</span></div>
+      <div><b>资源</b><span>文档</span><span>博客</span><span>社区</span></div>
+      <div class="copy">© 2026 <span class="bn"></span></div>
+    </div>`;
+  const MARK = `<div class="mark-wrap"><div class="mark" aria-hidden="true"><span></span></div></div>`;
+
+  function footer(sel, inner) {
+    const el = $(sel);
+    el.innerHTML = LINKS + inner;
+    el.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    return el;
+  }
+
+  // 大字铺满容器：100px 下量宽度，换算成 cqw
+  function fitMark(mark) {
+    const span = mark.firstElementChild;
+    span.textContent = brand;
+    mark.style.fontSize = '100px';
+    const w = span.getBoundingClientRect().width;
+    if (w) mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 60vh)`;
+  }
+
+  // canvas 上把文字居中铺进 w×h，返回 fillText 的坐标
+  function fitText(ctx, text, w, h, fill = 1) {
+    ctx.font = `900 100px ${SANS}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(text);
+    const tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight || 1;
+    const th = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || 1;
+    const size = Math.min(fill * 100 * w / tw, fill * 100 * h / th);
+    const k = size / 100;
+    ctx.font = `900 ${size}px ${SANS}`;
+    return {
+      x: (w - tw * k) / 2 + m.actualBoundingBoxLeft * k,
+      y: (h - th * k) / 2 + m.actualBoundingBoxAscent * k,
+      asc: m.actualBoundingBoxAscent * k,
+      h: th * k,
+    };
+  }
+
+  function sizeCanvas(cv, ratio, min) {
+    const dpr = DPR(), W = cv.clientWidth;
+    const H = Math.round(clamp(W * ratio, min, Math.max(min, innerHeight * 0.6)));
+    cv.style.height = H + 'px';
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    return { W, H, dpr };
+  }
+
+  // 记录指针相对 target 的位置和每次移动的位移
+  function trackPointer(el, target) {
+    const p = { x: -1e9, y: -1e9, vx: 0, vy: 0, on: false };
+    el.addEventListener('pointermove', e => {
+      const r = target.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (p.on) { p.vx = x - p.x; p.vy = y - p.y; }
+      p.x = x; p.y = y; p.on = true;
+    });
+    el.addEventListener('pointerleave', () => { p.on = false; p.x = p.y = -1e9; p.vx = p.vy = 0; });
+    return p;
+  }
+
+  // 统一调度：只跑在屏幕上的效果
+  const demos = [];
+  const running = new Set();
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    const d = e.target.__demo;
+    if (e.isIntersecting) { running.add(d); d.enter?.(); } else running.delete(d);
+  }), { rootMargin: '80px 0px' });
+  function register(el, d) {
+    el.__demo = d;
+    demos.push(d);
+    io.observe(el);
+  }
+  let last = performance.now();
+  requestAnimationFrame(function loop(now) {
+    requestAnimationFrame(loop);   // 先排下一帧：某个效果出错也不会把整个循环拖停
+    const dt = Math.min(now - last, 50);
+    last = now;
+    running.forEach(d => {
+      try { d.frame?.(now, dt); } catch (err) { running.delete(d); console.error(err); }
+    });
+  });
+
+  /* ---------- 01 立体字 ---------- */
+  (() => {
+    const N = 24;
+    const el = footer('.e1', `<div class="extrude-stage"><div class="extrude" aria-hidden="true">${'<span></span>'.repeat(N)}</div></div>`);
+    const stage = $('.extrude-stage', el), ex = $('.extrude', el);
+    const layers = [...ex.children];
+    const P = trackPointer(el, stage);
+    let rx = 0, ry = 0;
+    // 每层往后退一点，越往后越暗，叠出侧面
+    layers.forEach((l, i) => {
+      l.style.transform = `translateZ(${(-i * 0.008).toFixed(3)}em)`;
+      if (i) l.style.color = `color-mix(in oklab, #a87a22 ${Math.round(100 - (i / (N - 1)) * 80)}%, #120d04)`;
+    });
+    function setText() {
+      layers.forEach(l => { l.textContent = brand; });
+      ex.style.fontSize = '100px';
+      const w = layers[0].offsetWidth || 1;   // offsetWidth 不受旋转影响
+      ex.style.fontSize = `min(${(10000 * 0.88 / w).toFixed(3)}cqw, 45vh)`;
+    }
+    register(el, {
+      setText,
+      frame(now) {
+        let tx, ty;
+        if (P.on) {
+          const r = stage.getBoundingClientRect();
+          tx = clamp(P.x / r.width, 0, 1) * 2 - 1;
+          ty = clamp(P.y / r.height, 0, 1) * 2 - 1;
+        } else if (REDUCED) {
+          tx = ty = 0;
+        } else {
+          tx = Math.sin(now / 2400) * 0.6;
+          ty = Math.cos(now / 3100) * 0.4;
+        }
+        ry += (tx * 22 - ry) * 0.08;   // 左右最多转 22°
+        rx += (-ty * 16 - rx) * 0.08;  // 上下最多转 16°
+        ex.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+        // 光从左上方来：正面转向左上时更亮
+        const light = clamp(0.55 - ry / 22 * 0.3 + rx / 16 * 0.3, 0, 1);
+        layers[0].style.color = `color-mix(in oklab, #fff4c8 ${Math.round(light * 100)}%, #c08d2c)`;
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 02 钻进字母里 ---------- */
+  (() => {
+    const el = footer('.e2', `
+      <canvas aria-hidden="true"></canvas>
+      <div class="zoom-cta"><h3>来聊聊？</h3><p>hello@example.com</p><span>发邮件</span></div>`);
+    const track = el.parentElement;
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const cta = $('.zoom-cta', el), links = $('.links', el);
+    const PANEL = '#0f0f12', INK = '#efece4', GLOW = '#ff5a1f';
+    let W, H, dpr, font, base, textInfo, target, holeR, maxS, lastP = -1;
+
+    function build() {
+      dpr = DPR();
+      W = el.clientWidth;
+      H = el.clientHeight;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      const m = document.createElement('canvas').getContext('2d');
+      const bw = W * 0.92, bh = H * 0.4;
+      textInfo = fitText(m, brand, bw, bh);
+      font = m.font;
+      base = { x: (W - bw) / 2 + textInfo.x, y: H * 0.5 + textInfo.y };
+      findHole();
+      lastP = -1;
+    }
+
+    // 从画布四周往里灌水，灌不到的空白就是字母的空心；再用多源 BFS 找离笔画最远的点
+    function findHole() {
+      const k = 0.5, w = Math.ceil(W * k), h = Math.ceil(H * k), n = w * h;
+      const off = document.createElement('canvas');
+      off.width = w; off.height = h;
+      const o = off.getContext('2d', { willReadFrequently: true });
+      o.scale(k, k);
+      o.font = font;
+      o.fillText(brand, base.x, base.y);
+      const data = o.getImageData(0, 0, w, h).data;
+      const ink = new Uint8Array(n), outside = new Uint8Array(n), q = new Int32Array(n);
+      for (let i = 0; i < n; i++) ink[i] = data[i * 4 + 3] > 90 ? 1 : 0;
+      let qh = 0, qt = 0;
+      const flood = i => { if (!ink[i] && !outside[i]) { outside[i] = 1; q[qt++] = i; } };
+      for (let x = 0; x < w; x++) { flood(x); flood(n - w + x); }
+      for (let y = 0; y < h; y++) { flood(y * w); flood(y * w + w - 1); }
+      while (qh < qt) {
+        const i = q[qh++], x = i % w;
+        if (x > 0) flood(i - 1);
+        if (x < w - 1) flood(i + 1);
+        if (i >= w) flood(i - w);
+        if (i < n - w) flood(i + w);
+      }
+      const dist = new Int32Array(n).fill(-1);
+      for (let i = 0; i < n; i++) if (ink[i] || outside[i]) dist[i] = 0;
+      qh = qt = 0;
+      for (let i = 0; i < n; i++) {
+        if (dist[i] !== 0) continue;
+        const x = i % w;
+        if ((x > 0 && dist[i - 1] < 0) || (x < w - 1 && dist[i + 1] < 0) || (i >= w && dist[i - w] < 0) || (i < n - w && dist[i + w] < 0)) q[qt++] = i;
+      }
+      let best = -1, bestD = 0;
+      const visit = (j, d) => {
+        if (dist[j] >= 0) return;
+        dist[j] = d;
+        q[qt++] = j;
+        if (d > bestD) { bestD = d; best = j; }
+      };
+      while (qh < qt) {
+        const i = q[qh++], x = i % w, d = dist[i] + 1;
+        if (x > 0) visit(i - 1, d);
+        if (x < w - 1) visit(i + 1, d);
+        if (i >= w) visit(i - w, d);
+        if (i < n - w) visit(i + w, d);
+      }
+      if (best >= 0 && bestD >= 3) {
+        target = { x: (best % w + 0.5) / k, y: (Math.floor(best / w) + 0.5) / k };
+        holeR = bestD / k * 0.75;   // BFS 走的是曼哈顿距离，打个折更接近真实内切圆
+      } else {
+        target = { x: W / 2, y: base.y - textInfo.asc / 2 };
+        holeR = Math.max(4, textInfo.h * 0.04);
+      }
+      maxS = Math.hypot(W, H) / 2 / holeR * 1.3;   // 放到最大时，洞里的光正好盖满屏幕
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame() {
+        const r = track.getBoundingClientRect();
+        const p = clamp(-r.top / (r.height - innerHeight), 0, 1);
+        if (Math.abs(p - lastP) < 1e-4) return;
+        lastP = p;
+        const z = smooth(p / 0.85);   // 前 85% 推镜头，后 15% 露出内容
+        const s = Math.pow(maxS, z);  // 指数放大，每一段滚动的“推进感”一致
+        const px = target.x + (W / 2 - target.x) * z, py = target.y + (H / 2 - target.y) * z;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = PANEL;
+        ctx.fillRect(0, 0, W, H);
+        ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (px - target.x * s), dpr * (py - target.y * s));
+        const g = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, holeR);
+        g.addColorStop(0, GLOW);
+        g.addColorStop(0.8, GLOW);
+        g.addColorStop(1, 'rgba(255, 90, 31, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(target.x, target.y, holeR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = font;
+        ctx.fillStyle = INK;
+        ctx.fillText(brand, base.x, base.y);
+        links.style.opacity = 1 - clamp(p * 6, 0, 1);
+        const c = clamp((p - 0.85) / 0.12, 0, 1);
+        cta.style.opacity = c;
+        cta.style.transform = `translateY(${((1 - c) * 24).toFixed(1)}px)`;
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 03 光栅卡 ---------- */
+  (() => {
+    const el = footer('.e3', `<div class="lenti" aria-hidden="true"><div class="face fa"><span></span></div><div class="face fb"><span></span></div><div class="ridges"></div></div>`);
+    const lenti = $('.lenti', el);
+    const [sa, sb] = [...el.querySelectorAll('.face span')];
+    const back = $('#back-text');
+    const P = trackPointer(el, lenti);
+    let x = 0.25, lastF = -1;
+    function fitSpan(span, text) {
+      span.textContent = text;
+      span.style.fontSize = '100px';
+      const w = span.offsetWidth || 1;
+      span.style.fontSize = `min(${(9600 / w).toFixed(3)}cqw, 40vh)`;   // 两侧各留 2cqw
+    }
+    const backText = () => back.value.trim() || '你好';
+    function setText() { fitSpan(sa, brand); fitSpan(sb, backText()); }
+    back.addEventListener('input', () => fitSpan(sb, backText()));
+    register(el, {
+      setText,
+      frame(now) {
+        const w = lenti.clientWidth;
+        const tx = P.on ? clamp(P.x / w, 0, 1) : REDUCED ? 0.25 : 0.5 + 0.5 * Math.sin(now / 1900);
+        x += (tx - x) * 0.15;
+        const f = 1 - smooth((x - 0.38) / 0.24);   // 只在中间一小段角度里完成翻面
+        if (Math.abs(f - lastF) > 1e-3) {
+          lastF = f;
+          lenti.style.setProperty('--f', f.toFixed(3));
+        }
+        const shift = (x - 0.5) * 10;   // 两面文字反向错开一点，像隔着一层塑料看
+        sa.style.transform = `translateX(${(-shift).toFixed(2)}px)`;
+        sb.style.transform = `translateX(${shift.toFixed(2)}px)`;
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 04 跟着时间变的天空 ---------- */
+  (() => {
+    const el = footer('.e4', `<canvas class="sky" aria-hidden="true"></canvas><div class="sky-space"></div>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const slider = $('#hour'), follow = $('#follow'), label = $('#hour-label'), playBtn = $('#play-day');
+    // [小时, 天顶色, 地平线色]
+    const KEYS = [
+      [0, '#060a1c', '#141a3c'], [4.5, '#0b1030', '#2a2550'], [6, '#3a4a8a', '#f4a582'],
+      [7.5, '#5b9be6', '#cfe6ff'], [12, '#2f80e0', '#b9dcff'], [16.5, '#4a86d6', '#f3d9b0'],
+      [18.3, '#3a3b7a', '#ff8a5c'], [19.5, '#1a1d48', '#7a4a7a'], [21, '#080c22', '#1b2048'], [24, '#060a1c', '#141a3c'],
+    ].map(([h, a, b]) => [h, hex(a), hex(b)]);
+    function hex(c) { return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); }
+    const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+    const rgb = (c, a = 1) => `rgba(${c.map(Math.round).join(',')},${a})`;
+    function skyAt(h) {
+      let i = 0;
+      while (i < KEYS.length - 2 && h >= KEYS[i + 1][0]) i++;
+      const [h0, a0, b0] = KEYS[i], [h1, a1, b1] = KEYS[i + 1];
+      const t = smooth((h - h0) / (h1 - h0));
+      return [mix(a0, a1, t), mix(b0, b1, t)];
+    }
+    const nightAt = h => h < 4.5 || h >= 21 ? 1 : h < 7 ? 1 - smooth((h - 4.5) / 2.5) : h < 18 ? 0 : smooth((h - 18) / 3);
+    const fmt = h => `${String(Math.floor(h) % 24).padStart(2, '0')}:${String(Math.floor((h % 1) * 60)).padStart(2, '0')}`;
+    let W, H, dpr, font, tx, ty, horizon, stars = [], wins = [], playing = null;
+
+    function build() {
+      dpr = DPR();
+      W = el.clientWidth;
+      H = el.clientHeight;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      const skyH = $('.sky-space', el).offsetHeight;
+      const off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      const o = off.getContext('2d', { willReadFrequently: true });
+      const f = fitText(o, brand, W, skyH, 0.96);
+      font = o.font;
+      tx = f.x;
+      ty = H - skyH + f.y + skyH * 0.06;   // 往下压一点，底边被裁掉
+      horizon = ty - f.asc;
+      o.fillText(brand, tx, ty);
+      const data = o.getImageData(0, 0, W, H).data;
+      const inkAt = (x, y) => data[((y | 0) * W + (x | 0)) * 4 + 3] > 200;
+      // 窗户：整格都落在笔画里的格子才开窗
+      wins = [];
+      const c = clamp(W / 90, 7, 14);
+      for (let y = horizon; y < H - c; y += c) for (let x = 0; x < W - c; x += c) {
+        if (inkAt(x + 1, y + 1) && inkAt(x + c - 1, y + 1) && inkAt(x + 1, y + c - 1) && inkAt(x + c - 1, y + c - 1)) {
+          wins.push({ x: x + c * 0.28, y: y + c * 0.22, w: c * 0.44, h: c * 0.56, thr: Math.random() });
+        }
+      }
+      stars = Array.from({ length: 160 }, () => ({ x: Math.random() * W, y: Math.random() * horizon * 0.95, r: rand(0.5, 1.6), ph: rand(0, 6.28), sp: rand(0.6, 1.6) }));
+    }
+
+    slider.addEventListener('input', () => { follow.checked = false; playing = null; });
+    follow.addEventListener('change', () => { playing = null; });
+    playBtn.addEventListener('click', () => {
+      const h = +slider.value;
+      playing = { start: h, h };
+      follow.checked = false;
+    });
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now, dt) {
+        let h;
+        if (playing) {
+          playing.h += dt / 12000 * 24;   // 12 秒走完一天
+          if (playing.h - playing.start >= 24) playing = null;
+          h = (playing ? playing.h : +slider.value) % 24;
+          slider.value = h;
+        } else if (follow.checked) {
+          const d = new Date();
+          h = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+          slider.value = h;
+        } else {
+          h = +slider.value % 24;
+        }
+        label.textContent = `${fmt(h)}${playing ? '（快进中）' : follow.checked ? '（真实时间）' : '（手动）'}`;
+
+        const n = nightAt(h), [top, bottom] = skyAt(h);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const g = ctx.createLinearGradient(0, 0, 0, horizon + (H - horizon) * 0.3);
+        g.addColorStop(0, rgb(top));
+        g.addColorStop(1, rgb(bottom));
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+
+        if (n > 0.01) for (const s of stars) {
+          const a = n * (REDUCED ? 0.8 : 0.55 + 0.45 * Math.sin(now / 700 * s.sp + s.ph));
+          ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+          ctx.fillRect(s.x, s.y, s.r, s.r);
+        }
+        // 太阳 5:30–19:00，月亮 18:30–6:30，都走一条弧线
+        const body = (u, r, core, glow) => {
+          const x = W * (0.06 + 0.88 * u), y = horizon - Math.sin(Math.PI * u) * horizon * 0.8 + r;
+          const gr = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+          gr.addColorStop(0, core);
+          gr.addColorStop(0.25, core);
+          gr.addColorStop(0.3, glow);
+          gr.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = gr;
+          ctx.beginPath();
+          ctx.arc(x, y, r * 4, 0, Math.PI * 2);
+          ctx.fill();
+        };
+        if (h >= 5.5 && h <= 19) {
+          const u = (h - 5.5) / 13.5, high = Math.sin(Math.PI * u);
+          body(u, 22 + 10 * (1 - high), rgb(mix([255, 170, 90], [255, 248, 220], high)), rgb(mix([255, 140, 70], [255, 240, 200], high), 0.35));
+        }
+        const mu = ((h - 18.5 + 24) % 24) / 12;
+        if (mu <= 1) body(mu, 16, 'rgba(244,241,230,1)', 'rgba(200,210,255,0.18)');
+
+        ctx.font = font;
+        ctx.fillStyle = rgb(mix([34, 50, 78], [6, 8, 16], n));
+        ctx.fillText(brand, tx, ty);
+        if (n > 0.02) {
+          if (!REDUCED && Math.random() < 0.05) wins[(Math.random() * wins.length) | 0].thr = Math.random();
+          for (const w of wins) {
+            const a = clamp((n * 0.65 - w.thr) * 8, 0, 1);
+            if (a <= 0) continue;
+            ctx.fillStyle = `rgba(255,210,120,${(a * 0.9).toFixed(3)})`;
+            ctx.fillRect(w.x, w.y, w.w, w.h);
+          }
+        }
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 05 字母钢琴 ---------- */
+  (() => {
+    const el = footer('.e5', `
+      <div class="piano-bar"><button class="sound-btn" type="button" aria-pressed="false">♪ 开声音</button><span>鼠标从左往右划过大字</span></div>
+      <div class="mark-wrap"><div class="mark"></div></div>`);
+    const mark = $('.mark', el), btn = $('.sound-btn', el);
+    const PENTA = [0, 2, 4, 7, 9];
+    const freq = i => 261.63 * Math.pow(2, (PENTA[i % 5] + 12 * Math.floor(i / 5)) / 12);   // C 大调五声音阶
+    let keys = [], lastKey = -1, ac = null, master, on = false;
+
+    function initAudio() {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      master = ac.createGain();
+      master.gain.value = 0.35;
+      master.connect(ac.destination);
+      // 一道带反馈的回声，让声音有点空间感
+      const delay = ac.createDelay(), fb = ac.createGain(), wet = ac.createGain();
+      delay.delayTime.value = 0.22;
+      fb.gain.value = 0.28;
+      wet.gain.value = 0.25;
+      master.connect(delay);
+      delay.connect(fb);
+      fb.connect(delay);
+      delay.connect(wet);
+      wet.connect(ac.destination);
+    }
+    function play(i) {
+      if (!on || !ac) return;
+      const t = ac.currentTime, f = freq(i);
+      const env = ac.createGain(), lp = ac.createBiquadFilter();
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(0.5, t + 0.008);
+      env.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(f * 6, t);
+      lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.8);
+      [['triangle', 1, 1], ['sine', 2, 0.35]].forEach(([type, mul, vol]) => {
+        const osc = ac.createOscillator(), g = ac.createGain();
+        osc.type = type;
+        osc.frequency.value = f * mul;
+        g.gain.value = vol;
+        osc.connect(g);
+        g.connect(lp);
+        osc.start(t);
+        osc.stop(t + 1.5);
+      });
+      lp.connect(env);
+      env.connect(master);
+    }
+    function press(i) {
+      keys[i].d = 1;
+      play(i);
+      if (REDUCED) return;
+      const r = keys[i].el.getBoundingClientRect(), er = el.getBoundingClientRect(), mr = mark.getBoundingClientRect();
+      const n = document.createElement('span');
+      n.className = 'music-note';
+      n.textContent = i % 2 ? '♫' : '♪';
+      n.style.left = `${r.left + r.width / 2 - er.left}px`;
+      n.style.top = `${mr.top - er.top - 10}px`;
+      n.addEventListener('animationend', () => n.remove());
+      el.append(n);
+    }
+    function keyAt(cx, cy) {
+      const mr = mark.getBoundingClientRect();
+      if (cy < mr.top - 10 || cy > mr.bottom + 10) return -1;
+      return keys.findIndex(k => { const r = k.el.getBoundingClientRect(); return cx >= r.left && cx < r.right; });
+    }
+    el.addEventListener('pointermove', e => {
+      const i = keyAt(e.clientX, e.clientY);
+      if (i !== lastKey) { lastKey = i; if (i >= 0) press(i); }
+    });
+    el.addEventListener('pointerdown', e => {
+      const i = keyAt(e.clientX, e.clientY);
+      if (i >= 0) { lastKey = i; press(i); }
+    });
+    el.addEventListener('pointerleave', () => { lastKey = -1; });
+    btn.addEventListener('click', () => {
+      if (!ac) initAudio();
+      on = !on;
+      if (on && ac.state === 'suspended') ac.resume();
+      btn.setAttribute('aria-pressed', on);
+      btn.textContent = on ? '♪ 声音已开' : '♪ 开声音';
+      if (on) [0, 2, 4].forEach((n, j) => setTimeout(() => play(n), j * 90));   // 打开时弹个和弦确认
+    });
+
+    function setText() {
+      mark.textContent = '';
+      keys = Array.from(brand, ch => {
+        const s = document.createElement('span');
+        s.textContent = ch;
+        mark.append(s);
+        return { el: s, d: 0, dirty: false };
+      });
+      mark.style.fontSize = '100px';
+      const w = keys.reduce((a, k) => a + k.el.getBoundingClientRect().width, 0) || 1;
+      mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 55vh)`;
+    }
+    register(el, {
+      setText,
+      frame() {
+        keys.forEach(k => {
+          if (k.d < 0.002) {
+            if (k.dirty) { k.el.style.transform = k.el.style.color = k.el.style.textShadow = ''; k.dirty = false; }
+            return;
+          }
+          k.d *= 0.9;
+          k.el.style.transform = `translateY(${(k.d * 0.06).toFixed(4)}em)`;   // 按下去再弹回来
+          k.el.style.color = `color-mix(in oklab, #b6a8ff ${Math.round(k.d * 100)}%, #e9e7ff)`;
+          k.el.style.textShadow = `0 0 ${(k.d * 40).toFixed(1)}px rgb(143 123 255 / ${(k.d * 0.8).toFixed(2)})`;
+          k.dirty = true;
+        });
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 06 终端页脚 ---------- */
+  (() => {
+    const el = footer('.e6', `
+      <div class="term">
+        <div class="term-bar"><i></i><i></i><i></i><span class="term-title"></span></div>
+        <div class="term-body">
+          <div class="term-out" aria-live="polite"></div>
+          <label class="term-line"><span class="prompt"></span><input class="term-in" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="输入命令"></label>
+        </div>
+      </div>` + MARK);
+    const term = $('.term', el), body = $('.term-body', el), out = $('.term-out', el), cmdIn = $('.term-in', el);
+    const mark = $('.mark', el);
+    const hist = [];
+    let hi = 0;
+    const slug = () => brand.toLowerCase().replace(/\s+/g, '-');
+    const promptText = () => `visitor@${slug()}:~$`;
+
+    const files = () => ({
+      'about.txt': `${brand} 是一家虚构的公司，这个终端只是用来演示页脚还能怎么玩。`,
+      'contact.txt': '邮箱    hello@example.com\n电话    000-0000-0000\n地址    某城市某路 1 号',
+      'jobs.txt': '在招职位：\n  · 前端工程师（会 WebGL 加分）\n  · 动效设计师\n  · 实习生，什么都想学的那种\n投递方式：cat contact.txt',
+      '.secret': '你找到了彩蛋。真上线时，这里可以放优惠码、招聘暗号，或者一张团队合照。',
+    });
+    const HELP = [
+      'help        列出命令',
+      'ls [-a]     列出文件（-a 包括隐藏文件）',
+      'cat <file>  查看文件',
+      'about       关于我们',
+      'contact     联系方式',
+      'jobs        在招职位',
+      'logo        用字符画出 logo',
+      'theme       切换配色',
+      'date        现在几点',
+      'whoami      你是谁',
+      'history     敲过的命令',
+      'clear       清屏（也可以按 Ctrl+L）',
+    ];
+    // 每个字符格上下各采样一次，用 █ ▀ ▄ 拼，竖向精度翻倍；输出行的行高压到 1，格子之间不留缝
+    function asciiLogo() {
+      const cols = clamp(Math.floor(body.clientWidth / 8.6) - 2, 24, 64), rows = 9, cw = 6, ch = 10;   // 行高为 1 时等宽字符高约为宽的 1.7 倍
+      const c = document.createElement('canvas');
+      c.width = cols * cw; c.height = rows * ch;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      const f = fitText(x, brand, c.width, c.height, 0.95);
+      x.fillText(brand, f.x, f.y);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      const ink = (px, py) => d[((py | 0) * c.width + (px | 0)) * 4 + 3] > 110;
+      const lines = [];
+      for (let r = 0; r < rows; r++) {
+        let line = '';
+        for (let k = 0; k < cols; k++) {
+          const px = k * cw + cw / 2, t = ink(px, r * ch + ch * 0.25), b = ink(px, r * ch + ch * 0.75);
+          line += t && b ? '█' : t ? '▀' : b ? '▄' : ' ';
+        }
+        lines.push(line.replace(/\s+$/, ''));
+      }
+      return lines.filter(l => l);
+    }
+    const CMDS = {
+      help: () => HELP,
+      ls: a => Object.keys(files()).filter(f => a.includes('-a') || !f.startsWith('.')).join('    '),
+      cat: ([f]) => !f ? '用法：cat <文件名>，先 ls 看看有哪些文件' : files()[f] ?? `cat: ${f}: 没有这个文件`,
+      about: () => files()['about.txt'],
+      contact: () => files()['contact.txt'],
+      jobs: () => files()['jobs.txt'],
+      logo: () => { print(asciiLogo(), 'logo'); return null; },
+      theme: () => { term.classList.toggle('amber'); return term.classList.contains('amber') ? '已切换到琥珀色' : '已切换到绿色'; },
+      date: () => new Date().toLocaleString('zh-CN', { hour12: false }),
+      whoami: () => 'visitor —— 一位愿意在页脚敲命令的访客',
+      history: () => hist.map((h, i) => `${String(i + 1).padStart(4)}  ${h}`),
+      clear: () => { out.textContent = ''; return null; },
+      echo: a => a.join(' '),
+      sudo: () => '这里没有 root，只有页脚。',
+      exit: () => '页脚是关不掉的。',
+    };
+
+    function print(text, cls = '') {
+      (Array.isArray(text) ? text : String(text).split('\n')).forEach(line => {
+        const d = document.createElement('div');
+        if (cls) d.className = cls;
+        d.textContent = line;
+        out.append(d);
+      });
+      body.scrollTop = body.scrollHeight;
+    }
+    function run(raw) {
+      print(`${promptText()} ${raw}`, 'cmd');
+      const [cmd, ...args] = raw.trim().split(/\s+/);
+      if (!cmd) return;
+      hist.push(raw.trim());
+      hi = hist.length;
+      const fn = CMDS[cmd];
+      const res = fn ? fn(args) : `${cmd}: 找不到这个命令。输入 help 看看有哪些`;
+      if (res != null) print(res);
+    }
+    // Tab 补全：命令名，或者 cat 后面的文件名；只有一个候选时直接补上，多个时列出来
+    function complete(v) {
+      const m = v.match(/^cat\s+(\S*)$/);
+      const pool = m ? Object.keys(files()) : Object.keys(CMDS);
+      const word = m ? m[1] : v;
+      if (!v || (!m && /\s/.test(v))) return null;
+      const hits = pool.filter(k => k.startsWith(word));
+      if (!hits.length) return null;
+      if (hits.length > 1) { print(`${promptText()} ${v}`, 'cmd'); print(hits.join('    '), 'dim'); }
+      let common = hits[0];
+      hits.forEach(h => { while (!h.startsWith(common)) common = common.slice(0, -1); });
+      return (m ? `cat ${common}` : common) + (hits.length === 1 ? ' ' : '');
+    }
+    cmdIn.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { run(cmdIn.value); cmdIn.value = ''; }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (hi > 0) cmdIn.value = hist[--hi]; }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); hi = Math.min(hi + 1, hist.length); cmdIn.value = hist[hi] ?? ''; }
+      else if (e.key === 'Tab') { const c = complete(cmdIn.value); if (c !== null) { e.preventDefault(); cmdIn.value = c; } }
+      else if (e.key.toLowerCase() === 'l' && e.ctrlKey) { e.preventDefault(); out.textContent = ''; }
+    });
+    body.addEventListener('click', () => { if (!getSelection().toString()) cmdIn.focus({ preventScroll: true }); });
+
+    function setText() {
+      $('.prompt', el).textContent = promptText();
+      $('.term-title', el).textContent = `visitor@${slug()}: ~`;
+      fitMark(mark);
+    }
+    print([`Last login: ${new Date().toLocaleString('zh-CN', { hour12: false })} on footer`, '输入 help 查看命令。'], 'dim');
+    register(el, { setText });
+    setText();
+  })();
+
+  /* ---------- 07 访客足迹墙 ---------- */
+  (() => {
+    const el = footer('.e7', `<div class="wall"><div class="wall-hud"></div><canvas class="stage-canvas" aria-hidden="true"></canvas></div>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d'), hud = $('.wall-hud', el);
+    const KEY = 'fw-wall', WEEK = 7 * 864e5;
+    // 每个点存成 [x / 宽, y / 高, 时间戳, 是否模拟]，换尺寸也能还原
+    let dots = load(), W, H, dpr, font, tx, ty, mask, inkPts = [], acc, ripples = [], queue = [], lastAdd = 0;
+
+    function load() {
+      try {
+        const d = JSON.parse(localStorage.getItem(KEY)) || [];
+        return d.filter(p => Date.now() - p[2] < WEEK).slice(-3000);
+      } catch { return []; }
+    }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(dots.slice(-3000))); } catch {} }
+    const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H && mask[(y | 0) * W + (x | 0)] === 1;
+
+    function paintDot(c, p) {
+      const x = p[0] * W, y = p[1] * H, inn = inside(x, y), r = inn ? 14 : 7;
+      const col = !inn ? '255,255,255' : p[3] ? '120,190,255' : '255,200,90';
+      const g = c.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `rgba(${col},${inn ? 0.7 : 0.22})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r, 0, Math.PI * 2);
+      c.fill();
+    }
+    // 所有点先叠加画到一张离屏画布上，每帧只贴这一张，点再多也不卡
+    function redrawAcc() {
+      const a = acc.getContext('2d');
+      a.setTransform(dpr, 0, 0, dpr, 0, 0);
+      a.clearRect(0, 0, W, H);
+      a.globalCompositeOperation = 'lighter';
+      dots.forEach(p => paintDot(a, p));
+    }
+    function add(p) {
+      dots.push(p);
+      paintDot(acc.getContext('2d'), p);
+      ripples.push({ x: p[0] * W, y: p[1] * H, t: performance.now(), sim: p[3] });
+    }
+    function hudUpdate() {
+      const today = new Date().toDateString();
+      const t = dots.filter(p => new Date(p[2]).toDateString() === today);
+      const sim = t.filter(p => p[3]).length;
+      hud.textContent = `今天 ${t.length} 个点 · 其中模拟 ${sim} 个 · 你留下了 ${t.length - sim} 个`;
+    }
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.34, 220));
+      const off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      const o = off.getContext('2d', { willReadFrequently: true });
+      const f = fitText(o, brand, W, H, 0.9);
+      font = o.font; tx = f.x; ty = f.y;
+      o.fillText(brand, tx, ty);
+      const data = o.getImageData(0, 0, W, H).data;
+      mask = new Uint8Array(W * H);
+      inkPts = [];
+      for (let i = 0; i < W * H; i++) if (data[i * 4 + 3] > 128) { mask[i] = 1; if (i % 7 === 0) inkPts.push(i); }
+      acc = document.createElement('canvas');
+      acc.width = cv.width; acc.height = cv.height;
+      redrawAcc();
+      hudUpdate();
+    }
+
+    cv.addEventListener('pointerdown', e => {
+      const now = performance.now();
+      if (now - lastAdd < 120) return;
+      lastAdd = now;
+      const r = cv.getBoundingClientRect();
+      add([(e.clientX - r.left) / W, (e.clientY - r.top) / H, Date.now(), 0]);
+      save();
+      hudUpdate();
+    });
+    $('#sim200').addEventListener('click', () => {
+      for (let i = 0; i < 200; i++) {
+        let x, y;
+        if (Math.random() < 0.7 && inkPts.length) {   // 大部分人会点在字上
+          const k = inkPts[(Math.random() * inkPts.length) | 0];
+          x = k % W + rand(-2, 2); y = Math.floor(k / W);
+        } else { x = rand(0, W); y = rand(0, H); }
+        queue.push([x / W, y / H, Date.now(), 1]);
+      }
+    });
+    $('#wall-clear').addEventListener('click', () => {
+      dots = []; queue = []; ripples = [];
+      save(); redrawAcc(); hudUpdate();
+    });
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        if (queue.length) {
+          queue.splice(0, 5).forEach(add);
+          if (!queue.length) save();
+          hudUpdate();
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+        ctx.font = font;
+        ctx.fillStyle = '#17171d';
+        ctx.fillText(brand, tx, ty);
+        ctx.drawImage(acc, 0, 0, W, H);
+        ripples = ripples.filter(r => now - r.t < 700);
+        ripples.forEach(r => {
+          const k = (now - r.t) / 700;
+          ctx.strokeStyle = r.sim ? `rgba(120,190,255,${(1 - k) * 0.6})` : `rgba(255,210,120,${(1 - k) * 0.8})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, 4 + k * 36, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 08 会飘的旗 ---------- */
+  (() => {
+    const el = footer('.e8', `<div class="flag-stage"><canvas aria-hidden="true"></canvas><div class="rod"></div></div>`);
+    const stage = $('.flag-stage', el), rod = $('.rod', el);
+    let cv = $('canvas', el);
+    const COLS = 40, ROWS = 15, N = COLS * ROWS, ITER = 8, FOCAL = 900;
+    const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false });
+    let W, H, dpr, bw, bh, left, top, texCanvas;
+    let pos, prev, pin, cons, proj = new Float32Array(N * 2), verts = new Float32Array(N * 6), grabbed = -1, grabTo = null;
+    let prog, tex, vbuf, nIdx;
+
+    function buildTexture() {
+      texCanvas = document.createElement('canvas');
+      texCanvas.width = Math.round(bw * dpr);
+      texCanvas.height = Math.round(bh * dpr);
+      const x = texCanvas.getContext('2d');
+      x.scale(dpr, dpr);
+      x.fillStyle = '#b3241b';
+      x.fillRect(0, 0, bw, bh);
+      x.strokeStyle = 'rgba(246,238,220,.5)';
+      x.lineWidth = 2;
+      x.strokeRect(10, 10, bw - 20, bh - 20);
+      const f = fitText(x, brand, bw * 0.86, bh * 0.62);
+      x.fillStyle = '#f6eedc';
+      x.fillText(brand, bw * 0.07 + f.x, bh * 0.19 + f.y);
+      if (!ok) return;
+      if (tex) gl.deleteTexture(tex);
+      tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texCanvas);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    function build() {
+      dpr = DPR();
+      W = stage.clientWidth;
+      H = Math.round(clamp(W * 0.42, 280, innerHeight * 0.7));
+      stage.style.height = H + 'px';
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      bw = W * 0.84;
+      bh = Math.min(H * 0.72, bw * 0.34);
+      left = (W - bw) / 2;
+      top = H * 0.12;
+      rod.style.left = `${left - 14}px`;
+      rod.style.top = `${top - 6}px`;
+      rod.style.width = `${bw + 28}px`;
+      buildTexture();
+      if (!ok) {   // 没有 WebGL：换一块普通画布，画一面静止的旗
+        if (gl) { const c2 = document.createElement('canvas'); cv.replaceWith(c2); cv = c2; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+        cv.getContext('2d').drawImage(texCanvas, left * dpr, top * dpr, bw * dpr, bh * dpr);
+        return;
+      }
+      // 网格点：第一行每隔 3 个钉一个，像挂在杆子上的环
+      pos = new Float32Array(N * 3);
+      pin = new Uint8Array(N);
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const i = r * COLS + c;
+        pos[i * 3] = left + bw * c / (COLS - 1);
+        pos[i * 3 + 1] = top + bh * r / (ROWS - 1);
+        pin[i] = r === 0 && (c % 3 === 0 || c === COLS - 1) ? 1 : 0;
+        verts[i * 6 + 3] = c / (COLS - 1);
+        verts[i * 6 + 4] = r / (ROWS - 1);
+      }
+      prev = pos.slice();
+      // 约束：横、竖相邻点，再加两条对角线防止布被剪切变形
+      const dx = bw / (COLS - 1), dy = bh / (ROWS - 1), dd = Math.hypot(dx, dy);
+      cons = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const i = r * COLS + c;
+        if (c < COLS - 1) cons.push(i, i + 1, dx);
+        if (r < ROWS - 1) cons.push(i, i + COLS, dy);
+        if (c < COLS - 1 && r < ROWS - 1) cons.push(i, i + COLS + 1, dd, i + 1, i + COLS, dd);
+      }
+      cons = new Float32Array(cons);
+    }
+
+    function setupGL() {
+      const VS = `attribute vec3 p; attribute vec2 uv; attribute float s;
+        varying vec2 vUv; varying float vS;
+        void main() { vUv = uv; vS = s; gl_Position = vec4(p, 1.0); }`;
+      const FS = `precision mediump float;
+        uniform sampler2D tex; varying vec2 vUv; varying float vS;
+        void main() { gl_FragColor = vec4(texture2D(tex, vUv).rgb * vS, 1.0); }`;
+      const sh = (type, src) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+        return s;
+      };
+      prog = gl.createProgram();
+      gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+      gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+      gl.useProgram(prog);
+      vbuf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
+      const attr = (name, size, offset) => {
+        const loc = gl.getAttribLocation(prog, name);
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 24, offset);
+      };
+      attr('p', 3, 0);
+      attr('uv', 2, 12);
+      attr('s', 1, 20);
+      const idx = [];
+      for (let r = 0; r < ROWS - 1; r++) for (let c = 0; c < COLS - 1; c++) {
+        const i = r * COLS + c;
+        idx.push(i, i + COLS, i + 1, i + 1, i + COLS, i + COLS + 1);
+      }
+      nIdx = idx.length;
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(idx), gl.STATIC_DRAW);
+      gl.uniform1i(gl.getUniformLocation(prog, 'tex'), 0);
+      gl.enable(gl.DEPTH_TEST);
+    }
+
+    function step(now) {
+      const t = now / 1000, k = bw / 900;   // 风和重力按布的尺寸缩放，小屏上才不会被吹成一团
+      const wind = REDUCED ? 0 : 0.5 * k, gravity = 0.25 * k;
+      for (let i = 0; i < N; i++) {
+        if (pin[i] || i === grabbed) continue;
+        const j = i * 3, depth = Math.floor(i / COLS) / (ROWS - 1);
+        const x = pos[j], y = pos[j + 1], z = pos[j + 2];
+        // 风：朝屏幕里外推的波浪，越往下摆得越厉害；波长也按布的尺寸缩放
+        const ux = (x - left) / k, uy = (y - top) / k;
+        const wz = wind * (Math.sin(t * 1.6 + ux * 0.011 + uy * 0.006) + 0.5 * Math.sin(t * 3.1 - ux * 0.023)) * (0.25 + 0.75 * depth);
+        const wx = wind * 0.12 * Math.sin(t * 0.9 + uy * 0.01);
+        pos[j] = x + (x - prev[j]) * 0.985 + wx;
+        pos[j + 1] = y + (y - prev[j + 1]) * 0.985 + gravity;
+        pos[j + 2] = z + (z - prev[j + 2]) * 0.985 + wz;
+        prev[j] = x; prev[j + 1] = y; prev[j + 2] = z;
+      }
+      if (grabbed >= 0) {
+        const k = grabbed * 3;
+        prev[k] = pos[k]; prev[k + 1] = pos[k + 1];
+        pos[k] = grabTo.x; pos[k + 1] = grabTo.y;
+      }
+      for (let it = 0; it < ITER; it++) {
+        for (let j = 0; j < cons.length; j += 3) {
+          const a = cons[j], b = cons[j + 1], rest = cons[j + 2];
+          const wa = pin[a] || a === grabbed ? 0 : 1, wb = pin[b] || b === grabbed ? 0 : 1;
+          if (!wa && !wb) continue;
+          const ka = a * 3, kb = b * 3;
+          const dx = pos[kb] - pos[ka], dy = pos[kb + 1] - pos[ka + 1], dz = pos[kb + 2] - pos[ka + 2];
+          const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6;
+          const s = (d - rest) / d / (wa + wb);
+          pos[ka] += dx * s * wa; pos[ka + 1] += dy * s * wa; pos[ka + 2] += dz * s * wa;
+          pos[kb] -= dx * s * wb; pos[kb + 1] -= dy * s * wb; pos[kb + 2] -= dz * s * wb;
+        }
+      }
+    }
+
+    function render() {
+      const cx = W / 2, cy = H / 2;
+      for (let i = 0; i < N; i++) {
+        const k = i * 3, s = FOCAL / (FOCAL + pos[k + 2]);
+        const sx = cx + (pos[k] - cx) * s, sy = cy + (pos[k + 1] - cy) * s;
+        proj[i * 2] = sx; proj[i * 2 + 1] = sy;
+        verts[i * 6] = sx / W * 2 - 1;
+        verts[i * 6 + 1] = 1 - sy / H * 2;
+        verts[i * 6 + 2] = clamp(pos[k + 2] / 2000, -1, 1);
+      }
+      // 每个点的法线 = 横向切线 × 纵向切线，再和光的方向点乘得到明暗
+      const L = [-0.35, -0.55, -0.76];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const i = r * COLS + c;
+        const a = (r * COLS + Math.min(c + 1, COLS - 1)) * 3, b = (r * COLS + Math.max(c - 1, 0)) * 3;
+        const d = (Math.min(r + 1, ROWS - 1) * COLS + c) * 3, u = (Math.max(r - 1, 0) * COLS + c) * 3;
+        const ax = pos[a] - pos[b], ay = pos[a + 1] - pos[b + 1], az = pos[a + 2] - pos[b + 2];
+        const bx = pos[d] - pos[u], by = pos[d + 1] - pos[u + 1], bz = pos[d + 2] - pos[u + 2];
+        let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+        const len = Math.hypot(nx, ny, nz) || 1;
+        if (nz > 0) { nx = -nx; ny = -ny; nz = -nz; }   // 统一朝向镜头
+        const dif = Math.max(0, (nx * L[0] + ny * L[1] + nz * L[2]) / len);
+        verts[i * 6 + 5] = 0.45 + 0.65 * dif;
+      }
+      gl.viewport(0, 0, cv.width, cv.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
+      gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.drawElements(gl.TRIANGLES, nIdx, gl.UNSIGNED_SHORT, 0);
+    }
+
+    // 抓布：找离指针最近的投影点，拖动时按它当前的深度反投影回去
+    function setGrab(sx, sy) {
+      const k = (FOCAL + pos[grabbed * 3 + 2]) / FOCAL;
+      grabTo = { x: W / 2 + (sx - W / 2) * k, y: H / 2 + (sy - H / 2) * k };
+    }
+    cv.addEventListener('pointerdown', e => {
+      if (!ok) return;
+      const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      let best = -1, bd = 45 * 45;
+      for (let i = 0; i < N; i++) {
+        if (pin[i]) continue;
+        const dx = proj[i * 2] - x, dy = proj[i * 2 + 1] - y, d = dx * dx + dy * dy;
+        if (d < bd) { bd = d; best = i; }
+      }
+      if (best < 0) return;
+      grabbed = best;
+      setGrab(x, y);
+      cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('pointermove', e => {
+      if (grabbed < 0) return;
+      const r = cv.getBoundingClientRect();
+      setGrab(e.clientX - r.left, e.clientY - r.top);
+    });
+    const release = () => { grabbed = -1; };
+    cv.addEventListener('pointerup', release);
+    cv.addEventListener('pointercancel', release);
+
+    let ok = !!gl;
+    if (ok) {
+      try { setupGL(); } catch (err) { console.warn(err); ok = false; }
+    }
+    if (!ok) $('#no-gl').hidden = false;
+    register(el, {
+      setText: () => { if (ok) buildTexture(); else build(); },
+      resize: build,
+      frame(now) {
+        if (!ok) return;
+        step(now);
+        render();
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 页面最底 ---------- */
+  (() => {
+    const el = footer('.f-end', MARK);
+    const mark = $('.mark', el);
+    register(el, { setText: () => fitMark(mark), resize: () => fitMark(mark) });
+    fitMark(mark);
+  })();
+
+  // 换品牌名、改窗口宽度、字体加载完成时重排
+  let textTimer, resizeTimer, lastW = innerWidth;
+  input.addEventListener('input', () => {
+    brand = input.value.trim() || 'Lumen';
+    document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    clearTimeout(textTimer);
+    textTimer = setTimeout(() => demos.forEach(d => d.setText?.()), 150);
+  });
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => demos.forEach(d => (d.resize || d.setText)?.()), 150);
+  });
+  document.fonts.ready.then(() => demos.forEach(d => d.setText?.()));
+</script>
+</body>
+</html>

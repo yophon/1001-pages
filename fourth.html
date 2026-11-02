@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚第四批</title>
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --line: #26262b;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .back { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .bar .back:hover { color: var(--text); }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .bar input {
+    width: 150px; padding: 5px 9px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .bar nav { display: flex; gap: 2px; overflow-x: auto; margin-left: auto; max-width: 100%; scrollbar-width: none; }
+  .bar nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .bar nav a:hover { color: var(--text); background: var(--panel); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 112px 16px 24px; }
+  .hero h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p { color: var(--muted); margin: 0 0 12px; }
+
+  /* 每一节的“正文” */
+  .intro { position: relative; z-index: 1; background: var(--bg); padding: 96px 16px 80px; }
+  .intro > * { max-width: 720px; margin-inline: auto; }
+  .num { font: 900 64px/1 var(--sans); color: transparent; -webkit-text-stroke: 1px #44444c; }
+  .intro h2 { font-size: 28px; line-height: 1.3; margin-top: 12px; margin-bottom: 12px; }
+  .intro p { color: var(--muted); margin-top: 0; margin-bottom: 16px; }
+  .note { font-size: 14px; color: #f0b35a !important; }
+  .ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+  .ctrl select {
+    padding: 6px 10px; border-radius: 6px; font: inherit;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text);
+  }
+  .ctrl button {
+    font: 13px/1 var(--sans); color: var(--text); cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+  }
+  .tips { padding-left: 20px; color: var(--muted); }
+  .tips li { margin-bottom: 10px; }
+  .tips b { color: var(--text); }
+
+  /* 页脚公共部分 */
+  .demo { position: relative; overflow: hidden; padding-top: 56px; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 28px 64px;
+    padding: 0 clamp(16px, 4vw, 48px); font-size: 14px;
+    position: relative; z-index: 1;
+  }
+  .links div { display: flex; flex-direction: column; gap: 4px; }
+  .links b { font-size: 12px; font-weight: 600; letter-spacing: .08em; opacity: .55; margin-bottom: 4px; }
+  .links span { opacity: .85; }
+  .links .copy { margin-left: auto; align-self: flex-end; font-size: 13px; opacity: .55; }
+  .mark-wrap { container-type: inline-size; padding-inline: clamp(8px, 2vw, 24px); margin-top: 48px; }
+  .mark {
+    display: block;
+    font: 900 22cqw/0.8 var(--sans);
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    margin-bottom: -0.15em;
+  }
+  .mark > span { display: inline-block; }
+  .stage-canvas { display: block; width: 100%; margin-top: 32px; touch-action: pan-y; }
+
+  /* 01 签名描线：每个字的轮廓先画出来，再填色；--i 控制先后 */
+  .q1 { background: #f3efe6; color: #6f6758; }
+  .sig-wrap { padding: 48px clamp(16px, 4vw, 48px) 40px; }
+  .sig { display: block; width: 100%; height: auto; max-height: 46vh; color: #1b1a17; overflow: visible; }
+  .sig tspan { fill: transparent; stroke: currentColor; stroke-width: 1.1; stroke-dasharray: 700; stroke-dashoffset: 700; }
+  .sig.play tspan {
+    animation:
+      sig-draw 1.6s cubic-bezier(.55, .1, .35, 1) calc(var(--i) * .22s) forwards,
+      sig-fill .8s ease calc(var(--i) * .22s + 1.3s) forwards;
+  }
+  @keyframes sig-draw { to { stroke-dashoffset: 0; } }
+  @keyframes sig-fill { to { fill: currentColor; } }
+  @media (prefers-reduced-motion: reduce) {
+    .sig tspan, .sig.play tspan { animation: none; stroke-dashoffset: 0; fill: currentColor; }
+  }
+
+  /* 02 机场翻牌 */
+  .q2 { background: #0b0b0b; color: #6d6d6d; }
+  .board-wrap { container-type: inline-size; padding: 44px clamp(16px, 4vw, 48px) 56px; }
+  .board {
+    display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 1cqw; cursor: pointer;
+    font: 800 min(calc(88cqw / var(--n)), 30vh)/1 var(--sans); color: #f3efe4;
+  }
+  .flap { position: relative; height: 1.4em; perspective: 4em; }
+  .flap::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px;
+    background: rgb(0 0 0 / .7); z-index: 3;
+  }
+  .half, .leaf { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; backface-visibility: hidden; }
+  .half.top, .leaf.top { top: 0; border-radius: .08em .08em 0 0; background: linear-gradient(#2a2a2a, #1f1f1f); transform-origin: 50% 100%; }
+  .half.bottom, .leaf.bottom { bottom: 0; border-radius: 0 0 .08em .08em; background: linear-gradient(#1c1c1c, #151515); transform-origin: 50% 0; }
+  .leaf { z-index: 2; visibility: hidden; }
+  .leaf.bottom { transform: rotateX(90deg); }
+  .half span, .leaf span { position: absolute; left: 0; right: 0; height: 1.4em; line-height: 1.4em; text-align: center; }
+  .top span { top: 0; }
+  .bottom span { bottom: 0; }
+
+  /* 03 镭射闪卡 */
+  .q3 { background: #0d0d10; color: #8a8a96; }
+  .holo-stage { container-type: inline-size; perspective: 1200px; display: flex; justify-content: center; padding: 7vh 2cqw 9vh; }
+  .holo { transform-style: preserve-3d; will-change: transform; }
+  .holo span {
+    --mx: 50%; --my: 50%; --bx: 50%; --by: 50%;
+    display: block; width: max-content;
+    font: 900 20cqw/1 var(--sans); letter-spacing: -0.04em; white-space: nowrap;
+    color: transparent;
+    background:
+      radial-gradient(circle at var(--mx) var(--my), rgb(255 255 255 / .95) 0, rgb(255 255 255 / .3) 10%, transparent 28%),
+      linear-gradient(105deg, transparent 42%, rgb(255 255 255 / .85) 50%, transparent 58%),
+      repeating-linear-gradient(115deg, #ff5fa2 0%, #ffd14a 7%, #4dffb0 14%, #45b8ff 21%, #a174ff 28%, #ff5fa2 35%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(160deg, #d9d9e3, #8b8b98 55%, #c9c9d4);
+    background-size: 100% 100%, 250% 100%, 300% 300%, 160px 160px, 100% 100%;
+    background-position: 0 0, calc(100% - var(--bx)) 0, var(--bx) var(--by), 0 0, 0 0;   /* 反光带和鼠标反向扫过 */
+    background-blend-mode: screen, screen, overlay, soft-light, normal;
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter: drop-shadow(0 0 1px rgb(255 255 255 / .25));
+  }
+
+  /* 04 光源投影：画布铺满整个页脚，灯光才不会在画布边上断开 */
+  .q4 { background: #e9dfcc; color: #6e5f47; }
+  .q4 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .shadow-space { height: clamp(260px, 38vw, 560px); }
+
+  /* 05 字里装水 */
+  .q5 { background: #08121c; color: #5d7b93; }
+  .q5 canvas { cursor: pointer; }
+
+  /* 06 积雪 */
+  .q6 { background: linear-gradient(#0e1726, #1d2c47); color: #8ea0bd; }
+
+  /* 07 会眨眼的字 */
+  .q7 { background: #fdf1dc; color: #8a6d4d; }
+
+  /* 08 剪报拼贴 */
+  .q8 {
+    background:
+      radial-gradient(circle at 20% 30%, rgb(255 255 255 / .12), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgb(0 0 0 / .08), transparent 45%),
+      #cdb08a;
+    color: #4a3720;
+  }
+  .collage-wrap { padding: 56px clamp(16px, 4vw, 48px) 64px; }
+  .collage { display: flex; justify-content: center; align-items: center; white-space: nowrap; filter: drop-shadow(0 4px 5px rgb(60 40 10 / .35)); }
+  .piece {
+    display: inline-block; padding: .06em .14em; margin: 0 .03em; line-height: 1;
+    transform: translateY(var(--y, 0)) rotate(var(--r, 0deg)) scale(var(--s, 1));
+    transition: transform .25s;
+  }
+  .gap { display: inline-block; width: .3em; }
+
+  .f-end { background: var(--bg); color: #7a7a83; border-top: 1px solid var(--line); }
+  .f-end .mark { color: #26262c; }
+</style>
+</head>
+<body id="top">
+
+<div class="bar">
+  <a class="back" href="extra.html">← 第三批</a>
+  <strong>第四批</strong>
+  <label>品牌名 <input id="brand" value="Lumen" maxlength="16" spellcheck="false"></label>
+  <nav>
+    <a href="overview.html">总览</a>
+    <a href="#c1">01 签名</a><a href="#c2">02 翻牌</a><a href="#c3">03 镭射</a><a href="#c4">04 投影</a><a href="#c5">05 装水</a><a href="#c6">06 积雪</a><a href="#c7">07 眼睛</a><a href="#c8">08 剪报</a><a href="fifth.html">第五批 →</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <h1>巨字页脚，第四批</h1>
+  <p>这一批换的是“质感”和“性格”：笔迹、机械、材质、光影、液体、天气、表情、拼贴。用法和前几页一样，顶栏可以换品牌名，离开屏幕就暂停。</p>
+  <p class="note" id="reduced-note" hidden>你的系统开了“减少动画”：自动播放的部分会停掉，鼠标触发的效果保留。</p>
+</header>
+
+<section id="c1">
+  <div class="intro">
+    <div class="num">01</div>
+    <h2>签名描线</h2>
+    <p>滚到这里时，大字像被一支笔逐个描出轮廓，描完再填上墨色，一个字接一个字，像在签名。</p>
+    <p>做法是 SVG 文字的描边动画：把描边设成一段很长的虚线，再把虚线的起点从末尾挪到开头。每个字是一个 tspan，各自延迟一点开始。</p>
+    <div class="ctrl">
+      <select id="sig-style" aria-label="字体"><option value="bold">粗黑体</option><option value="hand">手写体</option></select>
+      <button type="button" id="sig-replay">再写一遍</button>
+    </div>
+  </div>
+  <footer class="demo q1"></footer>
+</section>
+
+<section id="c2">
+  <div class="intro">
+    <div class="num">02</div>
+    <h2>机场翻牌</h2>
+    <p>像车站的翻牌显示屏，每一格翻过几个随机字符后停在目标字上。每隔几秒换一条：品牌名、现在几点、一句招呼。点一下翻牌屏可以立刻换下一条。</p>
+    <p>每一格由四片组成：上下两片静止的半格，加上一片往下翻的上半格、一片翻下来的下半格，翻页用 Web Animations 控制先后。</p>
+  </div>
+  <footer class="demo q2"></footer>
+</section>
+
+<section id="c3">
+  <div class="intro">
+    <div class="num">03</div>
+    <h2>镭射闪卡</h2>
+    <p>大字像一张全息镭射卡，鼠标移动时彩虹反光跟着流动，还有一块高光跟着光标走，整块字随之微微倾斜。</p>
+    <p>纯 CSS：彩虹条纹、高光、噪点、银色底四层背景叠在一起，用混合模式融合后，裁剪成文字的形状。鼠标位置只改几个 CSS 变量。</p>
+  </div>
+  <footer class="demo q3"></footer>
+</section>
+
+<section id="c4">
+  <div class="intro">
+    <div class="num">04</div>
+    <h2>光源投影</h2>
+    <p>鼠标是一盏悬在纸面上方的灯，字是立在纸上的厚纸片，影子永远背着灯的方向拉长；离灯越远，影子越长。鼠标不在时，灯会自己绕着转，像日晷。</p>
+    <p>字和纸几乎同色，全靠影子把字形托出来。影子是把每个字的剪影沿投影方向连贴 28 次、每次很淡叠出来的，所以离字越远越淡。</p>
+  </div>
+  <footer class="demo q4"></footer>
+</section>
+
+<section id="c5">
+  <div class="intro">
+    <div class="num">05</div>
+    <h2>字里装水</h2>
+    <p>每个字是装着半杯水的玻璃：鼠标左右移动，水面跟着倾斜；手划过水面会起波纹，点一下会溅起来；快速滚动页面，水会晃。时不时还会冒一串气泡。</p>
+    <p>水面是一排互相牵连的弹簧，每帧算一遍波动；整片水画在离屏画布上，再用文字的形状裁剪。</p>
+  </div>
+  <footer class="demo q5"></footer>
+</section>
+
+<section id="c6">
+  <div class="intro">
+    <div class="num">06</div>
+    <h2>积雪</h2>
+    <p>雪落在笔画的顶上会停住，越积越厚，还会顺着边缘滑下来堆成斜坡。鼠标划过可以把雪扫掉，扫起来的雪会重新飘落。积得太多时，最上层的雪会慢慢化掉。</p>
+    <p>画面被分成 3px 的小格子，字所在的格子是实心的；每片雪往下落，下面堵住了就试着往左下、右下滑，都堵住了就停在原地，变成积雪的一格。</p>
+    <div class="ctrl"><button type="button" id="snow-clear">扫干净</button></div>
+  </div>
+  <footer class="demo q6"></footer>
+</section>
+
+<section id="c7">
+  <div class="intro">
+    <div class="num">07</div>
+    <h2>会眨眼的字</h2>
+    <p>字母的空心里长出了眼睛，眼珠跟着鼠标转，时不时眨一下；快速滚动页面时眼珠会晃，像玩具上的活动眼。</p>
+    <p>眼睛的位置是自动找的，和第三批“钻进字母里”用的是同一个办法：找出所有空心，在每个空心里离笔画最远的点放一只眼睛。中文也行，比如“回”有两只、“日”有两只。品牌名里没有空心时，就在字中间贴一对。</p>
+  </div>
+  <footer class="demo q7"></footer>
+</section>
+
+<section id="c8">
+  <div class="intro">
+    <div class="num">08</div>
+    <h2>剪报拼贴</h2>
+    <p>每个字像是从不同的报纸杂志上剪下来的：字体、底色、角度都不一样，边缘是剪刀剪出的毛边。鼠标碰到哪个字，那个字就换一张。</p>
+    <p>字体只用 Windows 自带的，中文从微软雅黑、楷体、宋体、仿宋、黑体里挑；毛边是随机缩进的多边形裁剪。</p>
+    <div class="ctrl"><button type="button" id="recut">重新剪一次</button></div>
+  </div>
+  <footer class="demo q8"></footer>
+</section>
+
+<section id="end">
+  <div class="intro">
+    <div class="num">✓</div>
+    <h2>四页合起来</h2>
+    <ul class="tips">
+      <li><b>基础六种</b>：裁切、幕布、渐隐、手电筒、升起、透图。</li>
+      <li><b>进阶八种</b>：可变字体、跑马灯、橡皮筋、点阵、物理、粒子、液体、实时数据。</li>
+      <li><b>第三批</b>：立体、钻洞、光栅、天空、钢琴、终端、足迹、旗帜。</li>
+      <li><b>这一批</b>：签名、翻牌、镭射、投影、装水、积雪、眼睛、剪报。</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="demo f-end"></footer>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[(Math.random() * a.length) | 0];
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = () => Math.min(devicePixelRatio || 1, 2);
+  const SANS = '"Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+  const input = $('#brand');
+  let brand = input.value.trim() || 'Lumen';
+  if (REDUCED) $('#reduced-note').hidden = false;
+
+  const LINKS = `
+    <div class="links">
+      <div><b>产品</b><span>功能</span><span>价格</span><span>更新日志</span></div>
+      <div><b>公司</b><span>关于我们</span><span>招聘</span><span>联系</span></div>
+      <div><b>资源</b><span>文档</span><span>博客</span><span>社区</span></div>
+      <div class="copy">© 2026 <span class="bn"></span></div>
+    </div>`;
+  const MARK = `<div class="mark-wrap"><div class="mark" aria-hidden="true"><span></span></div></div>`;
+
+  function footer(sel, inner) {
+    const el = $(sel);
+    el.innerHTML = LINKS + inner;
+    el.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    return el;
+  }
+
+  // 大字铺满容器：100px 下量宽度，换算成 cqw
+  function fitMark(mark) {
+    const span = mark.firstElementChild;
+    span.textContent = brand;
+    mark.style.fontSize = '100px';
+    const w = span.getBoundingClientRect().width;
+    if (w) mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 60vh)`;
+  }
+
+  // canvas 上把文字居中铺进 w×h，返回 fillText 的坐标和字形高度
+  function fitText(ctx, text, w, h, fill = 1) {
+    ctx.font = `900 100px ${SANS}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(text);
+    const tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight || 1;
+    const th = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || 1;
+    const size = Math.min(fill * 100 * w / tw, fill * 100 * h / th);
+    const k = size / 100;
+    ctx.font = `900 ${size}px ${SANS}`;
+    return {
+      x: (w - tw * k) / 2 + m.actualBoundingBoxLeft * k,
+      y: (h - th * k) / 2 + m.actualBoundingBoxAscent * k,
+      asc: m.actualBoundingBoxAscent * k,
+      h: th * k,
+    };
+  }
+
+  function sizeCanvas(cv, ratio, min) {
+    const dpr = DPR(), W = cv.clientWidth;
+    const H = Math.round(clamp(W * ratio, min, Math.max(min, innerHeight * 0.6)));
+    cv.style.height = H + 'px';
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    return { W, H, dpr };
+  }
+
+  // 记录指针相对 target 的位置和每次移动的位移
+  function trackPointer(el, target) {
+    const p = { x: -1e9, y: -1e9, vx: 0, vy: 0, on: false };
+    el.addEventListener('pointermove', e => {
+      const r = target.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (p.on) { p.vx = x - p.x; p.vy = y - p.y; }
+      p.x = x; p.y = y; p.on = true;
+    });
+    el.addEventListener('pointerleave', () => { p.on = false; p.x = p.y = -1e9; p.vx = p.vy = 0; });
+    return p;
+  }
+
+  // 统一调度：只跑在屏幕上的效果
+  const demos = [];
+  const running = new Set();
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    const d = e.target.__demo;
+    if (e.isIntersecting) { running.add(d); d.enter?.(); } else running.delete(d);
+  }), { rootMargin: '80px 0px' });
+  function register(el, d) {
+    el.__demo = d;
+    demos.push(d);
+    io.observe(el);
+  }
+  let last = performance.now();
+  requestAnimationFrame(function loop(now) {
+    requestAnimationFrame(loop);   // 先排下一帧：某个效果出错也不会把整个循环拖停
+    const dt = Math.min(now - last, 50);
+    last = now;
+    running.forEach(d => {
+      try { d.frame?.(now, dt); } catch (err) { running.delete(d); console.error(err); }
+    });
+  });
+
+  /* ---------- 01 签名描线 ---------- */
+  (() => {
+    const el = footer('.q1', `<div class="sig-wrap"><svg class="sig" aria-hidden="true"><text></text></svg></div>`);
+    const svg = $('.sig', el), text = $('text', el), style = $('#sig-style');
+    const FONTS = {
+      bold: { font: `900 100px ${SANS}`, stroke: 1.1 },
+      hand: { font: '400 100px "Segoe Script", "Ink Free", KaiTi, STKaiti, cursive', stroke: 0.9 },
+    };
+    let played = false;
+    function play() {
+      svg.classList.remove('play');
+      void svg.getBoundingClientRect();   // 强制重排，动画才会从头再来
+      svg.classList.add('play');
+    }
+    function setText() {
+      const f = FONTS[style.value];
+      text.textContent = '';
+      Array.from(brand).forEach((ch, i) => {
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        t.textContent = ch;
+        t.style.setProperty('--i', i);
+        text.append(t);
+      });
+      text.style.font = f.font;
+      text.setAttribute('x', 0);
+      text.setAttribute('y', 100);
+      text.querySelectorAll('tspan').forEach(t => { t.style.strokeWidth = f.stroke; });
+      const b = text.getBBox(), pad = 4;
+      svg.setAttribute('viewBox', `${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`);
+      if (played) play();
+    }
+    style.addEventListener('change', setText);
+    $('#sig-replay').addEventListener('click', () => { played = true; play(); el.scrollIntoView({ block: 'end', behavior: 'smooth' }); });
+    register(el, {
+      setText,
+      frame() {
+        if (played) return;
+        if (svg.getBoundingClientRect().top < innerHeight * 0.85) { played = true; play(); }
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 02 机场翻牌 ---------- */
+  (() => {
+    const el = footer('.q2', `<div class="board-wrap"><div class="board" aria-hidden="true"></div></div>`);
+    const board = $('.board', el);
+    const POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const POOL_ZH = '的一是在人有我他这中大来上国个到说们为子和你地出道也时年';
+    const isCJK = ch => /[㐀-鿿]/.test(ch);
+    const clock = () => new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const messages = () => [brand, clock(), 'HELLO'];
+    let cells = [], msgIdx = 0, busy = false, nextAt = 0, started = false;
+
+    function makeCell() {
+      const c = document.createElement('div');
+      c.className = 'flap';
+      c.innerHTML = '<div class="half top"><span></span></div><div class="half bottom"><span></span></div><div class="leaf top"><span></span></div><div class="leaf bottom"><span></span></div>';
+      const [st, sb, lt, lb] = c.querySelectorAll('span');
+      board.append(c);
+      return { st, sb, lt, lb, leafT: c.children[2], leafB: c.children[3], ch: ' ' };
+    }
+    // 翻一页：上半片带着旧字往下翻到 90°，下半片带着新字从 90° 落下来
+    async function flip(cell, next) {
+      const cur = cell.ch;
+      cell.st.textContent = next;
+      cell.sb.textContent = cur;
+      cell.lt.textContent = cur;
+      cell.lb.textContent = next;
+      cell.leafT.style.visibility = cell.leafB.style.visibility = 'visible';
+      const a = cell.leafT.animate([{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-90deg)' }], { duration: 50, easing: 'ease-in', fill: 'forwards' });
+      await a.finished;
+      const b = cell.leafB.animate([{ transform: 'rotateX(90deg)' }, { transform: 'rotateX(0deg)' }], { duration: 60, easing: 'ease-out', fill: 'forwards' });
+      await b.finished;
+      cell.sb.textContent = next;
+      cell.ch = next;
+      cell.leafT.style.visibility = cell.leafB.style.visibility = 'hidden';
+      a.cancel();
+      b.cancel();
+    }
+    async function flipTo(cell, target) {
+      if (cell.ch === target) return;
+      const n = REDUCED ? 0 : 3 + ((Math.random() * 7) | 0);
+      for (let k = 0; k < n; k++) await flip(cell, pick(isCJK(target) ? POOL_ZH : POOL));
+      await flip(cell, target);
+    }
+    async function show(msg) {
+      busy = true;
+      const chars = Array.from(msg).slice(0, cells.length);
+      const slots = Array(cells.length).fill(' ');
+      const start = Math.floor((cells.length - chars.length) / 2);
+      chars.forEach((c, i) => { slots[start + i] = c; });
+      await Promise.all(cells.map((c, i) => new Promise(r => setTimeout(r, i * 70)).then(() => flipTo(c, slots[i]))));
+      busy = false;
+    }
+    function setText() {
+      board.textContent = '';
+      const n = Math.max(Array.from(brand).length, 5);
+      board.style.setProperty('--n', n);
+      cells = Array.from({ length: n }, makeCell);
+      cells.forEach(c => { c.st.textContent = c.sb.textContent = ' '; });
+      msgIdx = 0;
+      started = false;
+    }
+    const next = () => { if (busy) return; msgIdx = (msgIdx + 1) % 3; show(messages()[msgIdx]); };
+    board.addEventListener('click', next);
+    register(el, {
+      setText,
+      frame(now) {
+        if (!started) {
+          if (board.getBoundingClientRect().top > innerHeight * 0.85) return;
+          started = true;
+          show(brand);
+          nextAt = now + 6000;
+          return;
+        }
+        if (!REDUCED && !busy && now > nextAt) { next(); nextAt = now + 6000; }
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 03 镭射闪卡 ---------- */
+  (() => {
+    const el = footer('.q3', `<div class="holo-stage"><div class="holo" aria-hidden="true"><span></span></div></div>`);
+    const stage = $('.holo-stage', el), holo = $('.holo', el), span = $('.holo span', el);
+    const P = trackPointer(el, stage);
+    let mx = 0.5, my = 0.5;
+    function setText() {
+      span.textContent = brand;
+      span.style.fontSize = '100px';
+      const w = span.offsetWidth || 1;
+      span.style.fontSize = `min(${(10000 * 0.9 / w).toFixed(3)}cqw, 45vh)`;
+    }
+    register(el, {
+      setText,
+      frame(now) {
+        let tx, ty;
+        if (P.on) {
+          tx = clamp(P.x / stage.clientWidth, 0, 1);
+          ty = clamp(P.y / stage.clientHeight, 0, 1);
+        } else if (REDUCED) {
+          tx = ty = 0.5;
+        } else {
+          tx = 0.5 + Math.sin(now / 2200) * 0.35;
+          ty = 0.5 + Math.cos(now / 2900) * 0.3;
+        }
+        mx += (tx - mx) * 0.1;
+        my += (ty - my) * 0.1;
+        holo.style.transform = `rotateX(${((0.5 - my) * 18).toFixed(2)}deg) rotateY(${((mx - 0.5) * 24).toFixed(2)}deg)`;
+        span.style.setProperty('--mx', `${(mx * 100).toFixed(1)}%`);
+        span.style.setProperty('--my', `${(my * 100).toFixed(1)}%`);
+        span.style.setProperty('--bx', `${(mx * 100).toFixed(1)}%`);   // 彩虹跟着倾斜方向流动
+        span.style.setProperty('--by', `${(my * 100).toFixed(1)}%`);
+      },
+    });
+    setText();
+  })();
+
+  /* ---------- 04 光源投影 ---------- */
+  (() => {
+    const el = footer('.q4', `<canvas aria-hidden="true"></canvas><div class="shadow-space"></div>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const STEPS = 28;
+    let W, H, dpr, font, ox, oy, glyphs = [], L = null;
+
+    function build() {
+      dpr = DPR();
+      W = el.clientWidth;
+      H = el.clientHeight;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      const sh = $('.shadow-space', el).offsetHeight;
+      const f = fitText(ctx, brand, W * 0.9, sh * 0.6);
+      font = ctx.font;
+      ox = W * 0.05 + f.x;
+      oy = H - sh + sh * 0.15 + f.y;
+      // 每个字单独做一张剪影，后面沿投影方向反复贴
+      const chars = Array.from(brand);
+      glyphs = [];
+      chars.forEach((ch, i) => {
+        if (!ch.trim()) return;
+        const x = ox + ctx.measureText(chars.slice(0, i).join('')).width;
+        const m = ctx.measureText(ch);
+        const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight, h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+        const left = x - m.actualBoundingBoxLeft - 2, top = oy - m.actualBoundingBoxAscent - 2;
+        const s = document.createElement('canvas');
+        s.width = Math.ceil((w + 4) * dpr);
+        s.height = Math.ceil((h + 4) * dpr);
+        const sc = s.getContext('2d');
+        sc.scale(dpr, dpr);
+        sc.font = font;
+        sc.fillStyle = '#4a3a24';
+        sc.fillText(ch, m.actualBoundingBoxLeft + 2, m.actualBoundingBoxAscent + 2);
+        glyphs.push({ sprite: s, left, top, w: w + 4, h: h + 4, cx: left + w / 2 + 2, cy: top + h / 2 + 2 });
+      });
+      L = L || { x: W * 0.2, y: H * 0.1 };
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        let tx, ty;
+        if (P.on) { tx = P.x; ty = P.y; }
+        else if (REDUCED) { tx = W * 0.2; ty = H * 0.1; }
+        else { tx = W / 2 + Math.cos(now / 3000) * W * 0.42; ty = H * 0.2 + Math.sin(now / 3000) * H * 0.15; }
+        L.x += (tx - L.x) * 0.15;
+        L.y += (ty - L.y) * 0.15;
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = '#e9dfcc';
+        ctx.fillRect(0, 0, W, H);
+        const glow = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, W * 0.55);
+        glow.addColorStop(0, 'rgba(255,250,236,0.9)');
+        glow.addColorStop(1, 'rgba(255,250,236,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, H);
+
+        // 点光源：灯高 HL、字厚 HZ，影子尖端 = 字的位置 + (字 - 灯) × HZ / (HL - HZ)
+        const HL = H * 0.9, HZ = H * 0.11, k = HZ / (HL - HZ), maxLen = H * 1.6;
+        ctx.globalAlpha = 0.05;
+        for (const g of glyphs) {
+          let dx = (g.cx - L.x) * k, dy = (g.cy - L.y) * k;
+          const len = Math.hypot(dx, dy);
+          if (len > maxLen) { dx *= maxLen / len; dy *= maxLen / len; }
+          for (let s = STEPS; s >= 1; s--) {
+            const t = s / STEPS;
+            ctx.drawImage(g.sprite, g.left + dx * t, g.top + dy * t, g.w, g.h);
+          }
+        }
+        ctx.globalAlpha = 1;
+        ctx.font = font;
+        ctx.fillStyle = '#f7f1e6';
+        ctx.fillText(brand, ox, oy);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(90,70,40,0.18)';
+        ctx.strokeText(brand, ox, oy);
+        if (P.on) {   // 灯本身
+          const b = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, 14);
+          b.addColorStop(0, 'rgba(255,255,255,1)');
+          b.addColorStop(0.4, 'rgba(255,236,190,0.9)');
+          b.addColorStop(1, 'rgba(255,236,190,0)');
+          ctx.fillStyle = b;
+          ctx.beginPath();
+          ctx.arc(L.x, L.y, 14, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 05 字里装水 ---------- */
+  (() => {
+    const el = footer('.q5', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const STEP = 6;
+    let W, H, dpr, font, tx, ty, top, bottom, mask, liq, lctx, N, hs, vs, slope = 0, bubbles = [], lastY = scrollY;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.34, 220));
+      const f = fitText(ctx, brand, W, H, 0.9);
+      font = ctx.font; tx = f.x; ty = f.y;
+      top = ty - f.asc;
+      bottom = top + f.h;
+      mask = document.createElement('canvas');
+      mask.width = cv.width; mask.height = cv.height;
+      const mc = mask.getContext('2d');
+      mc.scale(dpr, dpr);
+      mc.font = font;
+      mc.fillStyle = '#fff';
+      mc.fillText(brand, tx, ty);
+      liq = document.createElement('canvas');
+      liq.width = cv.width; liq.height = cv.height;
+      lctx = liq.getContext('2d');
+      N = Math.ceil(W / STEP) + 1;
+      hs = new Float32Array(N);
+      vs = new Float32Array(N);
+      bubbles = [];
+    }
+    const level = () => top + (bottom - top) * 0.45;   // 水装到 55% 左右
+    const surfaceAt = i => level() + (i * STEP - W / 2) * slope + hs[i];
+    const kick = (x, amount, spread = 2) => {
+      const i = Math.round(x / STEP);
+      for (let j = i - spread; j <= i + spread; j++) if (j >= 0 && j < N) vs[j] += amount * (1 - Math.abs(j - i) / (spread + 1));
+    };
+    cv.addEventListener('pointerdown', e => {
+      const r = cv.getBoundingClientRect();
+      kick(e.clientX - r.left, -9, 4);   // 点一下溅起来
+    });
+    register(el, {
+      setText: build, resize: build,
+      enter() { lastY = scrollY; },
+      frame(now) {
+        const target = P.on ? (P.x / W - 0.5) * 0.3 : REDUCED ? 0 : Math.sin(now / 1800) * 0.05;
+        slope += (target - slope) * 0.04;
+        const sv = clamp(scrollY - lastY, -40, 40);
+        lastY = scrollY;
+        if (sv) for (let i = 0; i < N; i++) vs[i] += sv * 0.025 * (i / (N - 1) - 0.5);   // 滚动时左右两头一起一落，水就晃起来
+        if (P.on) {
+          const i = clamp(Math.round(P.x / STEP), 0, N - 1);
+          if (Math.abs(P.y - surfaceAt(i)) < 40) kick(P.x, P.vy * 0.08 + Math.abs(P.vx) * 0.03);
+        }
+        // 水面：每个点被拉回平衡位置，同时被左右邻居带动
+        for (let pass = 0; pass < 2; pass++) {
+          for (let i = 0; i < N; i++) {
+            const l = hs[Math.max(i - 1, 0)], r = hs[Math.min(i + 1, N - 1)];
+            vs[i] = (vs[i] + (l + r - 2 * hs[i]) * 0.18 - hs[i] * 0.012) * 0.985;
+          }
+          for (let i = 0; i < N; i++) hs[i] += vs[i];
+        }
+        if (!REDUCED && Math.random() < 0.12) bubbles.push({ x: rand(0, W), y: bottom - rand(0, 8), r: rand(1.5, 4), vy: rand(0.6, 1.4), ph: rand(0, 6.28) });
+
+        lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        lctx.globalCompositeOperation = 'source-over';
+        lctx.clearRect(0, 0, W, H);
+        const g = lctx.createLinearGradient(0, level() - 30, 0, bottom);
+        g.addColorStop(0, '#5ef0e0');
+        g.addColorStop(1, '#1446c8');
+        lctx.fillStyle = g;
+        lctx.beginPath();
+        lctx.moveTo(0, H);
+        for (let i = 0; i < N; i++) lctx.lineTo(i * STEP, surfaceAt(i));
+        lctx.lineTo(W, H);
+        lctx.closePath();
+        lctx.fill();
+        lctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        lctx.lineWidth = 2;
+        lctx.beginPath();
+        for (let i = 0; i < N; i++) lctx[i ? 'lineTo' : 'moveTo'](i * STEP, surfaceAt(i));
+        lctx.stroke();
+        lctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        lctx.lineWidth = 1;
+        bubbles = bubbles.filter(b => {
+          b.y -= b.vy;
+          b.x += Math.sin(now / 200 + b.ph) * 0.3;
+          if (b.y < surfaceAt(clamp(Math.round(b.x / STEP), 0, N - 1))) return false;   // 冒出水面就破
+          lctx.beginPath();
+          lctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          lctx.stroke();
+          return true;
+        });
+        lctx.setTransform(1, 0, 0, 1, 0, 0);
+        lctx.globalCompositeOperation = 'destination-in';   // 只留下字里面的水
+        lctx.drawImage(mask, 0, 0);
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+        ctx.font = font;
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fillText(brand, tx, ty);
+        ctx.drawImage(liq, 0, 0, W, H);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(190,230,255,0.45)';
+        ctx.strokeText(brand, tx, ty);
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 06 积雪 ---------- */
+  (() => {
+    const el = footer('.q6', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const C = 3;   // 格子边长
+    let W, H, dpr, cols, rows, grid, ink, snow, sctx, flakes = [], snowCount = 0, cap = 0, base = 0;
+
+    const spawn = anywhere => ({ x: rand(0, W), y: anywhere ? rand(-H, H * 0.5) : rand(-30, 0), vy: rand(0.8, 2), ph: rand(0, 6.28), sz: rand(1, 2.3) });
+    const free = (c, r) => c >= 0 && c < cols && r >= 0 && r < rows && grid[r * cols + c] === 0;
+    function settle(c, r) {
+      grid[r * cols + c] = 2;
+      snowCount++;
+      sctx.fillStyle = Math.random() < 0.3 ? '#dfe7f5' : '#f6f9ff';
+      sctx.fillRect(c * C, r * C, C, C);
+    }
+    function unsettle(i) {
+      grid[i] = 0;
+      snowCount--;
+      sctx.clearRect((i % cols) * C, Math.floor(i / cols) * C, C, C);
+    }
+    function stepFlakes(t) {
+      for (let i = 0; i < flakes.length; i++) {
+        const f = flakes[i];
+        f.y += f.vy;
+        f.x += Math.sin(t / 900 + f.ph) * 0.35;
+        if (f.x < 0) f.x += W;
+        if (f.x >= W) f.x -= W;
+        if (f.y < 0) continue;
+        const c = Math.floor(f.x / C), r = Math.floor(f.y / C);
+        if (r >= rows || !free(c, r)) { flakes[i] = i < base ? spawn(false) : null; continue; }
+        if (free(c, r + 1)) continue;
+        // 下面堵住了：像沙子一样先试左下、右下，滑不动才停住
+        const d = Math.random() < 0.5 ? -1 : 1;
+        if (free(c + d, r + 1)) { f.x += d * C; continue; }
+        if (free(c - d, r + 1)) { f.x -= d * C; continue; }
+        settle(c, r);
+        flakes[i] = i < base ? spawn(false) : null;   // 扫起来的那些雪落定后就不再补
+      }
+      flakes = flakes.filter(Boolean);
+    }
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      cols = Math.ceil(W / C);
+      rows = Math.ceil(H / C);
+      grid = new Uint8Array(cols * rows);
+      ink = document.createElement('canvas');
+      ink.width = cv.width; ink.height = cv.height;
+      const ic = ink.getContext('2d', { willReadFrequently: true });
+      ic.scale(dpr, dpr);
+      const f = fitText(ic, brand, W, H * 0.78, 0.9);
+      ic.fillStyle = '#33425f';
+      ic.fillText(brand, f.x, f.y + H * 0.2);
+      const data = ic.getImageData(0, 0, ink.width, ink.height).data;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const px = Math.min(ink.width - 1, ((c + 0.5) * C * dpr) | 0), py = Math.min(ink.height - 1, ((r + 0.5) * C * dpr) | 0);
+        if (data[(py * ink.width + px) * 4 + 3] > 128) grid[r * cols + c] = 1;
+      }
+      for (let c = 0; c < cols; c++) grid[(rows - 1) * cols + c] = 1;   // 地面
+      snow = document.createElement('canvas');
+      snow.width = cv.width; snow.height = cv.height;
+      sctx = snow.getContext('2d');
+      sctx.scale(dpr, dpr);
+      snowCount = 0;
+      cap = Math.floor(cols * rows * 0.08);
+      base = Math.round(W / 2.2);
+      flakes = Array.from({ length: base }, () => spawn(true));
+      // 先在后台下一阵，进来时字上已经有薄薄一层；不播动画的话直接给一层积好的雪
+      for (let k = 0, n = REDUCED ? 900 : 300; k < n; k++) stepFlakes(k * 16);
+    }
+    function wipe() {
+      const R = 22, c0 = Math.max(0, Math.floor((P.x - R) / C)), c1 = Math.min(cols - 1, Math.ceil((P.x + R) / C));
+      const r0 = Math.max(0, Math.floor((P.y - R) / C)), r1 = Math.min(rows - 1, Math.ceil((P.y + R) / C));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const i = r * cols + c;
+        if (grid[i] !== 2 || Math.hypot((c + 0.5) * C - P.x, (r + 0.5) * C - P.y) > R) continue;
+        unsettle(i);
+        if (Math.random() < 0.15 && flakes.length < base * 2) flakes.push({ x: c * C, y: r * C - 6, vy: rand(0.3, 0.8), ph: rand(0, 6.28), sz: rand(1, 2) });
+      }
+    }
+    // 积太多时，从露在最上面的雪开始慢慢化
+    function melt() {
+      if (snowCount <= cap) return;
+      for (let k = 0; k < 80; k++) {
+        const i = (Math.random() * grid.length) | 0;
+        if (grid[i] === 2 && (i < cols || grid[i - cols] === 0)) { unsettle(i); break; }
+      }
+    }
+    $('#snow-clear').addEventListener('click', () => {
+      for (let i = 0; i < grid.length; i++) if (grid[i] === 2) grid[i] = 0;
+      snowCount = 0;
+      sctx.clearRect(0, 0, W, H);
+    });
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        if (!REDUCED) stepFlakes(now);
+        if (P.on) wipe();
+        melt();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(ink, 0, 0);
+        ctx.drawImage(snow, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.beginPath();
+        for (const f of flakes) {
+          if (f.y < 0) continue;
+          ctx.moveTo(f.x + f.sz, f.y);
+          ctx.arc(f.x, f.y, f.sz, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 07 会眨眼的字 ---------- */
+  // 找出字里所有的空心：从四周灌水，灌不到的空白按连通块分开，每块取离笔画最远的点
+  function findHoles(draw, W, H) {
+    const k = 0.5, w = Math.ceil(W * k), h = Math.ceil(H * k), n = w * h;
+    const off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    const o = off.getContext('2d', { willReadFrequently: true });
+    o.scale(k, k);
+    draw(o);
+    const data = o.getImageData(0, 0, w, h).data;
+    const ink = new Uint8Array(n), outside = new Uint8Array(n), q = new Int32Array(n);
+    for (let i = 0; i < n; i++) ink[i] = data[i * 4 + 3] > 90 ? 1 : 0;
+    let qh = 0, qt = 0;
+    const flood = i => { if (!ink[i] && !outside[i]) { outside[i] = 1; q[qt++] = i; } };
+    for (let x = 0; x < w; x++) { flood(x); flood(n - w + x); }
+    for (let y = 0; y < h; y++) { flood(y * w); flood(y * w + w - 1); }
+    while (qh < qt) {
+      const i = q[qh++], x = i % w;
+      if (x > 0) flood(i - 1);
+      if (x < w - 1) flood(i + 1);
+      if (i >= w) flood(i - w);
+      if (i < n - w) flood(i + w);
+    }
+    const dist = new Int32Array(n).fill(-1);
+    for (let i = 0; i < n; i++) if (ink[i] || outside[i]) dist[i] = 0;
+    qh = qt = 0;
+    for (let i = 0; i < n; i++) {
+      if (dist[i] !== 0) continue;
+      const x = i % w;
+      if ((x > 0 && dist[i - 1] < 0) || (x < w - 1 && dist[i + 1] < 0) || (i >= w && dist[i - w] < 0) || (i < n - w && dist[i + w] < 0)) q[qt++] = i;
+    }
+    const visit = (j, d) => { if (dist[j] < 0) { dist[j] = d; q[qt++] = j; } };
+    while (qh < qt) {
+      const i = q[qh++], x = i % w, d = dist[i] + 1;
+      if (x > 0) visit(i - 1, d);
+      if (x < w - 1) visit(i + 1, d);
+      if (i >= w) visit(i - w, d);
+      if (i < n - w) visit(i + w, d);
+    }
+    const label = new Uint8Array(n), holes = [];
+    for (let s = 0; s < n; s++) {
+      if (dist[s] <= 0 || label[s]) continue;
+      let best = s;
+      qh = qt = 0;
+      q[qt++] = s;
+      label[s] = 1;
+      while (qh < qt) {
+        const i = q[qh++], x = i % w;
+        if (dist[i] > dist[best]) best = i;
+        const nb = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1];
+        for (const j of nb) if (j >= 0 && dist[j] > 0 && !label[j]) { label[j] = 1; q[qt++] = j; }
+      }
+      if (dist[best] >= 4) holes.push({ x: (best % w + 0.5) / k, y: (Math.floor(best / w) + 0.5) / k, r: dist[best] / k * 0.75 });
+    }
+    return holes;
+  }
+  (() => {
+    const el = footer('.q7', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const INK = '#ff5a5f';
+    let W, H, dpr, font, tx, ty, eyes = [], lastY = scrollY;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      const f = fitText(ctx, brand, W, H, 0.9);
+      font = ctx.font; tx = f.x; ty = f.y;
+      const holes = findHoles(o => { o.font = font; o.fillText(brand, tx, ty); }, W, H);
+      // 没有空心时，在字中间贴一对
+      const spots = holes.length ? holes : [-1, 1].map(s => ({ x: W / 2 + s * f.h * 0.22, y: ty - f.asc / 2, r: f.h * 0.16 }));
+      // 空心太小时眼睛也不能太小，宁可像贴纸一样盖出笔画一点
+      eyes = spots.map(h => ({ x: h.x, y: h.y, R: Math.max(h.r * 0.9, f.h * 0.1), px: 0, py: 0, vx: 0, vy: 0, blinkAt: performance.now() + rand(800, 5000), blink: 0 }));
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      enter() { lastY = scrollY; },
+      frame(now) {
+        const sv = clamp(scrollY - lastY, -60, 60);
+        lastY = scrollY;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+        ctx.font = font;
+        ctx.fillStyle = INK;
+        ctx.fillText(brand, tx, ty);
+        for (const e of eyes) {
+          const pr = e.R * 0.48, room = e.R - pr - e.R * 0.08;
+          // 眼珠：有鼠标就看向鼠标，没有就被“重力”拉到下面；滚动时被甩一下
+          let gx = 0, gy = room;
+          if (P.on) {
+            const dx = P.x - e.x, dy = P.y - e.y, d = Math.hypot(dx, dy) || 1, m = Math.min(room, d * 0.15);
+            gx = dx / d * m; gy = dy / d * m;
+          }
+          e.vx += (gx - e.px) * 0.12 - e.vx * 0.18;
+          e.vy += (gy - e.py) * 0.12 - e.vy * 0.18 - sv * 0.08;
+          e.px += e.vx;
+          e.py += e.vy;
+          const d = Math.hypot(e.px, e.py);
+          if (d > room) { e.px *= room / d; e.py *= room / d; e.vx *= -0.4; e.vy *= -0.4; }
+          if (!REDUCED && now > e.blinkAt) { e.blink = now; e.blinkAt = now + rand(2000, 6000); }
+          const bt = (now - e.blink) / 160, lid = bt < 1 ? Math.sin(bt * Math.PI) : 0;
+
+          ctx.fillStyle = '#fff';
+          ctx.strokeStyle = '#2b1a14';
+          ctx.lineWidth = Math.max(1.5, e.R * 0.08);
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.R, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#1d1210';
+          ctx.beginPath();
+          ctx.arc(e.x + e.px, e.y + e.py, pr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(e.x + e.px - pr * 0.35, e.y + e.py - pr * 0.35, pr * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+          if (lid > 0) {   // 眼皮从上往下盖
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, e.R, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.fillStyle = INK;
+            ctx.fillRect(e.x - e.R, e.y - e.R, e.R * 2, e.R * 2 * lid);
+            ctx.restore();
+          }
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.R, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 08 剪报拼贴 ---------- */
+  (() => {
+    const el = footer('.q8', `<div class="collage-wrap"><div class="collage" aria-hidden="true"></div></div>`);
+    const wrap = $('.collage-wrap', el), col = $('.collage', el);
+    const LATIN = [
+      `900 1em ${SANS}`, '700 1em Georgia, serif', '400 1em Impact, sans-serif', '700 1em "Courier New", monospace',
+      '400 1em "Segoe Script", cursive', '900 1em "Arial Black", sans-serif', 'italic 700 1em "Times New Roman", serif',
+      '700 1em "Comic Sans MS", cursive', '700 1em Consolas, monospace', '400 1em "Bodoni MT", Didot, serif',
+    ];
+    const CJK = ['700 1em "Microsoft YaHei", sans-serif', '400 1em KaiTi, STKaiti, serif', '700 1em SimSun, serif', '400 1em FangSong, serif', '400 1em SimHei, sans-serif', '700 1em DengXian, sans-serif'];
+    const PAPERS = [
+      ['#f4e04d', '#111'], ['#111', '#f5f0e6'], ['#e63946', '#fff'], ['#f1faee', '#1d3557'], ['#a8dadc', '#1d3557'],
+      ['#fff', '#e63946'], ['#ffb4a2', '#3d0c02'], ['#2a9d8f', '#fff'], ['#e9c46a', '#264653'], ['#e8e4d8', '#222'], ['#3a86ff', '#fff'],
+    ];
+    const isCJK = ch => /[㐀-鿿豈-﫿]/.test(ch);
+    const j = () => `${rand(0, 7).toFixed(1)}%`;
+    const jr = () => `calc(100% - ${j()})`;
+
+    function cut(piece) {
+      const [bg, fg] = pick(PAPERS);
+      piece.style.font = pick(isCJK(piece.textContent) ? CJK : LATIN);
+      piece.style.lineHeight = '1';
+      piece.style.background = bg;
+      piece.style.color = fg;
+      piece.style.setProperty('--r', `${rand(-9, 9).toFixed(1)}deg`);
+      piece.style.setProperty('--y', `${rand(-0.06, 0.06).toFixed(3)}em`);
+      piece.style.setProperty('--s', rand(0.88, 1.08).toFixed(3));
+      // 剪刀剪出的毛边：沿矩形取 8 个点，每个点随机往里缩一点
+      piece.style.clipPath = `polygon(${j()} ${j()}, 50% ${j()}, ${jr()} ${j()}, ${jr()} 50%, ${jr()} ${jr()}, 50% ${jr()}, ${j()} ${jr()}, ${j()} 50%)`;
+    }
+    function fit() {
+      col.style.fontSize = '100px';
+      col.style.width = 'max-content';   // 量内容本身的宽度，不是容器的宽度
+      const w = col.offsetWidth || 1;
+      col.style.width = '';
+      col.style.fontSize = `${Math.min(100 * (wrap.clientWidth - 32) * 0.86 / w, innerHeight * 0.3)}px`;
+    }
+    function setText() {
+      col.textContent = '';
+      Array.from(brand).forEach(ch => {
+        const p = document.createElement('span');
+        if (!ch.trim()) { p.className = 'gap'; col.append(p); return; }
+        p.className = 'piece';
+        p.textContent = ch;
+        cut(p);
+        let lastCut = 0;
+        p.addEventListener('pointerenter', () => {
+          const now = performance.now();
+          if (now - lastCut < 300) return;
+          lastCut = now;
+          cut(p);
+          if (!REDUCED) p.animate([{ scale: '1.15' }, { scale: '1' }], { duration: 250, easing: 'ease-out' });
+        });
+        col.append(p);
+      });
+      fit();
+    }
+    $('#recut').addEventListener('click', () => { col.querySelectorAll('.piece').forEach(cut); fit(); });
+    register(el, { setText, resize: fit });
+    setText();
+  })();
+
+  /* ---------- 页面最底 ---------- */
+  (() => {
+    const el = footer('.f-end', MARK);
+    const mark = $('.mark', el);
+    register(el, { setText: () => fitMark(mark), resize: () => fitMark(mark) });
+    fitMark(mark);
+  })();
+
+  // 换品牌名、改窗口宽度、字体加载完成时重排
+  let textTimer, resizeTimer, lastW = innerWidth;
+  input.addEventListener('input', () => {
+    brand = input.value.trim() || 'Lumen';
+    document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    clearTimeout(textTimer);
+    textTimer = setTimeout(() => demos.forEach(d => d.setText?.()), 150);
+  });
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => demos.forEach(d => (d.resize || d.setText)?.()), 150);
+  });
+  document.fonts.ready.then(() => demos.forEach(d => d.setText?.()));
+</script>
+</body>
+</html>

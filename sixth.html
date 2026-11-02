@@ -1,0 +1,1352 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚第六批</title>
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --line: #26262b;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .back { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .bar .back:hover { color: var(--text); }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .bar input {
+    width: 150px; padding: 5px 9px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .bar nav { display: flex; gap: 2px; overflow-x: auto; margin-left: auto; max-width: 100%; scrollbar-width: none; }
+  .bar nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .bar nav a:hover { color: var(--text); background: var(--panel); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 112px 16px 24px; }
+  .hero h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p { color: var(--muted); margin: 0 0 12px; }
+
+  /* 每一节的“正文” */
+  .intro { position: relative; z-index: 1; background: var(--bg); padding: 96px 16px 80px; }
+  .intro > * { max-width: 720px; margin-inline: auto; }
+  .num { font: 900 64px/1 var(--sans); color: transparent; -webkit-text-stroke: 1px #44444c; }
+  .intro h2 { font-size: 28px; line-height: 1.3; margin-top: 12px; margin-bottom: 12px; }
+  .intro p { color: var(--muted); margin-top: 0; margin-bottom: 16px; }
+  .note { font-size: 14px; color: #f0b35a !important; }
+  .ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+  .ctrl button {
+    font: 13px/1 var(--sans); color: var(--text); cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+  }
+  .tips { padding-left: 20px; color: var(--muted); }
+  .tips li { margin-bottom: 10px; }
+  .tips b { color: var(--text); }
+
+  /* 页脚公共部分 */
+  .demo { position: relative; overflow: hidden; padding-top: 56px; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 28px 64px;
+    padding: 0 clamp(16px, 4vw, 48px); font-size: 14px;
+    position: relative; z-index: 1;
+  }
+  .links div { display: flex; flex-direction: column; gap: 4px; }
+  .links b { font-size: 12px; font-weight: 600; letter-spacing: .08em; opacity: .55; margin-bottom: 4px; }
+  .links span { opacity: .85; }
+  .links .copy { margin-left: auto; align-self: flex-end; font-size: 13px; opacity: .55; }
+  .mark-wrap { container-type: inline-size; padding-inline: clamp(8px, 2vw, 24px); margin-top: 48px; }
+  .mark {
+    display: block;
+    font: 900 22cqw/0.8 var(--sans);
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    margin-bottom: -0.15em;
+  }
+  .mark > span { display: inline-block; }
+  .stage-canvas { display: block; width: 100%; margin-top: 32px; touch-action: pan-y; }
+
+  /* 01 燃烧显字 */
+  .s1 { background: #120c08; color: #8a7462; }
+  .burn-stage { position: relative; margin-top: 32px; container-type: inline-size; }
+  .burn-under { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(70% 90% at 50% 60%, #2a1608, #120c08 70%); }
+  .burn-under span {
+    display: block; width: max-content; font: 900 20cqw/1 var(--sans); letter-spacing: -0.04em; white-space: nowrap;
+    color: #ffe2b0; text-shadow: 0 0 .04em #ffb35a, 0 0 .15em rgb(255 120 40 / .6);
+  }
+  .burn-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: pan-y; }
+
+  /* 02 藤蔓 */
+  .s2 { background: #f3f0e4; color: #6d6a58; }
+
+  /* 03 铁屑 */
+  .s3 { background: #e9e6dd; color: #6a675f; }
+
+  /* 04 雨窗 */
+  .s4 { background: #0b0f1d; color: #7c86a6; }
+
+  /* 05 示波器 */
+  .s5 { background: #1b1d1a; color: #868c80; }
+  .scope {
+    position: relative; margin: 32px clamp(16px, 4vw, 48px) 48px; border-radius: 22px; overflow: hidden;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 calc(10% - 1px), rgb(120 255 140 / .1) calc(10% - 1px) 10%),
+      repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), rgb(120 255 140 / .1) calc(10% - 1px) 10%),
+      radial-gradient(120% 100% at 50% 50%, #0b2410, #030a04 80%);
+    box-shadow: inset 0 0 60px rgb(0 0 0 / .8), 0 0 0 10px #2a2d28, 0 0 0 12px #111;
+  }
+  .scope canvas { display: block; width: 100%; touch-action: pan-y; }
+  .scope-label { position: absolute; left: 16px; bottom: 10px; font: 12px/1 Consolas, monospace; color: rgb(140 255 160 / .6); pointer-events: none; }
+
+  /* 06 拼图 */
+  .s6 { background: #2f6f5e; color: #cfe6dd; }
+  .jig-stage { position: relative; margin-top: 24px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .jig-ghost { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .jig-piece { position: absolute; left: 0; top: 0; cursor: grab; filter: drop-shadow(0 4px 6px rgb(0 0 0 / .3)); touch-action: none; }
+  .jig-piece.placed { cursor: default; filter: none; }
+  .jig-msg {
+    position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 50;
+    padding: 8px 16px; border-radius: 999px; background: #f4d35e; color: #1d1d1d; font-weight: 700;
+  }
+
+  /* 07 拉链 */
+  .s7 { background: #1c2533; color: #8794aa; }
+  .s7 canvas { touch-action: pan-y; }
+
+  /* 08 行军蚁 */
+  .s8 { background: #f9f5ec; color: #7e7262; }
+
+  .f-end { background: var(--bg); color: #7a7a83; border-top: 1px solid var(--line); }
+  .f-end .mark { color: #26262c; }
+</style>
+</head>
+<body id="top">
+
+<div class="bar">
+  <a class="back" href="fifth.html">← 第五批</a>
+  <strong>第六批</strong>
+  <label>品牌名 <input id="brand" value="Lumen" maxlength="16" spellcheck="false"></label>
+  <nav>
+    <a href="overview.html">总览</a>
+    <a href="#c1">01 燃烧</a><a href="#c2">02 藤蔓</a><a href="#c3">03 铁屑</a><a href="#c4">04 雨窗</a><a href="#c5">05 示波器</a><a href="#c6">06 拼图</a><a href="#c7">07 拉链</a><a href="#c8">08 蚂蚁</a><a href="seventh.html">第七批 →</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <h1>巨字页脚，第六批</h1>
+  <p>这一批：火、植物、磁场、雨、电子束、拼图、拉链、蚂蚁。用法和前几页一样，顶栏可以换品牌名，离开屏幕就暂停。</p>
+  <p class="note" id="reduced-note" hidden>你的系统开了“减少动画”：自动播放的部分会停掉，鼠标触发的效果保留。</p>
+</header>
+
+<section id="c1">
+  <div class="intro">
+    <div class="num">01</div>
+    <h2>燃烧显字</h2>
+    <p>滚到这里时，盖在大字上的一张纸从底边烧起来，火线弯弯曲曲往上蔓延，烧过的地方先焦黑再化成灰，露出底下发光的字。鼠标就是打火机，划过哪里就点着哪里。</p>
+    <p>纸被分成 4px 的小格，正在烧的格子每帧按概率点燃上下左右的邻格，概率由一张噪声图决定，所以火线是不规则的；还没烧到的纸会先被烤黄。火光是把正在烧的格子单独画一层、模糊后叠上去。</p>
+    <div class="ctrl"><button type="button" id="burn-reset">再盖一张纸</button></div>
+  </div>
+  <footer class="demo s1"></footer>
+</section>
+
+<section id="c2">
+  <div class="intro">
+    <div class="num">02</div>
+    <h2>藤蔓生长</h2>
+    <p>字的底部会冒出藤蔓，顺着笔画往上爬，长出叶子、分出枝杈，长到头开一朵花。藤蔓只在笔画里长，最后整个字会变成一盆修剪过的绿植。鼠标在字上移动，经过的地方会开花。</p>
+    <p>每根藤蔓是一个小“爬虫”：每步随机拐一点、略微偏向上方，下一步要出界就换个方向，实在走不动就开花停下。画布从不清空，只画新长出的那一小段，所以长满也不卡。</p>
+    <div class="ctrl"><button type="button" id="vine-reset">重新种</button></div>
+  </div>
+  <footer class="demo s2"></footer>
+</section>
+
+<section id="c3">
+  <div class="intro">
+    <div class="num">03</div>
+    <h2>铁屑磁场</h2>
+    <p>纸上撒了一层铁屑，字是一块块磁铁，鼠标是另一块磁铁：铁屑顺着磁力线排列，鼠标一动，整片纹路跟着转。鼠标不在时，磁铁会自己绕着转。</p>
+    <p>字的笔画上取了 160 个点当作磁极，每根铁屑按所有磁极的合力决定朝向。铁屑是两头一样的短线，转向时会走最近的那一边，不会突然翻转。</p>
+  </div>
+  <footer class="demo s3"></footer>
+</section>
+
+<section id="c4">
+  <div class="intro">
+    <div class="num">04</div>
+    <h2>雨窗</h2>
+    <p>隔着一扇起雾的玻璃看霓虹招牌：玻璃上挂满小水珠，大水珠攒够了就往下滑，滑过的地方雾被擦开，过一会儿又慢慢起雾。每颗大水珠里能看到倒过来的招牌，和真的水珠一样。鼠标可以在玻璃上擦出一块干净的地方。</p>
+    <p>画面准备了清晰和模糊两张，平时显示模糊的；水珠滑过和手擦过的地方记在一张遮罩上，从那里透出清晰的那张。大水珠里贴的是清晰图上下左右翻转后的一小块。</p>
+  </div>
+  <footer class="demo s4"></footer>
+</section>
+
+<section id="c5">
+  <div class="intro">
+    <div class="num">05</div>
+    <h2>示波器</h2>
+    <p>一台老示波器的电子束在屏幕上一笔一笔描出字的轮廓，荧光有余辉，描过的线会慢慢暗下去。把鼠标移到屏幕上，就像拿磁铁靠近老式显像管，附近的线条会被推开、扭曲。</p>
+    <p>字的轮廓是用行进方块法从字形里提出来的一圈圈有序的点，电子束沿着这些点走，跳到下一圈时关掉光束。余辉是每帧把整块画面擦淡一点，而不是重画。</p>
+  </div>
+  <footer class="demo s5"></footer>
+</section>
+
+<section id="c6">
+  <div class="intro">
+    <div class="num">06</div>
+    <h2>拼图</h2>
+    <p>大字先完整地出现，一眨眼就碎成拼图块散开。把每一块拖回原位，靠近时会自动吸附；全部拼好会有提示。拼不动可以点“帮我拼”。</p>
+    <p>拼图块的凹凸是随机的，相邻两块共用同一条边：一块凸出去，另一块就凹进来。点到拼图块透明的角上时，会穿透到下面那一块。</p>
+    <div class="ctrl"><button type="button" id="jig-shuffle">打乱</button><button type="button" id="jig-solve">帮我拼</button></div>
+  </div>
+  <footer class="demo s6"></footer>
+</section>
+
+<section id="c7">
+  <div class="intro">
+    <div class="num">07</div>
+    <h2>拉链</h2>
+    <p>字藏在一块牛仔布后面，中间有一条拉链。抓住最左边的拉链头往右拉，布会张开一个 V 字形的口子，露出底下的字；拉得越远，口子张得越大。</p>
+    <p>布、拉链齿和拉链头都是每帧画出来的：口子的宽度按离拉链头有多远来算，拉链齿沿着布边的斜率摆放；还没拉开的部分，上下两排齿交错咬合。</p>
+    <div class="ctrl"><button type="button" id="zip-close">拉上</button></div>
+  </div>
+  <footer class="demo s7"></footer>
+</section>
+
+<section id="c8">
+  <div class="intro">
+    <div class="num">08</div>
+    <h2>行军蚁</h2>
+    <p>一队队蚂蚁沿着字的轮廓排队行进，同一圈轮廓上的蚂蚁朝同一个方向走。鼠标靠近，附近的蚂蚁会慌忙散开、跑得更快，过一会儿再回到队伍里。</p>
+    <p>轮廓和示波器用的是同一套提取方法；每只蚂蚁记着自己在轮廓上走了多远，被惊扰时额外叠加一个偏移，偏移像弹簧一样慢慢收回。</p>
+  </div>
+  <footer class="demo s8"></footer>
+</section>
+
+<section id="end">
+  <div class="intro">
+    <div class="num">✓</div>
+    <h2>六页合起来</h2>
+    <ul class="tips">
+      <li><b>基础六种</b>：裁切、幕布、渐隐、手电筒、升起、透图。</li>
+      <li><b>进阶八种</b>：可变字体、跑马灯、橡皮筋、点阵、物理、粒子、液体、实时数据。</li>
+      <li><b>第三批</b>：立体、钻洞、光栅、天空、钢琴、终端、足迹、旗帜。</li>
+      <li><b>第四批</b>：签名、翻牌、镭射、投影、装水、积雪、眼睛、剪报。</li>
+      <li><b>第五批</b>：霓虹、故障、刮奖、挂绳、黏液、放大镜、折纸、海报。</li>
+      <li><b>这一批</b>：燃烧、藤蔓、铁屑、雨窗、示波器、拼图、拉链、蚂蚁。</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="demo f-end"></footer>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[(Math.random() * a.length) | 0];
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = () => Math.min(devicePixelRatio || 1, 2);
+  const SANS = '"Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+  const input = $('#brand');
+  let brand = input.value.trim() || 'Lumen';
+  if (REDUCED) $('#reduced-note').hidden = false;
+
+  const LINKS = `
+    <div class="links">
+      <div><b>产品</b><span>功能</span><span>价格</span><span>更新日志</span></div>
+      <div><b>公司</b><span>关于我们</span><span>招聘</span><span>联系</span></div>
+      <div><b>资源</b><span>文档</span><span>博客</span><span>社区</span></div>
+      <div class="copy">© 2026 <span class="bn"></span></div>
+    </div>`;
+  const MARK = `<div class="mark-wrap"><div class="mark" aria-hidden="true"><span></span></div></div>`;
+
+  function footer(sel, inner) {
+    const el = $(sel);
+    el.innerHTML = LINKS + inner;
+    el.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    return el;
+  }
+
+  // 让一个 width: max-content 的元素铺满容器宽度的 fill 倍，单位 cqw，再加一个高度上限
+  function fitWidth(node, fill, cap) {
+    node.style.fontSize = '100px';
+    const w = node.offsetWidth || 1;
+    node.style.fontSize = `min(${(10000 * fill / w).toFixed(3)}cqw, ${cap})`;
+  }
+
+  function fitMark(mark) {
+    const span = mark.firstElementChild;
+    span.textContent = brand;
+    mark.style.fontSize = '100px';
+    const w = span.getBoundingClientRect().width;
+    if (w) mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 60vh)`;
+  }
+
+  // canvas 上把文字居中铺进 w×h，返回 fillText 的坐标和字形高度
+  function fitText(ctx, text, w, h, fill = 1) {
+    ctx.font = `900 100px ${SANS}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(text);
+    const tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight || 1;
+    const th = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || 1;
+    const size = Math.min(fill * 100 * w / tw, fill * 100 * h / th);
+    const k = size / 100;
+    ctx.font = `900 ${size}px ${SANS}`;
+    return {
+      x: (w - tw * k) / 2 + m.actualBoundingBoxLeft * k,
+      y: (h - th * k) / 2 + m.actualBoundingBoxAscent * k,
+      asc: m.actualBoundingBoxAscent * k,
+      h: th * k,
+    };
+  }
+
+  function sizeCanvas(cv, ratio, min) {
+    const dpr = DPR(), W = cv.clientWidth;
+    const H = Math.round(clamp(W * ratio, min, Math.max(min, innerHeight * 0.6)));
+    cv.style.height = H + 'px';
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    return { W, H, dpr };
+  }
+
+  // 把品牌名画进 w×h 的遮罩，返回 { mask, font, f }；mask[i] 为 1 表示笔画
+  function textMask(w, h, fill) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const o = c.getContext('2d', { willReadFrequently: true });
+    const f = fitText(o, brand, w, h, fill);
+    o.fillText(brand, f.x, f.y);
+    const d = o.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+    for (let i = 0; i < mask.length; i++) mask[i] = d[i * 4 + 3] > 128 ? 1 : 0;
+    return { mask, font: o.font, f };
+  }
+
+  // 行进方块法：把遮罩的边界连成一圈圈有序的点；坐标单位是遮罩像素
+  function contours(mask, w, h) {
+    const nodes = new Map();
+    const node = (X, Y) => {
+      const k = X * 100000 + Y;
+      let n = nodes.get(k);
+      if (!n) nodes.set(k, n = { X, Y, nb: [], seen: false });
+      return n;
+    };
+    const link = (a, b) => { a.nb.push(b); b.nb.push(a); };
+    const at = (x, y) => (x >= 0 && y >= 0 && x < w && y < h ? mask[y * w + x] : 0);
+    for (let y = -1; y < h; y++) for (let x = -1; x < w; x++) {
+      const c = at(x, y) * 8 + at(x + 1, y) * 4 + at(x + 1, y + 1) * 2 + at(x, y + 1);
+      if (c === 0 || c === 15) continue;
+      // 格子四条边的中点，坐标乘 2 变成整数
+      const T = () => node(2 * x + 1, 2 * y), R = () => node(2 * x + 2, 2 * y + 1);
+      const B = () => node(2 * x + 1, 2 * y + 2), L = () => node(2 * x, 2 * y + 1);
+      if (c === 1 || c === 14) link(L(), B());
+      else if (c === 2 || c === 13) link(B(), R());
+      else if (c === 3 || c === 12) link(L(), R());
+      else if (c === 4 || c === 11) link(T(), R());
+      else if (c === 6 || c === 9) link(T(), B());
+      else if (c === 7 || c === 8) link(T(), L());
+      else if (c === 5) { link(T(), R()); link(L(), B()); }
+      else if (c === 10) { link(T(), L()); link(B(), R()); }
+    }
+    const loops = [];
+    for (const start of nodes.values()) {
+      if (start.seen) continue;
+      const pts = [];
+      let prev = null, cur = start;
+      while (cur && !cur.seen) {
+        cur.seen = true;
+        pts.push(cur.X / 2, cur.Y / 2);
+        const next = cur.nb.find(n => n !== prev && !n.seen);
+        prev = cur;
+        cur = next;
+      }
+      if (pts.length >= 16) loops.push(pts);
+    }
+    return loops;
+  }
+  // 先把台阶状的折线磨圆，再按固定间距重新取点；scale 把遮罩坐标换回画布坐标
+  function resample(pts, step, scale) {
+    let p = pts.map(v => v * scale);
+    const n = p.length / 2;
+    for (let pass = 0; pass < 2; pass++) {
+      const q = new Array(p.length);
+      for (let i = 0; i < n; i++) {
+        const a = (i + n - 1) % n, b = (i + 1) % n;
+        q[i * 2] = (p[a * 2] + p[i * 2] * 2 + p[b * 2]) / 4;
+        q[i * 2 + 1] = (p[a * 2 + 1] + p[i * 2 + 1] * 2 + p[b * 2 + 1]) / 4;
+      }
+      p = q;
+    }
+    const out = [];
+    let carry = 0;
+    for (let i = 0; i < n; i++) {
+      const x0 = p[i * 2], y0 = p[i * 2 + 1], j = (i + 1) % n, x1 = p[j * 2], y1 = p[j * 2 + 1];
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      let t = carry;
+      while (t < len) { out.push(x0 + (x1 - x0) * t / len, y0 + (y1 - y0) * t / len); t += step; }
+      carry = t - len;
+    }
+    return new Float32Array(out);
+  }
+
+  // 记录指针相对 target 的位置和每次移动的位移
+  function trackPointer(el, target) {
+    const p = { x: -1e9, y: -1e9, vx: 0, vy: 0, on: false };
+    el.addEventListener('pointermove', e => {
+      const r = target.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (p.on) { p.vx = x - p.x; p.vy = y - p.y; }
+      p.x = x; p.y = y; p.on = true;
+    });
+    el.addEventListener('pointerleave', () => { p.on = false; p.x = p.y = -1e9; p.vx = p.vy = 0; });
+    return p;
+  }
+
+  // 统一调度：只跑在屏幕上的效果
+  const demos = [];
+  const running = new Set();
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    const d = e.target.__demo;
+    if (e.isIntersecting) { running.add(d); d.enter?.(); } else running.delete(d);
+  }), { rootMargin: '80px 0px' });
+  function register(el, d) {
+    el.__demo = d;
+    demos.push(d);
+    io.observe(el);
+  }
+  let last = performance.now();
+  requestAnimationFrame(function loop(now) {
+    requestAnimationFrame(loop);   // 先排下一帧：某个效果出错也不会把整个循环拖停
+    const dt = Math.min(now - last, 50);
+    last = now;
+    running.forEach(d => {
+      try { d.frame?.(now, dt); } catch (err) { running.delete(d); console.error(err); }
+    });
+  });
+
+  /* ---------- 01 燃烧显字 ---------- */
+  (() => {
+    const el = footer('.s1', `<div class="burn-stage"><div class="burn-under" aria-hidden="true"><span></span></div><canvas aria-hidden="true"></canvas></div>`);
+    const stage = $('.burn-stage', el), under = $('.burn-under span', el), cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, stage);
+    const C = 4;   // 一格 4px
+    // 每格状态：0 纸，1 正在烧，2 焦黑，3 烧没了
+    let W, H, cols, rows, state, age, fuel, scorch, paper, front = [], low, lctx, limg, glow, gctx, gimg, started = false;
+
+    function build() {
+      W = stage.clientWidth;
+      H = Math.round(clamp(W * 0.36, 240, innerHeight * 0.6));
+      stage.style.height = `${H}px`;
+      const dpr = DPR();
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      cols = Math.ceil(W / C);
+      rows = Math.ceil(H / C);
+      const n = cols * rows;
+      state = new Uint8Array(n);
+      age = new Uint8Array(n);
+      scorch = new Float32Array(n);
+      paper = new Float32Array(n);
+      fuel = new Float32Array(n);
+      // 粗噪声（每 8 格一个随机值，双线性插值）+ 细噪声：决定每格有多容易被点着
+      const G = 8, gw = Math.ceil(cols / G) + 2, gh = Math.ceil(rows / G) + 2, grid = Array.from({ length: gw * gh }, Math.random);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const gx = c / G, gy = r / G, x0 = gx | 0, y0 = gy | 0, tx = smooth(gx - x0), ty = smooth(gy - y0);
+        const v = (grid[y0 * gw + x0] * (1 - tx) + grid[y0 * gw + x0 + 1] * tx) * (1 - ty) + (grid[(y0 + 1) * gw + x0] * (1 - tx) + grid[(y0 + 1) * gw + x0 + 1] * tx) * ty;
+        const i = r * cols + c;
+        fuel[i] = 0.12 + v * 0.55 + Math.random() * 0.12;
+        paper[i] = 0.93 + Math.random() * 0.05;
+      }
+      low = document.createElement('canvas');
+      low.width = cols; low.height = rows;
+      lctx = low.getContext('2d');
+      limg = lctx.createImageData(cols, rows);
+      glow = document.createElement('canvas');
+      glow.width = cols; glow.height = rows;
+      gctx = glow.getContext('2d');
+      gimg = gctx.createImageData(cols, rows);
+      front = [];
+      started = false;
+      paint();
+    }
+    function ignite(c, r) {
+      if (c < 0 || r < 0 || c >= cols || r >= rows) return;
+      const i = r * cols + c;
+      if (state[i]) return;
+      state[i] = 1;
+      age[i] = 0;
+      front.push(i);
+    }
+    function step() {
+      const next = [];
+      for (const i of front) {
+        age[i]++;
+        if (state[i] === 1) {
+          const c = i % cols, r = (i / cols) | 0;
+          for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const cc = c + dc, rr = r + dr;
+            if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+            const j = rr * cols + cc;
+            if (state[j]) continue;
+            scorch[j] = Math.min(1, scorch[j] + 0.06);   // 还没着的纸先被烤黄
+            if (Math.random() < fuel[j] * (dr < 0 ? 0.45 : 0.22)) { state[j] = 1; age[j] = 0; next.push(j); }   // 火往上窜得更快
+          }
+          if (age[i] > 18 + (i % 9)) { state[i] = 2; age[i] = 0; }
+          next.push(i);
+        } else if (state[i] === 2) {
+          if (age[i] > 26) state[i] = 3;
+          else next.push(i);
+        }
+      }
+      front = next;
+    }
+    function paint() {
+      const L = limg.data, Gd = gimg.data;
+      for (let i = 0; i < state.length; i++) {
+        const k = i * 4, s = state[i];
+        Gd[k + 3] = 0;
+        if (s === 0) {
+          const p = paper[i], sc = scorch[i];
+          L[k] = 238 * p - sc * 90; L[k + 1] = 228 * p - sc * 130; L[k + 2] = 205 * p - sc * 170; L[k + 3] = 255;
+        } else if (s === 1) {
+          const t = Math.min(1, age[i] / 20);
+          L[k] = 255; L[k + 1] = 230 - t * 150; L[k + 2] = 140 - t * 120; L[k + 3] = 255;
+          Gd[k] = 255; Gd[k + 1] = 150 - t * 80; Gd[k + 2] = 40; Gd[k + 3] = 255;
+        } else if (s === 2) {
+          const t = age[i] / 26;
+          L[k] = 46; L[k + 1] = 26; L[k + 2] = 14; L[k + 3] = 255 * (1 - t * t);
+        } else L[k + 3] = 0;
+      }
+      lctx.putImageData(limg, 0, 0);
+      gctx.putImageData(gimg, 0, 0);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(low, 0, 0, cv.width, cv.height);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.filter = `blur(${Math.round(cv.width / cols * 2)}px)`;   // 火光：只把正在烧的格子模糊后叠上去
+      ctx.drawImage(glow, 0, 0, cv.width, cv.height);
+      ctx.filter = 'none';
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    function setText() {
+      under.textContent = brand;
+      fitWidth(under, 0.86, '40vh');
+    }
+    $('#burn-reset').addEventListener('click', build);
+    register(el, {
+      setText: () => { setText(); build(); }, resize: build,
+      frame() {
+        if (!started) {
+          if (stage.getBoundingClientRect().top > innerHeight * 0.8) return;
+          started = true;
+          for (let k = 0; k < 4; k++) ignite((cols * (k + 0.5) / 4 + rand(-6, 6)) | 0, rows - 1);
+        }
+        if (P.on && P.y >= 0 && P.y < H) ignite((P.x / C) | 0, (P.y / C) | 0);   // 打火机
+        if (!front.length) return;
+        step();
+        paint();
+      },
+    });
+    setText();
+    build();
+  })();
+
+  /* ---------- 02 藤蔓生长 ---------- */
+  (() => {
+    const el = footer('.s2', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const PETALS = ['#ff7aa2', '#ffffff', '#ffb3c6', '#f9c74f', '#c77dff'];
+    let W, H, dpr, mask, seeds = [], tips = [], blooms = 0, started = false;
+
+    const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H && mask[(y | 0) * W + (x | 0)] === 1;
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      const t = textMask(W, H, 0.9);
+      mask = t.mask;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#f3f0e4';
+      ctx.fillRect(0, 0, W, H);
+      ctx.font = t.font;
+      ctx.fillStyle = '#e2dbc5';
+      ctx.fillText(brand, t.f.x, t.f.y);
+      // 种子：每个字底部的笔画里各种两三棵
+      seeds = [];
+      const chars = Array.from(brand);
+      chars.forEach((ch, i) => {
+        if (!ch.trim()) return;
+        const x0 = t.f.x + ctx.measureText(chars.slice(0, i).join('')).width, w = ctx.measureText(ch).width;
+        for (let k = 0; k < 6; k++) {
+          const x = x0 + w * rand(0.15, 0.85);
+          for (let y = H - 1; y > 0; y--) if (inside(x, y)) { seeds.push({ x, y: y - 2 }); break; }
+        }
+      });
+      seeds = seeds.filter((_, i) => i % 2 === 0);
+      tips = [];
+      blooms = 0;
+      started = false;
+    }
+    const sprout = (x, y, a, w, life) => tips.push({ x, y, a, w, life, life0: life });
+    function leaf(x, y, a, s) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(a);
+      ctx.fillStyle = pick(['#5d9e48', '#6fb85a', '#4f8a3c']);
+      ctx.beginPath();
+      ctx.ellipse(s * 0.9, 0, s, s * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(30,60,20,0.35)';
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(s * 1.7, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+    function bloom(x, y, s) {
+      blooms++;
+      ctx.fillStyle = pick(PETALS);
+      for (let k = 0; k < 5; k++) {
+        const a = k / 5 * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * s * 0.6, y + Math.sin(a) * s * 0.6, s * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ffd166';
+      ctx.beginPath();
+      ctx.arc(x, y, s * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    function grow() {
+      for (let i = tips.length - 1; i >= 0; i--) {
+        const t = tips[i];
+        let a = t.a + rand(-0.25, 0.25) + (-Math.PI / 2 - t.a) * 0.03;   // 随机拐一点，略微偏向上
+        let nx = t.x + Math.cos(a) * 1.6, ny = t.y + Math.sin(a) * 1.6;
+        if (!inside(nx, ny)) {   // 要出界：左右试几个角度，都不行就开花停下
+          const tries = [0.5, -0.5, 1, -1, 1.6, -1.6].map(d => a + d).find(b => inside(t.x + Math.cos(b) * 1.6, t.y + Math.sin(b) * 1.6));
+          if (tries === undefined || t.life <= 0) { bloom(t.x, t.y, 2.5 + t.w); tips.splice(i, 1); continue; }
+          a = tries;
+          nx = t.x + Math.cos(a) * 1.6;
+          ny = t.y + Math.sin(a) * 1.6;
+        }
+        ctx.strokeStyle = '#3f7d3a';
+        ctx.lineWidth = t.w * (0.35 + 0.65 * t.life / t.life0);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(t.x, t.y);
+        ctx.lineTo(nx, ny);
+        ctx.stroke();
+        t.x = nx; t.y = ny; t.a = a; t.life--;
+        if (Math.random() < 0.035) leaf(nx, ny, a + (Math.random() < 0.5 ? 1 : -1) * rand(0.6, 1.3), 3 + t.w * 1.6);
+        if (Math.random() < 0.012 && tips.length < 140) sprout(nx, ny, a + (Math.random() < 0.5 ? 1 : -1) * rand(0.5, 0.9), t.w * 0.72, t.life * 0.6);
+        if (t.life <= 0) { bloom(nx, ny, 2.5 + t.w); tips.splice(i, 1); }
+      }
+    }
+    $('#vine-reset').addEventListener('click', build);
+    register(el, {
+      setText: build, resize: build,
+      frame() {
+        if (!started) {
+          if (cv.getBoundingClientRect().top > innerHeight * 0.85) return;
+          started = true;
+          seeds.forEach(s => sprout(s.x, s.y, -Math.PI / 2 + rand(-0.3, 0.3), rand(2.2, 3.2), rand(160, 260)));
+          if (REDUCED) while (tips.length) grow();   // 不播生长过程，直接长满
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (P.on && inside(P.x, P.y) && blooms < 260 && Math.random() < 0.25) bloom(P.x + rand(-6, 6), P.y + rand(-6, 6), rand(3, 5));
+        if (!REDUCED) { grow(); grow(); }
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 03 铁屑磁场 ---------- */
+  (() => {
+    const el = footer('.s3', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    const Q = 160;
+    let W, H, dpr, font, tf, qx, qy, filings = [], g = 12, mx = 0, my = 0, settled = false;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      const t = textMask(W, H, 0.82);
+      font = t.font; tf = t.f;
+      const ink = [];
+      for (let i = 0; i < t.mask.length; i += 3) if (t.mask[i]) ink.push(i);
+      qx = new Float32Array(Q); qy = new Float32Array(Q);
+      for (let k = 0; k < Q; k++) { const i = ink[(Math.random() * ink.length) | 0] || 0; qx[k] = i % W; qy[k] = (i / W) | 0; }
+      g = clamp(W / 90, 9, 14);
+      filings = [];
+      for (let y = g / 2; y < H; y += g) for (let x = g / 2; x < W; x += g) {
+        const jx = x + rand(-g * 0.3, g * 0.3), jy = y + rand(-g * 0.3, g * 0.3);
+        if (!t.mask[(jy | 0) * W + (jx | 0)]) filings.push({ x: jx, y: jy, a: rand(0, Math.PI), m: 0 });
+      }
+      mx = W / 2; my = H / 2;
+      settled = false;
+    }
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        let tx, ty;
+        if (P.on) { tx = P.x; ty = P.y; settled = false; }
+        else if (REDUCED) { tx = W * 0.15; ty = H * 0.3; if (settled) return; }
+        else { tx = W / 2 + Math.cos(now / 2600) * W * 0.42; ty = H / 2 + Math.sin(now / 1900) * H * 0.38; }
+        mx += (tx - mx) * 0.2;
+        my += (ty - my) * 0.2;
+        // 字上的点当 S 极、磁铁当 N 极，按二维的 1/r 叠加场强
+        const strength = Q * 0.7;
+        for (const f of filings) {
+          let ex = 0, ey = 0;
+          for (let k = 0; k < Q; k++) {
+            const dx = f.x - qx[k], dy = f.y - qy[k], r2 = dx * dx + dy * dy + 30;
+            ex -= dx / r2; ey -= dy / r2;
+          }
+          const dx = f.x - mx, dy = f.y - my, r2 = dx * dx + dy * dy + 300;
+          ex += strength * dx / r2; ey += strength * dy / r2;
+          // 铁屑两头一样，角度只看模 π，往最近的那边转
+          let d = Math.atan2(ey, ex) - f.a;
+          d -= Math.round(d / Math.PI) * Math.PI;
+          f.a += d * 0.25;
+          f.m = Math.hypot(ex, ey);
+        }
+        if (REDUCED) settled = true;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = '#e9e6dd';
+        ctx.fillRect(0, 0, W, H);
+        ctx.font = font;
+        ctx.fillStyle = '#3a3d42';
+        ctx.fillText(brand, tf.x, tf.y);
+        const L = g * 0.42;
+        [[0.25, 0, 1.2], [0.5, 1.2, 3], [0.85, 3, 1e9]].forEach(([alpha, lower, upper]) => {   // 按场强分三档深浅，一档一次 stroke
+          ctx.strokeStyle = `rgba(40,38,36,${alpha})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          for (const f of filings) {
+            if (f.m < lower || f.m >= upper) continue;
+            const cx = Math.cos(f.a) * L, cy = Math.sin(f.a) * L;
+            ctx.moveTo(f.x - cx, f.y - cy);
+            ctx.lineTo(f.x + cx, f.y + cy);
+          }
+          ctx.stroke();
+        });
+        ctx.fillStyle = '#d6453d';   // 磁铁
+        ctx.beginPath();
+        ctx.arc(mx, my, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = `700 10px ${SANS}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('N', mx, my + 0.5);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 04 雨窗 ---------- */
+  (() => {
+    const el = footer('.s4', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    let W, H, dpr, sharp, fog, trail, tctx, tmp, mctx, sprite, small = [], big = [];
+
+    const layer = () => { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; return c; };
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.38, 260));
+      sharp = layer();
+      const s = sharp.getContext('2d');
+      s.scale(dpr, dpr);
+      const bg = s.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0b1026');
+      bg.addColorStop(1, '#1d0f2e');
+      s.fillStyle = bg;
+      s.fillRect(0, 0, W, H);
+      for (let k = 0; k < 40; k++) {   // 远处街灯的光斑
+        s.fillStyle = `${pick(['#ff9f43', '#ff6b9a', '#4dd2ff', '#ffd166'])}${pick(['30', '40', '55'])}`;
+        s.beginPath();
+        s.arc(rand(0, W), rand(0, H), rand(8, 50), 0, Math.PI * 2);
+        s.fill();
+      }
+      const f = fitText(s, brand, W * 0.86, H * 0.6);
+      const tg = s.createLinearGradient(0, H * 0.2, 0, H * 0.8);
+      tg.addColorStop(0, '#ffe08a');
+      tg.addColorStop(1, '#ff6b9a');
+      s.shadowColor = '#ff7aa8';
+      s.shadowBlur = 30;
+      s.fillStyle = tg;
+      s.fillText(brand, W * 0.07 + f.x, H * 0.2 + f.y);
+      s.shadowBlur = 0;
+      fog = layer();
+      const fc = fog.getContext('2d');
+      fc.filter = `blur(${Math.round(12 * dpr)}px)`;
+      fc.drawImage(sharp, 0, 0);
+      fc.filter = 'none';
+      fc.fillStyle = 'rgba(150,160,190,0.12)';   // 雾气发白
+      fc.fillRect(0, 0, fog.width, fog.height);
+      trail = layer();
+      tctx = trail.getContext('2d');
+      tctx.scale(dpr, dpr);
+      tmp = layer();
+      mctx = tmp.getContext('2d');
+      // 小水珠用一张通用贴图：边缘暗、左上一点高光，不做折射
+      sprite = document.createElement('canvas');
+      sprite.width = sprite.height = 32;
+      const sp = sprite.getContext('2d'), rg = sp.createRadialGradient(16, 16, 4, 16, 16, 16);
+      rg.addColorStop(0, 'rgba(255,255,255,0.10)');
+      rg.addColorStop(0.75, 'rgba(255,255,255,0.04)');
+      rg.addColorStop(1, 'rgba(0,0,0,0.35)');
+      sp.fillStyle = rg;
+      sp.beginPath();
+      sp.arc(16, 16, 16, 0, Math.PI * 2);
+      sp.fill();
+      sp.fillStyle = 'rgba(255,255,255,0.7)';
+      sp.beginPath();
+      sp.arc(11, 10, 3, 0, Math.PI * 2);
+      sp.fill();
+      small = Array.from({ length: Math.round(W * H / 2600) }, () => ({ x: rand(0, W), y: rand(0, H), r: rand(1.2, 3.6) }));
+      big = [];
+    }
+    function lens(d) {
+      const { x, y, r } = d, s = r * 5 * dpr;   // 水珠里装下一大片景色，而且是倒的
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.translate(x, y);
+      ctx.scale(-1, -1);
+      ctx.drawImage(sharp, x * dpr - s / 2, y * dpr - s / 2, s, s, -r, -r, r * 2, r * 2);
+      ctx.restore();
+      const rim = ctx.createRadialGradient(x - r * 0.2, y - r * 0.3, r * 0.3, x, y, r);
+      rim.addColorStop(0, 'rgba(255,255,255,0)');
+      rim.addColorStop(1, 'rgba(0,0,0,0.45)');
+      ctx.fillStyle = rim;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.beginPath();
+      ctx.ellipse(x - r * 0.35, y - r * 0.4, r * 0.22, r * 0.14, -0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    register(el, {
+      setText: build, resize: build,
+      frame() {
+        tctx.globalCompositeOperation = 'destination-out';   // 雾慢慢回来
+        tctx.fillStyle = 'rgba(0,0,0,0.006)';
+        tctx.fillRect(0, 0, W, H);
+        tctx.globalCompositeOperation = 'source-over';
+        tctx.fillStyle = '#fff';
+        if (!REDUCED) {
+          if (Math.random() < 0.3 && small.length < W * H / 1800) small.push({ x: rand(0, W), y: rand(0, H), r: rand(1.2, 3.6) });
+          if (big.length < 7 && Math.random() < 0.025) big.push({ x: rand(10, W - 10), y: rand(-10, H * 0.4), r: rand(9, 15), vy: 0, stick: rand(30, 160) });
+        }
+        big = big.filter(d => {
+          if (d.stick > 0) d.stick--;
+          else {
+            d.vy = Math.min(d.vy + 0.03 * d.r / 8, 2.6);
+            d.y += d.vy;
+            d.x += Math.sin(d.y * 0.05) * 0.25;
+            tctx.beginPath();
+            tctx.arc(d.x, d.y, d.r * 0.75, 0, Math.PI * 2);   // 滑过的地方擦掉雾
+            tctx.fill();
+            small = small.filter(s => {   // 吞掉路上的小水珠
+              if (Math.hypot(s.x - d.x, s.y - d.y) > d.r + s.r) return true;
+              d.r = Math.min(d.r + s.r * 0.12, 20);
+              return false;
+            });
+            if (Math.random() < 0.06) small.push({ x: d.x + rand(-2, 2), y: d.y - d.r, r: rand(1, 2.2) });   // 身后留下的小水点
+          }
+          return d.y - d.r < H;
+        });
+        if (P.on) {   // 手擦玻璃
+          tctx.beginPath();
+          tctx.arc(P.x, P.y, 26, 0, Math.PI * 2);
+          tctx.fill();
+          small = small.filter(s => Math.hypot(s.x - P.x, s.y - P.y) > 26);
+          big = big.filter(d => Math.hypot(d.x - P.x, d.y - P.y) > 26);
+        }
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(fog, 0, 0);
+        mctx.globalCompositeOperation = 'source-over';
+        mctx.clearRect(0, 0, tmp.width, tmp.height);
+        mctx.drawImage(sharp, 0, 0);
+        mctx.globalCompositeOperation = 'destination-in';
+        mctx.drawImage(trail, 0, 0);
+        ctx.drawImage(tmp, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        for (const s of small) ctx.drawImage(sprite, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+        big.forEach(lens);
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 05 示波器 ---------- */
+  (() => {
+    const el = footer('.s5', `<div class="scope"><canvas aria-hidden="true"></canvas><div class="scope-label">CH1 2V/div · TIME 5ms/div</div></div>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    let W, H, dpr, xs, ys, jump, N = 0, head = 0;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      const k = 0.5, w = Math.ceil(W * k), h = Math.ceil(H * k);
+      const t = textMask(w, h, 0.84);
+      const loops = contours(t.mask, w, h).map(l => resample(l, 2.5, 1 / k));
+      const xa = [], ya = [], ja = [];
+      loops.forEach(l => { for (let i = 0; i < l.length; i += 2) { xa.push(l[i]); ya.push(l[i + 1]); ja.push(i === 0); } });
+      xs = Float32Array.from(xa); ys = Float32Array.from(ya); jump = ja;
+      N = xs.length;
+      head = 0;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      if (REDUCED) trace(0, N);   // 不播描线过程，直接显示全部轮廓
+    }
+    // 磁铁靠近显像管：附近的点被推开
+    function bend(x, y) {
+      if (!P.on) return [x, y];
+      const dx = x - P.x, dy = y - P.y, f = 2600 / (dx * dx + dy * dy + 900);
+      return [x + dx * f, y + dy * f];
+    }
+    function trace(from, to) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.strokeStyle = 'rgba(120,255,140,0.75)';   // 不用叠加混合：相邻两段首尾重叠的地方会叠出亮点
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#5dff7a';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      for (let i = from; i < to; i++) {
+        const j = i % N, [x, y] = bend(xs[j] + rand(-0.3, 0.3), ys[j] + rand(-0.3, 0.3));
+        if (i === from || jump[j]) ctx.moveTo(x, y); else ctx.lineTo(x, y);   // 跳到下一圈时关掉光束
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    register(el, {
+      setText: build, resize: build,
+      frame() {
+        if (REDUCED || !N) return;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalCompositeOperation = 'destination-out';   // 余辉：每帧擦淡一点
+        ctx.fillStyle = 'rgba(0,0,0,0.09)';
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.globalCompositeOperation = 'source-over';
+        const step = Math.ceil(N / 50);   // 大约 50 帧描完一整遍
+        trace(head, head + step + 1);   // 不另画光点：它会被余辉留下来，变成一串亮点
+        head = (head + step) % N;
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 06 拼图 ---------- */
+  (() => {
+    const el = footer('.s6', `<div class="jig-stage"><canvas class="jig-ghost" aria-hidden="true"></canvas><div class="jig-msg" hidden>拼好了！</div></div>`);
+    const stage = $('.jig-stage', el), ghost = $('.jig-ghost', el), msg = $('.jig-msg', el);
+    let W, SH, bx, by, bw, bh, pieces = [], drag = null, started = false;
+
+    // 一条拼图边：sign 为 1 往外凸，-1 往里凹，0 是直边；法线取前进方向的左侧
+    function edge(c, x0, y0, x1, y1, sign) {
+      if (!sign) { c.lineTo(x1, y1); return; }
+      const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = uy, ny = -ux;
+      const p = (t, s) => [x0 + ux * L * t + nx * L * s * sign, y0 + uy * L * t + ny * L * s * sign];
+      c.lineTo(...p(0.38, 0));
+      c.bezierCurveTo(...p(0.42, 0.08), ...p(0.3, 0.24), ...p(0.5, 0.25));
+      c.bezierCurveTo(...p(0.7, 0.24), ...p(0.58, 0.08), ...p(0.62, 0));
+      c.lineTo(x1, y1);
+    }
+    const place = p => { p.el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`; };
+    function build() {
+      stage.querySelectorAll('.jig-piece').forEach(n => n.remove());
+      msg.hidden = true;
+      const dpr = DPR();
+      W = stage.clientWidth;
+      bw = W * 0.8;
+      bh = bw * 0.3;
+      SH = Math.round(bh * 2.1);
+      stage.style.height = `${SH}px`;
+      bx = (W - bw) / 2;
+      by = (SH - bh) / 2;
+      // 原图
+      const src = document.createElement('canvas');
+      src.width = Math.round(bw * dpr); src.height = Math.round(bh * dpr);
+      const s = src.getContext('2d');
+      s.scale(dpr, dpr);
+      s.fillStyle = '#f4d35e';
+      s.fillRect(0, 0, bw, bh);
+      s.strokeStyle = 'rgba(0,0,0,0.06)';
+      s.lineWidth = 8;
+      for (let x = -bh; x < bw; x += 22) { s.beginPath(); s.moveTo(x, bh); s.lineTo(x + bh, 0); s.stroke(); }
+      const f = fitText(s, brand, bw, bh, 0.84);
+      s.fillStyle = '#1d1d1d';
+      s.fillText(brand, f.x, f.y);
+      // 目标位置的淡影
+      ghost.width = Math.round(W * dpr); ghost.height = Math.round(SH * dpr);
+      ghost.style.width = `${W}px`; ghost.style.height = `${SH}px`;
+      const gc = ghost.getContext('2d');
+      gc.scale(dpr, dpr);
+      gc.globalAlpha = 0.14;
+      gc.drawImage(src, bx, by, bw, bh);
+      gc.globalAlpha = 0.5;
+      gc.setLineDash([6, 6]);
+      gc.strokeStyle = '#cfe6dd';
+      gc.strokeRect(bx, by, bw, bh);
+
+      const cols = clamp(Math.round(bw / 110), 4, 9), rows = 3, cw = bw / cols, ch = bh / rows, tab = Math.min(cw, ch) * 0.26;
+      const hs = Array.from({ length: rows - 1 }, () => Array.from({ length: cols }, () => (Math.random() < 0.5 ? 1 : -1)));
+      const vs = Array.from({ length: rows }, () => Array.from({ length: cols - 1 }, () => (Math.random() < 0.5 ? 1 : -1)));
+      pieces = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const pw = cw + tab * 2, ph = ch + tab * 2;
+        const cvp = document.createElement('canvas');
+        cvp.className = 'jig-piece';
+        cvp.width = Math.round(pw * dpr); cvp.height = Math.round(ph * dpr);
+        cvp.style.width = `${pw}px`; cvp.style.height = `${ph}px`;
+        const pc = cvp.getContext('2d', { willReadFrequently: true });
+        pc.scale(dpr, dpr);
+        pc.beginPath();
+        pc.moveTo(tab, tab);
+        edge(pc, tab, tab, tab + cw, tab, r === 0 ? 0 : -hs[r - 1][c]);
+        edge(pc, tab + cw, tab, tab + cw, tab + ch, c === cols - 1 ? 0 : vs[r][c]);
+        edge(pc, tab + cw, tab + ch, tab, tab + ch, r === rows - 1 ? 0 : hs[r][c]);
+        edge(pc, tab, tab + ch, tab, tab, c === 0 ? 0 : -vs[r][c - 1]);
+        pc.closePath();
+        pc.save();
+        pc.clip();
+        pc.drawImage(src, (c * cw - tab) * dpr, (r * ch - tab) * dpr, pw * dpr, ph * dpr, 0, 0, pw, ph);
+        pc.restore();
+        pc.strokeStyle = 'rgba(0,0,0,0.35)';
+        pc.lineWidth = 1.2;
+        pc.stroke();
+        const p = { el: cvp, ctx: pc, dpr, tx: bx + c * cw - tab, ty: by + r * ch - tab, x: 0, y: 0, w: pw, h: ph, placed: false };
+        p.x = p.tx; p.y = p.ty;
+        place(p);
+        stage.append(cvp);
+        pieces.push(p);
+      }
+      started = false;
+    }
+    function scatter() {
+      msg.hidden = true;
+      pieces.forEach(p => {
+        p.placed = false;
+        p.el.classList.remove('placed');
+        p.x = rand(0, W - p.w);
+        p.y = rand(0, SH - p.h);
+        p.el.style.transition = REDUCED ? '' : 'transform .6s cubic-bezier(.2,.8,.2,1)';
+        p.el.style.zIndex = 1 + ((Math.random() * 20) | 0);
+        place(p);
+      });
+      setTimeout(() => pieces.forEach(p => { p.el.style.transition = ''; }), 650);
+    }
+    function solve() {
+      pieces.forEach(p => {
+        p.x = p.tx; p.y = p.ty; p.placed = true;
+        p.el.classList.add('placed');
+        p.el.style.zIndex = 0;
+        p.el.style.transition = 'transform .7s cubic-bezier(.2,.8,.2,1)';
+        place(p);
+      });
+      setTimeout(() => { pieces.forEach(p => { p.el.style.transition = ''; }); msg.hidden = false; }, 720);
+    }
+    // 只认点到的不透明像素：透明的凹角会穿透到下面那一块
+    stage.addEventListener('pointerdown', e => {
+      const hit = document.elementsFromPoint(e.clientX, e.clientY).map(n => pieces.find(p => p.el === n)).find(p => {
+        if (!p || p.placed) return false;
+        const r = p.el.getBoundingClientRect();
+        return p.ctx.getImageData(((e.clientX - r.left) * p.dpr) | 0, ((e.clientY - r.top) * p.dpr) | 0, 1, 1).data[3] > 0;
+      });
+      if (!hit) return;
+      drag = { p: hit, ox: e.clientX - hit.x, oy: e.clientY - hit.y };
+      hit.el.style.zIndex = 100;
+      hit.el.style.cursor = 'grabbing';
+      stage.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    stage.addEventListener('pointermove', e => {
+      if (!drag) return;
+      drag.p.x = clamp(e.clientX - drag.ox, -drag.p.w / 2, W - drag.p.w / 2);
+      drag.p.y = clamp(e.clientY - drag.oy, -drag.p.h / 2, SH - drag.p.h / 2);
+      place(drag.p);
+    });
+    const drop = () => {
+      if (!drag) return;
+      const p = drag.p;
+      p.el.style.cursor = '';
+      p.el.style.zIndex = 1 + ((Math.random() * 20) | 0);
+      if (Math.hypot(p.x - p.tx, p.y - p.ty) < 20) {   // 靠近就吸附
+        p.x = p.tx; p.y = p.ty; p.placed = true;
+        p.el.classList.add('placed');
+        p.el.style.zIndex = 0;
+        place(p);
+        if (pieces.every(q => q.placed)) msg.hidden = false;
+      }
+      drag = null;
+    };
+    stage.addEventListener('pointerup', drop);
+    stage.addEventListener('pointercancel', drop);
+    $('#jig-shuffle').addEventListener('click', scatter);
+    $('#jig-solve').addEventListener('click', solve);
+    register(el, {
+      setText: build, resize: build,
+      frame() {
+        // 整块露出来、或顶部过了屏幕一半才开始；页脚在页面最底时，顶部不一定滚得到更高的位置
+        const r = stage.getBoundingClientRect();
+        if (started || (r.bottom > innerHeight + 20 && r.top > innerHeight * 0.5)) return;
+        started = true;
+        setTimeout(scatter, 700);   // 先完整亮一下，再碎开
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 07 拉链 ---------- */
+  (() => {
+    const el = footer('.s7', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    let W, H, dpr, reveal, fabric, px = 0, target = 0, dragging = false, y0 = 0;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      y0 = H / 2;
+      reveal = document.createElement('canvas');
+      reveal.width = cv.width; reveal.height = cv.height;
+      const r = reveal.getContext('2d');
+      r.scale(dpr, dpr);
+      r.fillStyle = '#0d1117';
+      r.fillRect(0, 0, W, H);
+      const f = fitText(r, brand, W * 0.9, H * 0.8);
+      r.fillStyle = '#ffd166';
+      r.shadowColor = '#ff9f1c';
+      r.shadowBlur = 24;
+      r.fillText(brand, W * 0.05 + f.x, H * 0.1 + f.y);
+      // 牛仔布：深蓝底、斜纹、颗粒
+      const pc = document.createElement('canvas');
+      pc.width = pc.height = 24;
+      const p = pc.getContext('2d');
+      p.fillStyle = '#2d4a7a';
+      p.fillRect(0, 0, 24, 24);
+      p.strokeStyle = 'rgba(255,255,255,0.08)';
+      p.lineWidth = 2;
+      for (let k = -24; k < 48; k += 6) { p.beginPath(); p.moveTo(k, 24); p.lineTo(k + 24, 0); p.stroke(); }
+      for (let k = 0; k < 60; k++) { p.fillStyle = `rgba(0,0,0,${rand(0.05, 0.15)})`; p.fillRect(rand(0, 24), rand(0, 24), 1, 1); }
+      fabric = ctx.createPattern(pc, 'repeat');
+      px = target = 24;
+    }
+    // 拉链头后面第 x 处张开多宽：离拉链头越远越宽
+    const gap = x => (x >= px ? 0 : H * 1.05 * smooth((px - x) / (W * 0.45)));
+    const edgeY = (x, side) => y0 + side * gap(x) / 2;
+    function half(side) {
+      ctx.beginPath();
+      ctx.moveTo(0, side < 0 ? 0 : H);
+      for (let x = 0; x <= W; x += 6) ctx.lineTo(x, edgeY(x, side) + side * -4);
+      ctx.lineTo(W, side < 0 ? 0 : H);
+      ctx.closePath();
+      ctx.fillStyle = fabric;
+      ctx.fill();
+      ctx.setLineDash([6, 5]);   // 布边的明线
+      ctx.strokeStyle = 'rgba(240,200,120,0.6)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 6) ctx[x ? 'lineTo' : 'moveTo'](x, edgeY(x, side) + side * 14);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    function teeth() {
+      ctx.fillStyle = '#c9c9c9';
+      ctx.strokeStyle = '#5c5c5c';
+      ctx.lineWidth = 1;
+      for (let x = 3; x < W; x += 6) {
+        for (const side of [-1, 1]) {
+          if ((x / 6 | 0) % 2 === (side < 0 ? 0 : 1)) continue;   // 上下两排交错
+          const y = edgeY(x, side), slope = Math.atan2(edgeY(x + 2, side) - edgeY(x - 2, side), 4);
+          ctx.save();
+          ctx.translate(x, y + side * -1);
+          ctx.rotate(slope);
+          ctx.beginPath();
+          ctx.roundRect(-2.5, side < 0 ? -7 : 0, 5, 7, 1.5);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+    function pull() {
+      ctx.save();
+      ctx.translate(px, y0);
+      const g = ctx.createLinearGradient(-12, -10, 12, 10);
+      g.addColorStop(0, '#f2f2f2');
+      g.addColorStop(1, '#8a8a8a');
+      ctx.fillStyle = g;
+      ctx.strokeStyle = '#444';
+      ctx.beginPath();
+      ctx.moveTo(-14, -9); ctx.lineTo(10, -6); ctx.lineTo(10, 6); ctx.lineTo(-14, 9); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.beginPath();   // 垂下来的拉片
+      ctx.roundRect(-4, 4, 12, 26, 4);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#2a2a2a';
+      ctx.beginPath();
+      ctx.roundRect(-0.5, 18, 5, 8, 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    const near = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    cv.addEventListener('pointerdown', e => {
+      const p = near(e);
+      if (Math.abs(p.x - px) < 36 && Math.abs(p.y - y0 - 12) < 40) { dragging = true; cv.setPointerCapture(e.pointerId); }
+    });
+    cv.addEventListener('pointermove', e => {
+      const p = near(e);
+      cv.style.cursor = dragging || (Math.abs(p.x - px) < 36 && Math.abs(p.y - y0 - 12) < 40) ? 'grab' : '';
+      if (dragging) target = clamp(p.x, 24, W - 10);
+    });
+    const release = () => { dragging = false; };
+    cv.addEventListener('pointerup', release);
+    cv.addEventListener('pointercancel', release);
+    $('#zip-close').addEventListener('click', () => { target = 24; });
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        px += (target - px) * (dragging ? 0.5 : 0.12);
+        const wiggle = !REDUCED && px < 30 && !dragging ? Math.sin(now / 300) * 3 : 0;   // 没人拉时，拉链头轻轻晃一下提示
+        const save = px;
+        px += wiggle;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(reveal, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        half(-1);
+        half(1);
+        teeth();
+        pull();
+        px = save;
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 08 行军蚁 ---------- */
+  (() => {
+    const el = footer('.s8', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(el, cv);
+    let W, H, dpr, font, tf, loops = [], ants = [];
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      const k = 0.5, w = Math.ceil(W * k), h = Math.ceil(H * k);
+      const t = textMask(w, h, 0.86);
+      loops = contours(t.mask, w, h).map(l => resample(l, 1, 1 / k)).filter(l => l.length > 80);
+      const c2 = document.createElement('canvas').getContext('2d');
+      tf = fitText(c2, brand, W, H, 0.86);
+      font = c2.font;
+      const total = loops.reduce((a, l) => a + l.length / 2, 0);
+      const count = Math.min(240, Math.round(total / 16));
+      ants = [];
+      loops.forEach(l => {
+        const n = Math.round(count * (l.length / 2) / total), dir = Math.random() < 0.5 ? 1 : -1;
+        for (let i = 0; i < n; i++) ants.push({ l, s: (i / n) * (l.length / 2) + rand(-3, 3), v: rand(0.45, 0.75) * dir, ox: 0, oy: 0, vx: 0, vy: 0, size: rand(1.1, 1.4) });
+      });
+    }
+    function drawAnt(x, y, a, size, phase) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(a);
+      ctx.scale(size, size);
+      ctx.strokeStyle = '#2b1d14';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      for (let k = -1; k <= 1; k++) {   // 三对腿，左右交替摆动
+        const sw = Math.sin(phase + k * 2) * 1.2;
+        ctx.moveTo(k * 1.4, 0); ctx.lineTo(k * 1.4 + sw, -3.2);
+        ctx.moveTo(k * 1.4, 0); ctx.lineTo(k * 1.4 - sw, 3.2);
+      }
+      ctx.moveTo(3.6, 0); ctx.lineTo(5.6, -1.6);   // 触角
+      ctx.moveTo(3.6, 0); ctx.lineTo(5.6, 1.6);
+      ctx.stroke();
+      ctx.fillStyle = '#2b1d14';
+      ctx.beginPath();
+      ctx.ellipse(-2.8, 0, 2.3, 1.6, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 1.3, 0.9, 0, 0, Math.PI * 2);
+      ctx.ellipse(2.5, 0, 1.2, 1.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = '#f9f5ec';
+        ctx.fillRect(0, 0, W, H);
+        ctx.font = font;
+        ctx.fillStyle = '#eadfc8';
+        ctx.fillText(brand, tf.x, tf.y);
+        for (const a of ants) {
+          const n = a.l.length / 2;
+          const panic = Math.hypot(a.ox, a.oy) > 4;
+          if (!REDUCED) a.s = (a.s + a.v * (panic ? 2.2 : 1) + n) % n;
+          const i = a.s | 0, j = (i + (a.v > 0 ? 3 : n - 3)) % n;
+          const bx = a.l[i * 2], by = a.l[i * 2 + 1];
+          if (P.on) {   // 被鼠标惊到就往外跑
+            const dx = bx + a.ox - P.x, dy = by + a.oy - P.y, d = Math.hypot(dx, dy);
+            if (d < 60) { a.vx += dx / (d || 1) * 2.4; a.vy += dy / (d || 1) * 2.4; }
+          }
+          a.vx = (a.vx - a.ox * 0.04) * 0.85;   // 偏移像弹簧一样收回
+          a.vy = (a.vy - a.oy * 0.04) * 0.85;
+          a.ox += a.vx;
+          a.oy += a.vy;
+          const ang = panic ? Math.atan2(a.vy, a.vx) : Math.atan2(a.l[j * 2 + 1] - by, a.l[j * 2] - bx);
+          drawAnt(bx + a.ox, by + a.oy, ang, a.size, now / 60 + a.s);
+        }
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 页面最底 ---------- */
+  (() => {
+    const el = footer('.f-end', MARK);
+    const mark = $('.mark', el);
+    register(el, { setText: () => fitMark(mark), resize: () => fitMark(mark) });
+    fitMark(mark);
+  })();
+
+  // 换品牌名、改窗口宽度、字体加载完成时重排
+  let textTimer, resizeTimer, lastW = innerWidth;
+  input.addEventListener('input', () => {
+    brand = input.value.trim() || 'Lumen';
+    document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    clearTimeout(textTimer);
+    textTimer = setTimeout(() => demos.forEach(d => d.setText?.()), 150);
+  });
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => demos.forEach(d => (d.resize || d.setText)?.()), 150);
+  });
+  document.fonts.ready.then(() => demos.forEach(d => d.setText?.()));
+</script>
+</body>
+</html>

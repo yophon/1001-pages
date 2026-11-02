@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚总览</title>
+<meta name="description" content="十一批巨字页脚演示的总目录：86 种做法，按批次、上线成本和互动方式筛选，点卡片直接跳到那一节。">
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #141417;
+    --panel-2: #1b1b1f;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --faint: #6c6c75;
+    --line: #26262b;
+    --light: #7fd18b;
+    --mid: #f0b35a;
+    --heavy: #ff7d6e;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }   /* 卡片是 flex，不加这条 hidden 藏不掉 */
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.65 var(--sans); }
+  a { color: inherit; }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .86); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .search { position: relative; flex: 1 1 220px; max-width: 360px; }
+  .search input {
+    width: 100%; padding: 6px 34px 6px 11px; border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: 13px/1.4 var(--sans);
+  }
+  .search input:focus { outline: none; border-color: #4a4a54; }
+  .search kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font: 11px var(--mono); color: var(--faint); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px;
+  }
+  .bar .go { margin-left: auto; color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .bar .go:hover { color: var(--text); }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+
+  /* 开头 */
+  .hero { padding: 88px 0 28px; max-width: 760px; }
+  .hero h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 18px; }
+  .hero p { color: var(--muted); margin: 0 0 12px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 26px; }
+  .stats div { display: flex; flex-direction: column; }
+  .stats b { font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stats span { font-size: 12px; color: var(--faint); }
+  .stats .l b { color: var(--light); }
+  .stats .m b { color: var(--mid); }
+  .stats .h b { color: var(--heavy); }
+
+  h2 { font-size: 22px; line-height: 1.3; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+
+  /* 推荐 */
+  .picks { padding: 36px 0 12px; }
+  .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .pick { display: grid; grid-template-columns: 132px 1fr; gap: 14px; align-items: start; padding: 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); text-decoration: none; }
+  .pick:hover { border-color: #3a3a42; }
+  .pick .th { border-radius: 8px; }
+  .pick h3 { margin: 2px 0 4px; font-size: 15px; }
+  .pick p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .pick .kind { font-size: 11px; letter-spacing: .06em; color: var(--faint); }
+
+  /* 筛选 */
+  .filters { padding: 34px 0 6px; border-top: 1px solid var(--line); margin-top: 36px; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .row > span { flex: none; width: 64px; font-size: 12px; color: var(--faint); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font: 12.5px/1 var(--sans); color: var(--muted); cursor: pointer; white-space: nowrap;
+    background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px;
+  }
+  .chip:hover { color: var(--text); border-color: #3a3a42; }
+  .chip[aria-pressed="true"] { color: #0b0b0d; background: var(--text); border-color: var(--text); }
+  .chip i { font-style: normal; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .count { font-size: 13px; color: var(--faint); margin: 8px 0 0; display: flex; gap: 14px; align-items: center; }
+  .count button { font: inherit; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* 分组和卡片 */
+  .group { padding: 34px 0 8px; }
+  .group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 16px; }
+  .group-head h2 { margin: 0; }
+  .group-head .no { font: 600 13px var(--mono); color: var(--faint); }
+  .group-head p { margin: 0; color: var(--muted); font-size: 14px; }
+  .group-head a { margin-left: auto; font-size: 13px; color: var(--muted); text-decoration: none; white-space: nowrap; }
+  .group-head a:hover { color: var(--text); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(262px, 1fr)); gap: 18px; }
+  .card {
+    display: flex; flex-direction: column; text-decoration: none;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+  .card:hover { border-color: #3d3d46; transform: translateY(-2px); }
+  .card:focus-visible, .pick:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+  .th { position: relative; aspect-ratio: 2.4 / 1; overflow: hidden; background: #050506; }
+  .th img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s; }
+  .card:hover .th img { transform: scale(1.04); }
+  .th .badge {
+    position: absolute; left: 8px; top: 8px;
+    font: 600 11px/1 var(--mono); color: #fff; background: rgb(0 0 0 / .55); backdrop-filter: blur(4px);
+    padding: 4px 6px; border-radius: 5px; letter-spacing: .04em;
+  }
+  .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .body h3 { margin: 0; font-size: 15.5px; line-height: 1.35; }
+  .body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.55; flex: 1; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .tag { font-size: 11px; line-height: 1; padding: 4px 6px; border-radius: 4px; background: var(--panel-2); color: var(--muted); }
+  .tag.cost { color: #0b0b0d; font-weight: 600; }
+  .tag.c1 { background: var(--light); }
+  .tag.c2 { background: var(--mid); }
+  .tag.c3 { background: var(--heavy); }
+  .empty { padding: 60px 0; color: var(--muted); text-align: center; }
+
+  .legend { margin-top: 40px; padding: 22px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
+  .legend ul { margin: 8px 0 0; padding-left: 18px; }
+  .legend li { margin-bottom: 6px; }
+  .legend h2 { color: var(--text); }
+  .legend b { color: var(--text); font-weight: 600; }
+
+  /* 页尾：总览页自己也用第一种做法，字比页面宽、底边裁掉一截 */
+  .end { margin-top: 72px; border-top: 1px solid var(--line); overflow: hidden; }
+  .end .meta { display: flex; flex-wrap: wrap; gap: 8px 32px; padding: 36px 16px 0; max-width: 1240px; margin: 0 auto; font-size: 13px; color: var(--faint); }
+  .end .meta a { color: var(--muted); text-decoration: none; }
+  .end .meta a:hover { color: var(--text); }
+  .end-mark { container-type: inline-size; padding-inline: 1vw; margin-top: 28px; }
+  .end-mark div {
+    font: 900 24.5cqw/0.8 var(--sans); letter-spacing: -0.06em; white-space: nowrap;
+    margin-bottom: -0.17em; color: #1d1d22;
+    background: linear-gradient(180deg, #2a2a31 0%, #141418 75%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding-top: 56px; }
+    .row { align-items: flex-start; flex-direction: column; gap: 6px; }
+    .row > span { width: auto; }
+    .chips { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; scrollbar-width: none; }
+    .pick { grid-template-columns: 112px 1fr; }
+    .group-head a { margin-left: 0; }
+    .search kbd { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .card, .th img { transition: none; }
+    .card:hover { transform: none; }
+    .card:hover .th img { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>巨字页脚 · 总览</strong>
+  <label class="search"><input id="q" type="search" placeholder="搜名字、做法或标签" title="比如：声音、WebGL、纸、水" autocomplete="off"><kbd>/</kbd></label>
+  <a class="go" href="index.html">从第一批看起 →</a>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>86 种巨字页脚</h1>
+    <p>官网底部那行占满整宽的品牌大字，十一批演示一共做了 86 种。这一页是总目录：按批次、上线成本和互动方式筛选，点卡片直接跳到那一节去看会动的样子。</p>
+    <p>缩略图是在无头浏览器里自动截的某一瞬间，大多数效果要滚到、要动、要点才完整。每一页顶栏都能换品牌名，中文也行。</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <section class="picks" aria-labelledby="picks-h">
+    <h2 id="picks-h">如果只挑几个</h2>
+    <p class="sub">前三个几乎不花成本，可以直接用在正式官网上；后三个更费工夫，但放在活动页或者作品集里最容易被记住。</p>
+    <div class="pick-grid" id="picks"></div>
+  </section>
+
+  <section class="filters" aria-label="筛选">
+    <div class="row"><span>批次</span><div class="chips" id="f-batch"></div></div>
+    <div class="row"><span>上线成本</span><div class="chips" id="f-cost"></div></div>
+    <div class="row"><span>怎么互动</span><div class="chips" id="f-act"></div></div>
+    <p class="count"><span id="count"></span><button type="button" id="reset" hidden>清除筛选</button></p>
+  </section>
+
+  <main id="list"></main>
+  <p class="empty" id="empty" hidden>没有符合条件的效果，换个筛选试试。</p>
+
+  <section class="legend" aria-label="标签说明">
+    <h2>标签怎么看</h2>
+    <ul>
+      <li><b>轻</b>：纯 CSS 或几十行脚本，几乎没有性能和兼容风险，可以直接上线。</li>
+      <li><b>中</b>：Canvas 2D 动画，正式用之前要照顾尺寸变化、离屏暂停和“减少动画”设置；演示页里这些都做了，但离产品级还要再打磨。</li>
+      <li><b>重</b>：实时模拟、WebGL、物理引擎或成千上万的元素，适合活动页和作品集；放在日常官网上要掂量低端手机的耗电和发热。</li>
+      <li><b>声音</b>：浏览器要求先点一下页面才允许出声，所有带声音的效果都只在点过之后才响。</li>
+    </ul>
+  </section>
+</div>
+
+<footer class="end">
+  <div class="meta">
+    <span>十一页 · 86 种 · 2026</span>
+    <a href="index.html">基础六种</a><a href="eighth.html">工坊</a><a href="ninth.html">玩具箱</a><a href="tenth.html">自然现象</a><a href="eleventh.html">看的方式</a>
+  </div>
+  <div class="end-mark" aria-hidden="true"><div>巨字页脚</div></div>
+</footer>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const PAGES = ['index', 'more', 'extra', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh'];
+  const BATCH = [
+    ['基础六种', '最常见的几种做法，大多是纯 CSS'],
+    ['进阶八种', '加上脚本、Canvas、WebGL 和真实数据'],
+    ['第三批', '立体、时间、声音和命令行'],
+    ['第四批', '签名、翻牌、光影和会动的小东西'],
+    ['第五批', '霓虹、故障、纸和海报'],
+    ['第六批', '火、植物、磁力、雨和老机器'],
+    ['第七批', '印章、地图、乐器和各种材质'],
+    ['工坊', '看着字被造出来'],
+    ['玩具箱', '能捏、能扔、能拼的'],
+    ['自然现象', '真的去算化学、流体和生长'],
+    ['看的方式', '视错觉、信息图和装置'],
+  ];
+  const COST = ['', '轻', '中', '重'];
+  const ACTS = ['只看', '滚动', '鼠标', '点击', '键盘', '声音'];
+  // [批次, 第几个, 名字, 一句话, 做法, 互动, 成本 1 轻 2 中 3 重, 缩略图纵向取景（可选）]
+  const FX = [
+    [1, 1, '裁切', '字比页脚还宽，底边被切掉一截', 'CSS', '只看', 1],
+    [1, 2, '幕布', '正文像幕布一样拉开，露出垫在底下的页脚', 'CSS', '滚动', 1],
+    [1, 3, '渐隐', '往下渐隐，或者只留空心描边', 'CSS', '只看', 1],
+    [1, 4, '手电筒', '字平时是暗的，鼠标照到哪里亮哪里', 'CSS', '鼠标', 1],
+    [1, 5, '升起', '纯 CSS 滚动驱动，滚到时从底下升起', 'CSS', '滚动', 1],
+    [1, 6, '透图', '字当窗口，后面透出照片或渐变', 'CSS', '只看', 1],
+    [2, 1, '可变字体磁场', '靠近鼠标的字母变粗变宽，整行宽度不变', 'CSS,可变字体', '鼠标', 1],
+    [2, 2, '速度跑马灯', '无限横滚，页面滚得越快它跑得越快', 'CSS', '滚动', 1],
+    [2, 3, '橡皮筋', '到底了还往下拉，大字被拉长再弹回去', 'CSS', '滚动', 2],
+    [2, 4, 'ASCII 点阵', '用字符画出 logo，像琥珀色的老终端', 'Canvas', '鼠标', 2],
+    [2, 5, '物理掉落', '字母和标签从天上掉下来，可以拎起来甩', 'Canvas,物理引擎', '鼠标', 3],
+    [2, 6, '粒子', '几千个粒子聚成字，鼠标把它们拨开', 'Canvas', '鼠标', 2],
+    [2, 7, 'WebGL 液体', '页脚是一层水面，划过留下涟漪和色散', 'WebGL', '鼠标', 3],
+    [2, 8, '实时数据', '时间、天气、系统状态，全是真数据', 'CSS,联网', '只看', 2],
+    [3, 1, '立体字', '有厚度的金属字跟着鼠标转', 'CSS', '鼠标', 2],
+    [3, 2, '钻进字母里', '往下滚，镜头钻进字母的空心里', 'Canvas', '滚动', 2, '92%'],
+    [3, 3, '光栅卡', '左右移动鼠标，大字在两面之间翻', 'CSS', '鼠标', 1],
+    [3, 4, '时间天空', '天色跟着当地时间走，字变成城市剪影', 'Canvas', '只看', 2],
+    [3, 5, '字母钢琴', '每个字母是琴键，划过去弹出五声音阶', 'CSS', '鼠标,声音', 2],
+    [3, 6, '终端', '一个能输命令、能补全的复古终端', 'CSS', '键盘', 2],
+    [3, 7, '足迹墙', '点一下留一个光点，点多了字会被点亮', 'Canvas', '点击', 2],
+    [3, 8, '飘动的旗', '字印在旗子上，在风里飘', 'WebGL', '鼠标', 3],
+    [4, 1, '签名描线', '像用笔签名一样，逐字描出轮廓再填墨', 'SVG', '滚动', 1],
+    [4, 2, '机场翻牌', '车站翻牌屏，翻过几个字符停在品牌名上', 'CSS', '只看,点击', 2],
+    [4, 3, '镭射闪卡', '全息闪卡，彩虹反光跟着鼠标流动', 'CSS', '鼠标', 1],
+    [4, 4, '光源投影', '鼠标是灯，字在纸上投出长长的影子', 'Canvas', '鼠标', 2],
+    [4, 5, '字里装水', '每个字是半杯水，会倾斜、起波纹、溅水花', 'Canvas', '鼠标,点击', 2],
+    [4, 6, '积雪', '雪落在笔画顶上，越积越厚', 'Canvas', '只看', 2],
+    [4, 7, '会眨眼的字', '字母空心里长出眼睛，一直盯着鼠标', 'Canvas', '鼠标', 2],
+    [4, 8, '剪报拼贴', '每个字从不同的报纸杂志上剪下来', 'CSS', '鼠标', 1],
+    [5, 1, '霓虹灯', '招牌逐字通电，有一个字接触不良', 'CSS', '只看,点击', 1],
+    [5, 2, '故障切片', '信号不好的屏幕：横向错位加红青重影', 'CSS', '鼠标', 1],
+    [5, 3, '刮刮乐', '按住鼠标刮开银色涂层', 'Canvas', '鼠标', 2],
+    [5, 4, '挂绳摆动', '每个字是挂在绳上的木牌，碰一下就晃', 'Canvas', '鼠标', 2],
+    [5, 5, '黏液融合', '鼠标是一团黏液，和笔画黏在一起拉丝', 'SVG', '鼠标', 2],
+    [5, 6, '放大镜', '笔画是微缩文字排出来的，拿放大镜看', 'Canvas', '鼠标', 2],
+    [5, 7, '折纸展开', '往下滚时一折一折展开', 'CSS', '滚动', 2],
+    [5, 8, '生成海报', '每次随机排一张品牌名海报，可以下载', 'Canvas', '点击', 2],
+    [6, 1, '燃烧显字', '盖在字上的纸烧起来，露出发光的字', 'Canvas', '只看', 2],
+    [6, 2, '藤蔓生长', '藤蔓顺着笔画往上爬，最后开花', 'Canvas', '只看', 2],
+    [6, 3, '铁屑磁场', '字是磁铁，铁屑沿磁力线排开', 'Canvas', '鼠标', 2],
+    [6, 4, '雨窗', '隔着起雾的雨窗看霓虹招牌', 'Canvas', '鼠标', 3],
+    [6, 5, '示波器', '电子束一笔笔描出字，带荧光余辉', 'Canvas', '只看', 2],
+    [6, 6, '拼图', '字碎成拼图块，一块块拖回去拼好', 'Canvas', '鼠标', 2],
+    [6, 7, '拉链', '字藏在牛仔布后面，拉开拉链才看得见', 'Canvas', '鼠标', 2],
+    [6, 8, '行军蚁', '蚂蚁沿着字的轮廓排队行军', 'Canvas', '只看', 2],
+    [7, 1, '盖章', '木印章压下来盖出品牌名，点哪盖哪', 'Canvas', '点击,声音', 2],
+    [7, 2, '等高线地形图', '品牌名变成山脉，画成纸质地图', 'Canvas', '鼠标', 3],
+    [7, 3, '色觉测试图', '字藏在色觉测试图里，镜片下会消失', 'Canvas', '鼠标', 2],
+    [7, 4, '音乐盒', '字打成纸带上的孔，转过音梳奏出曲子', 'Canvas', '鼠标,声音', 2],
+    [7, 5, '针板', '钢针从背后把字顶出来，按下去会凹', 'Canvas', '鼠标', 2],
+    [7, 6, '丝绒', '绒毛倒向不同显出字，划一下就刷乱', 'Canvas', '鼠标', 3],
+    [7, 7, '热成像', '透过热像仪看一块块发热的字', 'Canvas', '鼠标', 3],
+    [7, 8, '多米诺', '骨牌一排排倒下，牌面拼出字', 'Canvas', '点击,声音', 2],
+    [8, 1, '3D 打印', '喷头一层层把字堆出来，像延时摄影', 'Canvas', '只看,声音', 2],
+    [8, 2, '激光切割', '激光沿轮廓切木板，切完字块被顶起来', 'Canvas', '鼠标', 2],
+    [8, 3, '十字绣', '照真实针法一针针绣出来，能翻到背面', 'Canvas', '鼠标', 2],
+    [8, 4, '提花织机', '梭子来回穿，靠两种缎纹织出字', 'Canvas', '只看,声音', 2],
+    [8, 5, '打字机', '字锤砸出墨色不匀的大字，还能接着打', 'Canvas', '键盘,声音', 2],
+    [8, 6, '喷漆模板', '镂空模板喷出来，带飞漆和漆泪', 'Canvas', '鼠标,声音', 2],
+    [8, 7, '暗房显影', '红灯下影像在药水里慢慢浮出来', 'Canvas', '鼠标', 2],
+    [8, 8, '浇铸', '铁水灌满字形砂型，冷却后开箱', 'Canvas', '点击,声音', 3],
+    [9, 1, '泡泡纸', '一整张能捏爆的气泡膜', 'Canvas', '点击,声音', 2],
+    [9, 2, '骰子拼画', '黑白骰子拼出字，点一下掀起翻滚的波', 'Canvas', '点击,声音', 2],
+    [9, 3, '迷宫', '迷宫只挖在字里，水从入口漫到出口', 'Canvas', '鼠标', 2],
+    [9, 4, '弹珠台', '钢珠撞到字会亮灯、加分', 'Canvas', '点击,声音', 3],
+    [9, 5, '橡皮泥', '彩泥捏的字，能按出带指纹的坑', 'Canvas', '鼠标', 3],
+    [9, 6, '铝膜气球', '派对字母气球，戳一下吱吱漏气', 'Canvas', '点击,声音', 2],
+    [9, 7, '扑克牌', '洗牌、发牌，翻开总是品牌名', 'Canvas', '鼠标,声音', 2],
+    [9, 8, '枯山水', '青苔石头字，鼠标是五齿耙', 'Canvas', '鼠标', 2],
+    [10, 1, '反应扩散', '字里长出珊瑚、指纹一样的花纹', 'Canvas', '鼠标', 3],
+    [10, 2, '结霜', '冰花从字里长出来，哈气能化开', 'Canvas', '鼠标,声音', 3],
+    [10, 3, '倒影', '黄昏湖边的字和水里的倒影', 'Canvas', '鼠标,声音', 3],
+    [10, 4, '星图', '每个字是一个星座，能换成古星图', 'Canvas', '鼠标', 2],
+    [10, 5, '风洞', '真的算流体，字后面卷出涡街', 'Canvas', '鼠标', 3],
+    [10, 6, '生命游戏', '字是开局，演化碎掉以后还能倒带', 'Canvas', '鼠标', 2],
+    [10, 7, '蜂巢', '蜜蜂一格格灌蜜封蜡，拼出字', 'Canvas', '鼠标', 2],
+    [10, 8, '雷电', '闪电沿笔画劈下来，留下灼痕', 'Canvas', '点击,声音', 2],
+    [11, 1, '立体图', '字藏在纹样里，要对眼才看得见', 'Canvas', '只看', 2],
+    [11, 2, '运动隐字', '哪一帧都只是噪点，动起来才有字', 'Canvas', '只看', 2],
+    [11, 3, '后像', '盯 15 秒，眼睛里会浮出另一种颜色的字', 'Canvas', '点击', 2],
+    [11, 4, '地铁图', '字自动画成一张地铁线路图', 'Canvas', '鼠标', 2],
+    [11, 5, '时钟阵列', '一排排钟的指针拼出字和时间', 'Canvas', '点击', 2],
+    [11, 6, '碎玻璃', '点一下玻璃碎了，再倒带拼回去', 'Canvas', '点击,声音', 2],
+    [11, 7, '放映机', '老胶片放映，摇手柄控制快慢', 'Canvas', '鼠标,声音', 2],
+    [11, 8, '星球', '字是行星上的大陆，夜里亮着城市灯光', 'WebGL', '鼠标', 3],
+  ].map(([b, n, name, one, tech, acts, cost, pos]) => ({
+    b, n, name, one, cost, pos: pos || '62%',
+    tech: tech.split(','), acts: acts.split(','),
+    href: `${PAGES[b - 1]}.html#c${n}`,
+    img: `overview/${PAGES[b - 1]}-c${n}.webp`,
+    code: `${String(b).padStart(2, '0')}·${String(n).padStart(2, '0')}`,
+  }));
+  const PICKS = [
+    [1, 1, '最稳', '一行 CSS 就有冲击力：字比页面宽、底边被裁掉，没有任何动画也成立。'],
+    [1, 5, '最稳', '纯 CSS 的滚动驱动动画，不支持的浏览器直接显示最终的样子，降级是白送的。'],
+    [4, 1, '最稳', '进场时描一次轮廓再填墨，SVG 描边，很轻，又有“亲手签名”的品牌感。'],
+    [8, 7, '最难忘', '红灯下影像慢慢浮出来，定影后开灯是一张黑白照片，很有仪式感。'],
+    [10, 3, '最难忘', '黄昏的湖和倒影，划水起涟漪；什么都不做，光看也很好看。'],
+    [11, 4, '最难忘', '任何品牌名都能自动画成地铁线路图，信息设计的味道很足。'],
+  ].map(([b, n, kind, why]) => ({ ...FX.find(f => f.b === b && f.n === n), kind, why }));
+
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const thumb = f => `<div class="th"><img src="${f.img}" alt="" loading="lazy" decoding="async" style="object-position: 50% ${f.pos}"><span class="badge">${f.code}</span></div>`;
+  const tags = f => `<span class="tag cost c${f.cost}">${COST[f.cost]}</span>` + [...f.tech, ...f.acts.filter(a => a !== '只看')].map(t => `<span class="tag">${esc(t)}</span>`).join('');
+
+  // 统计
+  const n = c => FX.filter(f => f.cost === c).length;
+  $('#stats').innerHTML = `<div><b>11</b><span>批</span></div><div><b>${FX.length}</b><span>种</span></div>`
+    + `<div class="l"><b>${n(1)}</b><span>轻：可以直接上线</span></div><div class="m"><b>${n(2)}</b><span>中：Canvas 动画</span></div><div class="h"><b>${n(3)}</b><span>重：模拟或 WebGL</span></div>`;
+
+  // 推荐
+  $('#picks').innerHTML = PICKS.map(f => `<a class="pick" href="${f.href}">${thumb(f)}<div><div class="kind">${f.kind} · ${f.code}</div><h3>${esc(f.name)}</h3><p>${esc(f.why)}</p></div></a>`).join('');
+
+  // 分组卡片
+  $('#list').innerHTML = BATCH.map(([title, theme], i) => {
+    const b = i + 1, items = FX.filter(f => f.b === b);
+    return `<section class="group" data-b="${b}"><div class="group-head"><span class="no">${String(b).padStart(2, '0')}</span><h2>${title}</h2><p>${theme} · ${items.length} 种</p><a href="${PAGES[i]}.html">打开这一页 →</a></div>`
+      + `<div class="grid">${items.map(f => `<a class="card" href="${f.href}" data-i="${FX.indexOf(f)}">${thumb(f)}<div class="body"><h3>${esc(f.name)}</h3><p>${esc(f.one)}</p><div class="tags">${tags(f)}</div></div></a>`).join('')}</div></section>`;
+  }).join('');
+
+  // 筛选：批次单选，成本单选，互动多选（要同时满足），再加关键词
+  const state = { b: 0, cost: 0, acts: new Set(), q: '' };
+  const chip = (label, attrs, dot) => `<button type="button" class="chip" ${attrs}>${dot ? `<i style="background:${dot}"></i>` : ''}${label}</button>`;
+  $('#f-batch').innerHTML = chip('全部', 'data-b="0" aria-pressed="true"') + BATCH.map(([t], i) => chip(`${i + 1} ${t}`, `data-b="${i + 1}" aria-pressed="false"`)).join('');
+  $('#f-cost').innerHTML = chip('全部', 'data-c="0" aria-pressed="true"') + [1, 2, 3].map(c => chip(COST[c], `data-c="${c}" aria-pressed="false"`, `var(--${['', 'light', 'mid', 'heavy'][c]})`)).join('');
+  $('#f-act').innerHTML = ACTS.map(a => chip(a, `data-a="${a}" aria-pressed="false"`)).join('');
+  const press = (box, el) => box.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === el)));
+  $('#f-batch').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; state.b = +c.dataset.b; press($('#f-batch'), c); render(); });
+  $('#f-cost').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; state.cost = +c.dataset.c; press($('#f-cost'), c); render(); });
+  $('#f-act').addEventListener('click', e => {
+    const c = e.target.closest('.chip');
+    if (!c) return;
+    const a = c.dataset.a;
+    state.acts.has(a) ? state.acts.delete(a) : state.acts.add(a);
+    c.setAttribute('aria-pressed', String(state.acts.has(a)));
+    render();
+  });
+  $('#q').addEventListener('input', e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+  $('#reset').addEventListener('click', () => {
+    Object.assign(state, { b: 0, cost: 0, q: '' });
+    state.acts.clear();
+    $('#q').value = '';
+    press($('#f-batch'), $('#f-batch .chip'));
+    press($('#f-cost'), $('#f-cost .chip'));
+    $('#f-act').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+    render();
+  });
+  addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== $('#q')) { e.preventDefault(); $('#q').focus(); }
+    if (e.key === 'Escape' && document.activeElement === $('#q')) $('#q').blur();
+  });
+
+  function match(f) {
+    if (state.b && f.b !== state.b) return false;
+    if (state.cost && f.cost !== state.cost) return false;
+    for (const a of state.acts) if (!f.acts.includes(a)) return false;
+    if (state.q) {
+      const hay = [f.name, f.one, f.code, COST[f.cost], ...f.tech, ...f.acts, BATCH[f.b - 1][0]].join(' ').toLowerCase();
+      if (!state.q.split(/\s+/).every(w => hay.includes(w))) return false;
+    }
+    return true;
+  }
+  function render() {
+    let shown = 0;
+    document.querySelectorAll('.card').forEach(el => { const ok = match(FX[+el.dataset.i]); el.hidden = !ok; if (ok) shown++; });
+    document.querySelectorAll('.group').forEach(g => { g.hidden = !g.querySelector('.card:not([hidden])'); });
+    const filtered = state.b || state.cost || state.acts.size || state.q;
+    $('#count').textContent = filtered ? `显示 ${shown} / ${FX.length} 种` : `共 ${FX.length} 种`;
+    $('#reset').hidden = !filtered;
+    $('#empty').hidden = shown > 0;
+  }
+  render();
+</script>
+</body>
+</html>

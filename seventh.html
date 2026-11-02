@@ -1,0 +1,1865 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚第七批</title>
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --line: #26262b;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .back { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .bar .back:hover { color: var(--text); }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .bar input {
+    width: 150px; padding: 5px 9px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .bar nav { display: flex; gap: 2px; overflow-x: auto; margin-left: auto; max-width: 100%; scrollbar-width: none; }
+  .bar nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .bar nav a:hover { color: var(--text); background: var(--panel); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 112px 16px 24px; }
+  .hero h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p { color: var(--muted); margin: 0 0 12px; }
+
+  /* 每一节的“正文” */
+  .intro { position: relative; z-index: 1; background: var(--bg); padding: 96px 16px 80px; }
+  .intro > * { max-width: 720px; margin-inline: auto; }
+  .num { font: 900 64px/1 var(--sans); color: transparent; -webkit-text-stroke: 1px #44444c; }
+  .intro h2 { font-size: 28px; line-height: 1.3; margin-top: 12px; margin-bottom: 12px; }
+  .intro p { color: var(--muted); margin-top: 0; margin-bottom: 16px; }
+  .note { font-size: 14px; color: #f0b35a !important; }
+  .ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+  .ctrl button {
+    font: 13px/1 var(--sans); color: var(--text); cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+  }
+  .tips { padding-left: 20px; color: var(--muted); }
+  .tips li { margin-bottom: 10px; }
+  .tips b { color: var(--text); }
+
+  /* 页脚公共部分 */
+  .demo { position: relative; overflow: hidden; padding-top: 56px; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 28px 64px;
+    padding: 0 clamp(16px, 4vw, 48px); font-size: 14px;
+    position: relative; z-index: 1;
+  }
+  .links div { display: flex; flex-direction: column; gap: 4px; }
+  .links b { font-size: 12px; font-weight: 600; letter-spacing: .08em; opacity: .55; margin-bottom: 4px; }
+  .links span { opacity: .85; }
+  .links .copy { margin-left: auto; align-self: flex-end; font-size: 13px; opacity: .55; }
+  .mark-wrap { container-type: inline-size; padding-inline: clamp(8px, 2vw, 24px); margin-top: 48px; }
+  .mark {
+    display: block;
+    font: 900 22cqw/0.8 var(--sans);
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    margin-bottom: -0.15em;
+  }
+  .mark > span { display: inline-block; }
+  .stage-canvas { display: block; width: 100%; margin-top: 32px; touch-action: pan-y; }
+
+  /* 01 盖章 */
+  .s1 { background: #efe8d9; color: #7d7361; }
+  .s1 canvas { cursor: pointer; }
+
+  /* 02 等高线 */
+  .s2 { background: #f1ead8; color: #7f735c; }
+  .s2 canvas { cursor: crosshair; }
+
+  /* 03 色觉测试图 */
+  .s3 { background: #f6f1e7; color: #7c7468; }
+
+  /* 04 音乐盒 */
+  .s4 { background: #24170f; color: #a48d74; }
+  .s4 canvas { cursor: grab; }
+  .s4 canvas:active { cursor: grabbing; }
+
+  /* 05 针板 */
+  .s5 { background: #18191d; color: #8b8e96; }
+
+  /* 06 丝绒 */
+  .s6 { background: #1d0710; color: #b98a96; }
+
+  /* 07 热成像 */
+  .s7 { background: #07060c; color: #8a86a0; }
+  .s7 canvas { cursor: none; }
+
+  /* 08 多米诺 */
+  .s8 { background: #1b2a23; color: #9fb3a6; }
+  .s8 canvas { cursor: pointer; }
+
+  .f-end { background: var(--bg); color: #7a7a83; border-top: 1px solid var(--line); }
+  .f-end .mark { color: #26262c; }
+</style>
+</head>
+<body id="top">
+
+<div class="bar">
+  <a class="back" href="sixth.html">← 第六批</a>
+  <strong>第七批</strong>
+  <label>品牌名 <input id="brand" value="Lumen" maxlength="16" spellcheck="false"></label>
+  <nav>
+    <a href="overview.html">总览</a>
+    <a href="#c1">01 盖章</a><a href="#c2">02 地形</a><a href="#c3">03 色觉</a><a href="#c4">04 音乐盒</a><a href="#c5">05 针板</a><a href="#c6">06 丝绒</a><a href="#c7">07 热成像</a><a href="#c8">08 多米诺</a><a href="eighth.html">第八批 →</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <h1>巨字页脚，第七批</h1>
+  <p>这一批：印章、地形图、色觉测试图、音乐盒、针板、丝绒、热成像、多米诺。用法和前几页一样，顶栏可以换品牌名，离开屏幕就暂停。盖章、音乐盒和多米诺带声音，浏览器要求先点一下才会响。</p>
+  <p class="note" id="reduced-note" hidden>你的系统开了“减少动画”：自动播放的部分会停掉，鼠标触发的效果保留。</p>
+</header>
+
+<section id="c1">
+  <div class="intro">
+    <div class="num">01</div>
+    <h2>盖章</h2>
+    <p>滚到这里，一块大木头印章从上面压下来，在纸上盖出带边框的品牌名，印泥还会往纸里洇开一点。在纸上随便点，会盖一个写着“已阅”和今天日期的圆章。印泥越用越淡，盖多了会缺笔断画，点“蘸印泥”补满。</p>
+    <p>印出来的样子是算出来的：先把字和边框画成白色形状并稍微模糊，用一层细噪声把边缘咬毛，用一层粗噪声决定哪里吃墨多、哪里缺墨，印泥越少缺得越多。印子用“正片叠底”叠到纸上，两个章重叠的地方颜色会更深。</p>
+    <div class="ctrl"><button type="button" id="stamp-again">再盖一次</button><button type="button" id="stamp-ink">蘸印泥</button><button type="button" id="stamp-clear">换张纸</button><span id="stamp-left"></span></div>
+  </div>
+  <footer class="demo s1"></footer>
+</section>
+
+<section id="c2">
+  <div class="intro">
+    <div class="num">02</div>
+    <h2>等高线地形图</h2>
+    <p>品牌名变成一片山脉，画成纸质地图的样子：一圈圈等高线、按海拔上色、左上方打光的山体阴影，每五条线加粗一条，几座主峰标着海拔。鼠标移到图上，脚下会隆起一座山，周围的等高线跟着让路，旁边显示鼠标所在的海拔。</p>
+    <p>高度由“离字边多远”决定：字里越靠近笔画中心越高，字外随距离慢慢降下去，再叠一层噪声让山形不规则。等高线用行进方块法每帧重新算，交点做了线性插值，所以线是平滑的；整张图还会随时间极慢地起伏。</p>
+  </div>
+  <footer class="demo s2"></footer>
+</section>
+
+<section id="c3">
+  <div class="intro">
+    <div class="num">03</div>
+    <h2>色觉测试图</h2>
+    <p>满屏大大小小的圆点，字是靠颜色藏进去的：字里的点偏橙红，字外的点偏黄绿，明暗故意打乱，只能靠色相分辨。鼠标是一块“色弱镜片”，镜片里显示红绿色弱的人看到的样子，字在里面会消失；点“用红绿色弱的眼睛看”，整张图都换过去。</p>
+    <p>先在线性 RGB 里找出红绿色弱分不清的那个颜色方向（由 Machado 等人 2009 年的色觉模拟矩阵算出来），每个点在一个随机底色上沿这个方向加一点就是字里的颜色，减一点就是字外的颜色。正常的眼睛看得出差别，模拟出来两边完全一样。</p>
+    <p class="note">这是个玩笑性质的设计：男性里大约 5%～8% 有红绿色觉异常，真要上线，得在别处放一个正常显示的品牌名。</p>
+    <div class="ctrl"><button type="button" id="cvd-toggle">用红绿色弱的眼睛看</button><button type="button" id="cvd-new">换一批点</button></div>
+  </div>
+  <footer class="demo s3"></footer>
+</section>
+
+<section id="c4">
+  <div class="intro">
+    <div class="num">04</div>
+    <h2>音乐盒</h2>
+    <p>品牌名打成音乐盒纸带上的孔，纸带从右往左走过琴盒，每个孔经过音梳时拨响一个音：越往上的孔音越高，一共 18 个音，用的是五声音阶，怎么排都不难听。可以抓住纸带左右拖，往回拖就倒着放。</p>
+    <p>孔是把字缩成 18 行高的点阵得到的。为了不让一竖笔画变成十几个音一起轰响，连成一段的孔只有第一个出声，同一列的音从低到高错开十几毫秒，听起来像拨了一下竖琴。声音全是用 Web Audio 现场合成的。</p>
+    <p class="note">浏览器要先有一次点击才允许出声：点“开声音”，或者直接在纸带上点一下。</p>
+    <div class="ctrl"><button type="button" id="mb-sound">开声音</button></div>
+  </div>
+  <footer class="demo s4"></footer>
+</section>
+
+<section id="c5">
+  <div class="intro">
+    <div class="num">05</div>
+    <h2>针板</h2>
+    <p>那种一面插满钢针的玩具：从背后把字顶上来，字的地方针就凸出来。滚到这里时，针从左到右一列列被顶出，带一点回弹。鼠标是一只手，按到哪里，哪里的针就被压回去，挪开就弹回来；点一下会推出一圈波纹。</p>
+    <p>每根针是一个带阻尼的弹簧，目标高度来自字形：把字画在比针密 4 倍的格子上，算每根针被字盖住多少，再模糊一下，字边上的针只顶出一半，边缘就圆润了。凸出来的针会露出针杆，在背板上投下影子。</p>
+  </div>
+  <footer class="demo s5"></footer>
+</section>
+
+<section id="c6">
+  <div class="intro">
+    <div class="num">06</div>
+    <h2>丝绒</h2>
+    <p>整块页脚是一块酒红色的丝绒，字和底的绒毛倒向相反，灯从左上方照过来，一边亮一边暗，字就显出来了。用鼠标在上面划，绒毛会顺着划的方向倒，颜色跟着变；顺着一个方向把整块布刷一遍，字就没了。放着不管，绒毛会慢慢倒回原来的方向，字又浮出来。</p>
+    <p>每隔四五个像素一根绒毛，记着自己现在的朝向和原本的朝向，亮度只看朝向和灯光方向的夹角。为了画得动两万根线，按亮度分成十几组，每组一次画完；没有变化的时候不重画。</p>
+    <div class="ctrl"><button type="button" id="velvet-flat">抚平</button></div>
+  </div>
+  <footer class="demo s6"></footer>
+</section>
+
+<section id="c7">
+  <div class="intro">
+    <div class="num">07</div>
+    <h2>热成像</h2>
+    <p>透过热像仪看页脚：字是一块块发热的板子，滚到这里时慢慢热起来，热量往四周散开成一圈光晕。鼠标是你的手，划过的地方会留下一道体温的痕迹，再慢慢散掉；点一下是放上一块冰。准星显示指着的地方多少度，左上角是全场最高和最低温。</p>
+    <p>画面背后是一张 4 像素一格的温度表，每帧做两次热扩散，再往室温慢慢冷却；字所在的格子由“加热器”往 44～52°C 拉。温度按一张从黑、紫、红到黄白的色表上色，再加一点传感器噪点。</p>
+  </div>
+  <footer class="demo s7"></footer>
+</section>
+
+<section id="c8">
+  <div class="intro">
+    <div class="num">08</div>
+    <h2>多米诺</h2>
+    <p>整片页脚摆满了立着的多米诺骨牌，从上面看只是一条条黑色的窄边。滚到这里时，左边第一列被推倒，一排排接着倒过去，牌面朝上，字就拼出来了：字里的牌面是红的，字外是象牙白的。点一张还立着的牌，从那里往右推倒；点一张已经倒下的，从那里往右重新立起来。</p>
+    <p>每张牌绕着自己右下角那条边转，从上面看到的牌面宽度是“牌长 × sin 倾角”。倒下的牌靠在右边那张身上，停在 arccos(厚度 ÷ 间距) 那个角度，每排最后一张会完全躺平。自己点出来的那几次会配上咔嗒声。</p>
+    <div class="ctrl"><button type="button" id="domino-reset">全部摆好</button></div>
+  </div>
+  <footer class="demo s8"></footer>
+</section>
+
+<section id="end">
+  <div class="intro">
+    <div class="num">✓</div>
+    <h2>七页合起来</h2>
+    <ul class="tips">
+      <li><b>基础六种</b>：裁切、幕布、渐隐、手电筒、升起、透图。</li>
+      <li><b>进阶八种</b>：可变字体、跑马灯、橡皮筋、点阵、物理、粒子、液体、实时数据。</li>
+      <li><b>第三批</b>：立体、钻洞、光栅、天空、钢琴、终端、足迹、旗帜。</li>
+      <li><b>第四批</b>：签名、翻牌、镭射、投影、装水、积雪、眼睛、剪报。</li>
+      <li><b>第五批</b>：霓虹、故障、刮奖、挂绳、黏液、放大镜、折纸、海报。</li>
+      <li><b>第六批</b>：燃烧、藤蔓、铁屑、雨窗、示波器、拼图、拉链、蚂蚁。</li>
+      <li><b>这一批</b>：盖章、地形、色觉、音乐盒、针板、丝绒、热成像、多米诺。</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="demo f-end"></footer>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[(Math.random() * a.length) | 0];
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const backOut = x => 1 + 2.70158 * (x - 1) ** 3 + 1.70158 * (x - 1) ** 2;
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = () => Math.min(devicePixelRatio || 1, 2);
+  const SANS = '"Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+  const input = $('#brand');
+  let brand = input.value.trim() || 'Lumen';
+  if (REDUCED) $('#reduced-note').hidden = false;
+
+  const LINKS = `
+    <div class="links">
+      <div><b>产品</b><span>功能</span><span>价格</span><span>更新日志</span></div>
+      <div><b>公司</b><span>关于我们</span><span>招聘</span><span>联系</span></div>
+      <div><b>资源</b><span>文档</span><span>博客</span><span>社区</span></div>
+      <div class="copy">© 2026 <span class="bn"></span></div>
+    </div>`;
+  const MARK = `<div class="mark-wrap"><div class="mark" aria-hidden="true"><span></span></div></div>`;
+
+  function footer(sel, inner) {
+    const el = $(sel);
+    el.innerHTML = LINKS + inner;
+    el.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    return el;
+  }
+
+  function fitMark(mark) {
+    const span = mark.firstElementChild;
+    span.textContent = brand;
+    mark.style.fontSize = '100px';
+    const w = span.getBoundingClientRect().width;
+    if (w) mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 60vh)`;
+  }
+
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+
+  // canvas 上把文字居中铺进 w×h，返回 fillText 的坐标和字形高度
+  function fitText(ctx, text, w, h, fill = 1) {
+    ctx.font = `900 100px ${SANS}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(text);
+    const tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight || 1;
+    const th = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || 1;
+    const size = Math.min(fill * 100 * w / tw, fill * 100 * h / th);
+    const k = size / 100;
+    ctx.font = `900 ${size}px ${SANS}`;
+    return {
+      x: (w - tw * k) / 2 + m.actualBoundingBoxLeft * k,
+      y: (h - th * k) / 2 + m.actualBoundingBoxAscent * k,
+      asc: m.actualBoundingBoxAscent * k,
+      h: th * k,
+    };
+  }
+
+  function sizeCanvas(cv, ratio, min) {
+    const dpr = DPR(), W = cv.clientWidth;
+    const H = Math.round(clamp(W * ratio, min, Math.max(min, innerHeight * 0.6)));
+    cv.style.height = H + 'px';
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    return { W, H, dpr };
+  }
+
+  // 把品牌名画进 w×h 的遮罩，返回 { mask, font, f }；mask[i] 为 1 表示笔画
+  function textMask(w, h, fill) {
+    const c = canvas(w, h);
+    const o = c.getContext('2d', { willReadFrequently: true });
+    const f = fitText(o, brand, w, h, fill);
+    o.fillText(brand, f.x, f.y);
+    const d = o.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+    for (let i = 0; i < mask.length; i++) mask[i] = d[i * 4 + 3] > 128 ? 1 : 0;
+    return { mask, font: o.font, f };
+  }
+
+  // 两遍倒角距离：mask 值等于 want 的像素到最近的另一种像素有多远（近似欧氏距离，单位像素）
+  function distance(mask, w, h, want) {
+    const d = new Float32Array(w * h), R2 = Math.SQRT2;
+    for (let i = 0; i < d.length; i++) d[i] = mask[i] === want ? 1e9 : 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!d[i]) continue;
+      let v = d[i];
+      if (x > 0) v = Math.min(v, d[i - 1] + 1);
+      if (y > 0) {
+        v = Math.min(v, d[i - w] + 1);
+        if (x > 0) v = Math.min(v, d[i - w - 1] + R2);
+        if (x < w - 1) v = Math.min(v, d[i - w + 1] + R2);
+      }
+      d[i] = v;
+    }
+    for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+      const i = y * w + x;
+      if (!d[i]) continue;
+      let v = d[i];
+      if (x < w - 1) v = Math.min(v, d[i + 1] + 1);
+      if (y < h - 1) {
+        v = Math.min(v, d[i + w] + 1);
+        if (x < w - 1) v = Math.min(v, d[i + w + 1] + R2);
+        if (x > 0) v = Math.min(v, d[i + w - 1] + R2);
+      }
+      d[i] = v;
+    }
+    return d;
+  }
+
+  // 值噪声：整数格点上取伪随机数再平滑插值，结果在 0~1
+  function hash(x, y) {
+    let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  }
+  function noise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  const fbm = (x, y) => noise(x, y) * 0.55 + noise(x * 2.1 + 17, y * 2.1 + 9) * 0.3 + noise(x * 4.3 + 41, y * 4.3 + 23) * 0.15;
+
+  // 进场判断：顶边过了屏幕的 k 处，或者已经整块露出来（页脚在页面最底时可能滚不到那条线）
+  function seen(el, k) {
+    const r = el.getBoundingClientRect();
+    return r.top < innerHeight * k || r.bottom <= innerHeight + 4;
+  }
+
+  // 记录指针相对 target 的位置和每次移动的位移
+  function trackPointer(el, target) {
+    const p = { x: -1e9, y: -1e9, vx: 0, vy: 0, on: false };
+    el.addEventListener('pointermove', e => {
+      const r = target.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (p.on) { p.vx = x - p.x; p.vy = y - p.y; }
+      p.x = x; p.y = y; p.on = true;
+    });
+    el.addEventListener('pointerleave', () => { p.on = false; p.x = p.y = -1e9; p.vx = p.vy = 0; });
+    return p;
+  }
+
+  // 声音：整页共用一个 AudioContext，最后过一个压限器，免得和弦爆音
+  let AC = null, NOISE = null;
+  function audio() {
+    if (!AC) {
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return null;
+      AC = new A();
+      AC.out = AC.createDynamicsCompressor();
+      AC.out.connect(AC.destination);
+    }
+    if (AC.state === 'suspended') AC.resume();
+    return AC;
+  }
+  function noiseBuf(ac) {
+    if (!NOISE) {
+      NOISE = ac.createBuffer(1, Math.round(ac.sampleRate * 0.2), ac.sampleRate);
+      const d = NOISE.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return NOISE;
+  }
+
+  // 统一调度：只跑在屏幕上的效果
+  const demos = [];
+  const running = new Set();
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    const d = e.target.__demo;
+    if (e.isIntersecting) { running.add(d); d.enter?.(); } else running.delete(d);
+  }), { rootMargin: '80px 0px' });
+  function register(el, d) {
+    el.__demo = d;
+    demos.push(d);
+    io.observe(el);
+  }
+  let last = performance.now();
+  requestAnimationFrame(function loop(now) {
+    requestAnimationFrame(loop);   // 先排下一帧：某个效果出错也不会把整个循环拖停
+    const dt = Math.min(now - last, 50);
+    last = now;
+    running.forEach(d => {
+      try { d.frame?.(now, dt); } catch (err) { running.delete(d); console.error(err); }
+    });
+  });
+
+  /* ---------- 01 盖章 ---------- */
+  (() => {
+    const el = footer('.s1', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const left = $('#stamp-left');
+    const INK = [190, 30, 45];
+    const TIMES = { big: [260, 110, 320], seal: [150, 60, 210] };   // 落下、压住、抬起各用多少毫秒
+    const anims = [];
+    let W, H, dpr, sheet, sctx, ink = 1, seed = rand(0, 1000), started = false, dirty = true;
+
+    function paper() {
+      sheet = canvas(cv.width, cv.height);
+      sctx = sheet.getContext('2d');
+      // 纸：底色加一点颗粒和纤维，按 CSS 像素生成再放大
+      const p = canvas(W, H), o = p.getContext('2d'), img = o.createImageData(W, H), d = img.data;
+      for (let i = 0; i < W * H; i++) {
+        const n = (Math.random() - 0.5) * 10;
+        d[i * 4] = 240 + n; d[i * 4 + 1] = 233 + n; d[i * 4 + 2] = 218 + n; d[i * 4 + 3] = 255;
+      }
+      o.putImageData(img, 0, 0);
+      o.strokeStyle = 'rgba(120, 100, 70, .08)';
+      o.lineWidth = 0.6;
+      for (let k = 0; k < W * H / 900; k++) {
+        const x = rand(0, W), y = rand(0, H), a = rand(0, Math.PI * 2), l = rand(4, 14);
+        o.beginPath();
+        o.moveTo(x, y);
+        o.quadraticCurveTo(x + Math.cos(a) * l / 2 + rand(-2, 2), y + Math.sin(a) * l / 2 + rand(-2, 2), x + Math.cos(a) * l, y + Math.sin(a) * l);
+        o.stroke();
+      }
+      sctx.drawImage(p, 0, 0, sheet.width, sheet.height);
+    }
+    function blurred(c, px) {
+      const b = canvas(c.width, c.height), o = b.getContext('2d', { willReadFrequently: true });
+      o.filter = `blur(${px}px)`;
+      o.drawImage(c, 0, 0);
+      return b;
+    }
+    // 把白色形状变成印泥：边缘咬毛、浓淡不匀，印泥越少缺得越多
+    function inkify(c, amount) {
+      const w = c.width, h = c.height, o = c.getContext('2d', { willReadFrequently: true });
+      const img = o.getImageData(0, 0, w, h), d = img.data;
+      const s = (seed += 37.1), gap = 0.1 + (1 - amount) * 0.85;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4, a = d[i + 3] / 255;
+        if (a < 0.02) { d[i + 3] = 0; continue; }
+        const edge = smooth((a - 0.5) * 5 + (noise(x * 0.35 + s, y * 0.35) - 0.5) * 2.2 + 0.5);
+        const big = fbm(x * 0.012 + s, y * 0.03 - s);
+        const fine = noise(x * 0.6 - s, y * 0.6 + s);
+        const cover = smooth((fine * 0.6 + big * 0.7 - gap) * 4);
+        d[i] = INK[0]; d[i + 1] = INK[1]; d[i + 2] = INK[2];
+        d[i + 3] = edge * cover * (0.62 + 0.38 * big) * 240 * (0.55 + 0.45 * amount);
+      }
+      o.putImageData(img, 0, 0);
+      return c;
+    }
+    function bigShape() {
+      const w = Math.round(W * 0.86), h = Math.round(Math.min(H * 0.74, W * 0.3)), m = 6;
+      const c = canvas(w + m * 2, h + m * 2), o = c.getContext('2d');
+      o.translate(m, m);
+      o.strokeStyle = o.fillStyle = '#fff';
+      const lw = Math.max(3, h * 0.035), r = h * 0.1, ins = lw * 2.4, pad = ins * 2.2;
+      o.lineWidth = lw;
+      o.beginPath(); o.roundRect(lw / 2, lw / 2, w - lw, h - lw, r); o.stroke();
+      o.lineWidth = Math.max(1.2, lw * 0.32);
+      o.beginPath(); o.roundRect(ins, ins, w - ins * 2, h - ins * 2, Math.max(0, r - ins * 0.6)); o.stroke();
+      const f = fitText(o, brand, w - pad * 2, h - pad * 2, 0.92);
+      o.fillText(brand, pad + f.x, pad + f.y);
+      return blurred(c, 1.1);
+    }
+    function sealShape() {
+      const D = Math.round(clamp(H * 0.42, 96, 168)), m = 6, c = canvas(D + m * 2, D + m * 2), o = c.getContext('2d');
+      const cx = D / 2 + m, R = D / 2;
+      o.strokeStyle = o.fillStyle = '#fff';
+      o.lineWidth = R * 0.07;
+      o.beginPath(); o.arc(cx, cx, R - R * 0.035, 0, Math.PI * 2); o.stroke();
+      o.lineWidth = R * 0.025;
+      o.beginPath(); o.arc(cx, cx, R * 0.66, 0, Math.PI * 2); o.stroke();
+      // 外圈一圈品牌名，字数按周长排满
+      const rt = R * 0.81, circ = Math.PI * 2 * rt, unit = Array.from(brand.toUpperCase() + ' · ');
+      let fs = R * 0.19;
+      o.font = `800 ${fs}px ${SANS}`;
+      const unitW = () => unit.reduce((a, ch) => a + o.measureText(ch).width, 0);
+      let uw = unitW();
+      if (uw > circ) { fs *= circ / uw; o.font = `800 ${fs}px ${SANS}`; uw = unitW(); }
+      const n = Math.max(1, Math.floor(circ / uw)), k = circ / (n * uw);
+      o.textAlign = 'center';
+      o.textBaseline = 'middle';
+      let a = -Math.PI / 2;
+      for (let j = 0; j < n; j++) for (const ch of unit) {
+        const cw = o.measureText(ch).width * k, mid = a + cw / 2 / rt;
+        o.save();
+        o.translate(cx + Math.cos(mid) * rt, cx + Math.sin(mid) * rt);
+        o.rotate(mid + Math.PI / 2);
+        o.fillText(ch, 0, 0);
+        o.restore();
+        a += cw / rt;
+      }
+      // 中间：“已阅”和今天的日期
+      const t = new Date(), pad = v => String(v).padStart(2, '0');
+      o.font = `900 ${R * 0.4}px ${SANS}`;
+      o.fillText('已阅', cx, cx - R * 0.08);
+      o.font = `700 ${R * 0.12}px ${SANS}`;
+      o.fillText(`${t.getFullYear()}.${pad(t.getMonth() + 1)}.${pad(t.getDate())}`, cx, cx + R * 0.3);
+      return blurred(c, 0.7);
+    }
+    function showInk() { left.textContent = `印泥 ${Math.round(ink * 100)}%`; }
+
+    function thud(big) {
+      const ac = audio();
+      if (!ac) return;
+      const t = ac.currentTime + 0.01, o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.setValueAtTime(big ? 120 : 190, t);
+      o.frequency.exponentialRampToValueAtTime(big ? 45 : 80, t + 0.12);
+      g.gain.setValueAtTime(big ? 0.5 : 0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      o.connect(g).connect(ac.out);
+      o.start(t); o.stop(t + 0.2);
+      const n = ac.createBufferSource(), f = ac.createBiquadFilter(), g2 = ac.createGain();
+      n.buffer = noiseBuf(ac);
+      f.type = 'lowpass'; f.frequency.value = big ? 900 : 1600;
+      g2.gain.setValueAtTime(0.3, t);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      n.connect(f).connect(g2).connect(ac.out);
+      n.start(t); n.stop(t + 0.08);
+    }
+
+    function stamp(kind, x, y, rot, loud) {
+      const c = inkify(kind === 'big' ? bigShape() : sealShape(), ink);
+      ink = Math.max(0.15, ink - (kind === 'big' ? 0.14 : 0.06));
+      showInk();
+      const a = {
+        kind, x, y, rot, loud, imp: c, w: c.width, h: c.height, t0: performance.now(), hit: false,
+        grain: Array.from({ length: 14 }, () => [rand(-1, 1), rand(1, 4), rand(0, 6)]),
+      };
+      if (REDUCED) { press(a); put(a, a.soft, 0.3); dirty = true; return; }
+      anims.push(a);
+    }
+    function put(a, img, alpha) {
+      sctx.save();
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sctx.globalCompositeOperation = 'multiply';
+      sctx.globalAlpha = alpha;
+      sctx.translate(a.x, a.y);
+      sctx.rotate(a.rot);
+      sctx.drawImage(img, -a.w / 2, -a.h / 2);
+      sctx.restore();
+    }
+    // 印章碰到纸的那一下：印子落到纸上，画面震一下
+    function press(a) {
+      a.hit = true;
+      put(a, a.imp, 1);
+      a.soft = blurred(a.imp, 1.6);
+      if (a.loud) thud(a.kind === 'big');
+      if (!REDUCED) {
+        const dy = a.kind === 'big' ? 4 : 2;
+        cv.animate([{ transform: 'none' }, { transform: `translate(1px, ${dy}px)` }, { transform: 'translate(-1px, -1px)' }, { transform: 'none' }], { duration: a.kind === 'big' ? 180 : 110 });
+      }
+    }
+    // 木头印章本身：s 是离镜头远近造成的缩放，lift 是离纸多高
+    function block(a, s, alpha, lift) {
+      const w = a.w * 1.03, h = a.h * 1.06;
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      ctx.rotate(a.rot);
+      ctx.scale(s, s);
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = `rgba(50, 25, 10, ${0.45 * (1 - lift * 0.7)})`;
+      ctx.shadowBlur = (8 + lift * 40) * dpr;
+      ctx.shadowOffsetX = (2 + lift * 14) * dpr;
+      ctx.shadowOffsetY = (4 + lift * 30) * dpr;
+      const g = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
+      g.addColorStop(0, '#b07a45');
+      g.addColorStop(1, '#7b4d29');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      if (a.kind === 'big') ctx.roundRect(-w / 2, -h / 2, w, h, h * 0.08);
+      else ctx.arc(0, 0, w / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.save();
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(60, 30, 10, .2)';
+      ctx.lineWidth = 1.2;
+      for (const [y0, amp, ph] of a.grain) {   // 木纹
+        ctx.beginPath();
+        for (let x = -w / 2, first = true; x <= w / 2 + 12; x += 12, first = false) {
+          const y = y0 * h / 2 + Math.sin(x * 0.01 + ph) * amp;
+          if (first) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+      // 顶上贴的纸签
+      ctx.fillStyle = '#efe4cc';
+      if (a.kind === 'big') {
+        const lw = w * 0.3, lh = h * 0.28;
+        ctx.fillRect(-lw / 2, -lh / 2, lw, lh);
+        ctx.fillStyle = `rgb(${INK})`;
+        const f = fitText(ctx, brand, lw, lh, 0.7);
+        ctx.fillText(brand, -lw / 2 + f.x, -lh / 2 + f.y);
+      } else {
+        ctx.beginPath(); ctx.arc(0, 0, w * 0.26, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = `rgb(${INK})`;
+        ctx.font = `900 ${w * 0.15}px ${SANS}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('已阅', 0, 0);
+      }
+      ctx.restore();
+    }
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.36, 240));
+      anims.length = 0;
+      paper();
+      started = false;
+      dirty = true;
+    }
+    cv.addEventListener('click', e => {
+      const r = cv.getBoundingClientRect();
+      stamp('seal', e.clientX - r.left, e.clientY - r.top, rand(-0.35, 0.35), true);
+    });
+    $('#stamp-again').addEventListener('click', () => {
+      stamp('big', W / 2 + rand(-0.015, 0.015) * W, H / 2 + rand(-0.03, 0.03) * H, rand(-3, 3) * Math.PI / 180, true);
+    });
+    $('#stamp-ink').addEventListener('click', () => { ink = 1; showInk(); });
+    $('#stamp-clear').addEventListener('click', build);
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        if (!started && seen(cv, 0.7)) {
+          started = true;
+          stamp('big', W / 2, H / 2, rand(-2.5, -1) * Math.PI / 180, false);
+        }
+        if (!anims.length && !dirty) return;
+        dirty = false;
+        for (const a of anims) if (!a.hit && now - a.t0 >= TIMES[a.kind][0]) press(a);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.drawImage(sheet, 0, 0, W, H);
+        // 印泥往纸里洇：模糊过的印子慢慢叠上去
+        ctx.globalCompositeOperation = 'multiply';
+        for (const a of anims) if (a.hit) {
+          ctx.globalAlpha = 0.3 * clamp((now - a.t0 - TIMES[a.kind][0]) / 900, 0, 1);
+          ctx.save();
+          ctx.translate(a.x, a.y);
+          ctx.rotate(a.rot);
+          ctx.drawImage(a.soft, -a.w / 2, -a.h / 2);
+          ctx.restore();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        for (const a of anims) {
+          const [D, Pr, L] = TIMES[a.kind], e = now - a.t0;
+          if (e < D) { const k = e / D; block(a, 1 + 0.4 * (1 - k) ** 2, Math.min(1, k * 1.8), 1 - k); }
+          else if (e < D + Pr) block(a, 0.992, 1, 0);
+          else if (e < D + Pr + L) { const k = (e - D - Pr) / L; block(a, 1 + 0.4 * k * k, 1 - k, k); }
+        }
+        for (let i = anims.length - 1; i >= 0; i--) {
+          const a = anims[i], [D, Pr, L] = TIMES[a.kind];
+          if (a.hit && now - a.t0 > Math.max(D + 900, D + Pr + L)) {
+            put(a, a.soft, 0.3);
+            anims.splice(i, 1);
+            dirty = true;
+          }
+        }
+      },
+    });
+    build();
+    showInk();
+  })();
+
+  /* ---------- 02 等高线地形图 ---------- */
+  (() => {
+    const el = footer('.s2', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(cv, cv);   // 只认画布上的指针，移到上面的链接区不算
+    const C = 4, STEP = 0.04, HMAX = 2400;   // 每格 4px；每隔 0.04 一条等高线；高度 1 算 2400 米
+    // 分层设色：低处浅绿，往上土黄、褐色，最高处发白
+    const RAMP = [[0, 206, 222, 190], [0.25, 226, 230, 196], [0.45, 238, 226, 190], [0.7, 226, 202, 160], [0.88, 214, 186, 150], [1, 246, 242, 236]];
+    const LUT = new Uint8Array(256 * 3);
+    for (let i = 0; i < 256; i++) {
+      const v = i / 255;
+      let k = 0;
+      while (k < RAMP.length - 2 && v > RAMP[k + 1][0]) k++;
+      const [a, b] = [RAMP[k], RAMP[k + 1]], t = clamp((v - a[0]) / (b[0] - a[0]), 0, 1);
+      for (let j = 0; j < 3; j++) LUT[i * 3 + j] = a[j + 1] + (b[j + 1] - a[j + 1]) * t;
+    }
+    let W, H, dpr, gw, gh, base, h, tint, tctx, timg, peaks = [], seed = rand(0, 100), mx = 0, my = 0, amp = 0, still = false;
+
+    function blur(a, w, hh, passes) {
+      let src = a, dst = new Float32Array(a.length);
+      for (let p = 0; p < passes; p++) {
+        for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) {
+          let s = 0, n = 0;
+          for (let j = -1; j <= 1; j++) {
+            const yy = y + j;
+            if (yy < 0 || yy >= hh) continue;
+            for (let i = -1; i <= 1; i++) {
+              const xx = x + i;
+              if (xx < 0 || xx >= w) continue;
+              s += src[yy * w + xx]; n++;
+            }
+          }
+          dst[y * w + x] = s / n;
+        }
+        [src, dst] = [dst, src];
+      }
+      return src;
+    }
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.4, 260));
+      gw = Math.ceil(W / C) + 1;
+      gh = Math.ceil(H / C) + 1;
+      const { mask } = textMask(gw, gh, 0.8);
+      const din = distance(mask, gw, gh, 1), dout = distance(mask, gw, gh, 0);
+      let maxIn = 1;
+      for (let i = 0; i < din.length; i++) if (mask[i] && din[i] > maxIn) maxIn = din[i];
+      const raw = new Float32Array(gw * gh);
+      for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+        const i = y * gw + x;
+        const n = fbm(x * 0.05 + seed, y * 0.05 - seed), n2 = fbm(x * 0.09 - seed, y * 0.09 + seed);
+        // 字里：越靠近笔画中心越高；字外：随距离降下去。两边在字边上都是 0.44，接得上
+        const core = mask[i]
+          ? 0.44 + 0.5 * (1 - (1 - Math.min(din[i] / maxIn, 1)) ** 2) * (0.65 + 0.7 * n2)
+          : 0.44 * Math.exp(-dout[i] / (maxIn * 1.8));
+        raw[i] = Math.max(0, core + (n - 0.5) * 0.12);
+      }
+      base = blur(raw, gw, gh, 2);
+      h = new Float32Array(gw * gh);
+      tint = canvas(gw, gh);
+      tctx = tint.getContext('2d');
+      timg = tctx.createImageData(gw, gh);
+      // 山顶：比周围都高的点，挑最高的几个，彼此隔开一些
+      const cand = [];
+      for (let y = 6; y < gh - 6; y += 2) for (let x = 6; x < gw - 6; x += 2) {
+        const v = base[y * gw + x];
+        if (v < 0.7) continue;
+        let top = true;
+        for (let j = -6; j <= 6 && top; j += 2) for (let k = -6; k <= 6; k += 2) if (base[(y + j) * gw + x + k] > v) { top = false; break; }
+        if (top) cand.push({ x, y, v });
+      }
+      cand.sort((a, b) => b.v - a.v);
+      peaks = [];
+      for (const p of cand) if (peaks.length < 4 && peaks.every(q => Math.hypot(q.x - p.x, q.y - p.y) > gw * 0.16)) peaks.push(p);
+      still = false;
+    }
+
+    function paint() {
+      // 分层设色 + 左上打光的山体阴影，按格子算好再放大
+      const d = timg.data;
+      for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+        const i = y * gw + x;
+        const gx = h[y * gw + Math.min(x + 1, gw - 1)] - h[y * gw + Math.max(x - 1, 0)];
+        const gy = h[Math.min(y + 1, gh - 1) * gw + x] - h[Math.max(y - 1, 0) * gw + x];
+        const nx = -gx * 9, ny = -gy * 9, nl = Math.hypot(nx, ny, 1);
+        const f = clamp(1 + ((-nx * 0.55 - ny * 0.55 + 0.63) / nl - 0.63) * 1.2, 0.55, 1.2);
+        const k = (clamp(h[i], 0, 1) * 255 | 0) * 3;
+        d[i * 4] = LUT[k] * f;
+        d[i * 4 + 1] = LUT[k + 1] * f;
+        d[i * 4 + 2] = LUT[k + 2] * f;
+        d[i * 4 + 3] = 255;
+      }
+      tctx.putImageData(timg, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(tint, -C / 2, -C / 2, gw * C, gh * C);
+
+      // 经纬网
+      ctx.strokeStyle = 'rgba(80, 110, 140, .16)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath();
+      const gs = W / 8;
+      for (let x = gs; x < W; x += gs) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+      for (let y = gs; y < H; y += gs) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 等高线：行进方块法，交点按高度线性插值
+      const thin = new Path2D(), bold = new Path2D();
+      for (let y = 0; y < gh - 1; y++) for (let x = 0; x < gw - 1; x++) {
+        const i = y * gw + x, tl = h[i], tr = h[i + 1], br = h[i + gw + 1], bl = h[i + gw];
+        const lo = Math.min(tl, tr, br, bl), hi = Math.max(tl, tr, br, bl);
+        for (let k = Math.floor(lo / STEP) + 1; k * STEP < hi; k++) {
+          const v = k * STEP, p = k % 5 ? thin : bold;
+          const code = (tl > v ? 8 : 0) | (tr > v ? 4 : 0) | (br > v ? 2 : 0) | (bl > v ? 1 : 0);
+          const T = () => [x + (v - tl) / (tr - tl), y], R = () => [x + 1, y + (v - tr) / (br - tr)];
+          const B = () => [x + (v - bl) / (br - bl), y + 1], L = () => [x, y + (v - tl) / (bl - tl)];
+          const seg = (a, b) => { p.moveTo(a[0] * C, a[1] * C); p.lineTo(b[0] * C, b[1] * C); };
+          if (code === 1 || code === 14) seg(L(), B());
+          else if (code === 2 || code === 13) seg(B(), R());
+          else if (code === 3 || code === 12) seg(L(), R());
+          else if (code === 4 || code === 11) seg(T(), R());
+          else if (code === 6 || code === 9) seg(T(), B());
+          else if (code === 7 || code === 8) seg(T(), L());
+          else if (code === 5) { seg(T(), R()); seg(L(), B()); }
+          else if (code === 10) { seg(T(), L()); seg(B(), R()); }
+        }
+      }
+      ctx.strokeStyle = 'rgba(150, 96, 52, .5)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke(thin);
+      ctx.strokeStyle = 'rgba(128, 76, 38, .85)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke(bold);
+
+      // 主峰
+      ctx.font = `600 11px ${SANS}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      for (const p of peaks) {
+        const x = p.x * C, y = p.y * C, v = h[p.y * gw + p.x];
+        ctx.fillStyle = '#6b4423';
+        ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x + 4.5, y + 3); ctx.lineTo(x - 4.5, y + 3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(80, 50, 25, .9)';
+        ctx.fillText((Math.round(v * HMAX / 10) * 10).toLocaleString('en-US'), x, y - 9);
+      }
+
+      // 指北针和比例尺
+      ctx.fillStyle = ctx.strokeStyle = 'rgba(90, 60, 35, .8)';
+      const nx0 = W - 28, ny0 = 26;
+      ctx.beginPath(); ctx.moveTo(nx0, ny0 - 12); ctx.lineTo(nx0 + 5, ny0 + 6); ctx.lineTo(nx0, ny0 + 2); ctx.lineTo(nx0 - 5, ny0 + 6); ctx.closePath(); ctx.fill();
+      ctx.font = `700 11px ${SANS}`;
+      ctx.fillText('N', nx0, ny0 + 20);
+      const sx = 18, sy = H - 18, sl = Math.round(W / 8);
+      ctx.lineWidth = 1;
+      ctx.fillRect(sx, sy, sl / 2, 3);
+      ctx.strokeRect(sx + 0.5, sy + 0.5, sl, 3);
+      ctx.font = `600 10px ${SANS}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('0', sx - 2, sy - 5);
+      ctx.textAlign = 'center';
+      ctx.fillText('1 km', sx + sl, sy - 5);
+
+      // 鼠标处的海拔
+      if (P.on && amp > 0.3) {
+        const gx = clamp(Math.round(P.x / C), 0, gw - 1), gy = clamp(Math.round(P.y / C), 0, gh - 1);
+        const text = `海拔 ${Math.round(h[gy * gw + gx] * HMAX).toLocaleString('en-US')} 米`;
+        ctx.font = `600 12px ${SANS}`;
+        const tw = ctx.measureText(text).width, bx = clamp(P.x + 14, 4, W - tw - 16), by = clamp(P.y - 30, 4, H - 26);
+        ctx.fillStyle = 'rgba(255, 252, 244, .92)';
+        ctx.beginPath(); ctx.roundRect(bx, by, tw + 12, 22, 6); ctx.fill();
+        ctx.fillStyle = '#5a3a1e';
+        ctx.textAlign = 'left';
+        ctx.fillText(text, bx + 6, by + 15);
+        ctx.strokeStyle = '#5a3a1e';
+        ctx.beginPath(); ctx.moveTo(P.x - 5, P.y); ctx.lineTo(P.x + 5, P.y); ctx.moveTo(P.x, P.y - 5); ctx.lineTo(P.x, P.y + 5); ctx.stroke();
+      }
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        // 鼠标抬起的那座山：位置跟得稍慢一点，高度渐起渐落
+        if (P.on) {
+          if (amp < 0.02) { mx = P.x; my = P.y; }
+          mx += (P.x - mx) * 0.25;
+          my += (P.y - my) * 0.25;
+        }
+        amp += ((P.on ? 1 : 0) - amp) * 0.07;
+        if (REDUCED && still && amp < 0.002) return;
+        still = true;
+        const t = now / 1000, sig2 = 2 * 36 * 36;
+        for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+          const i = y * gw + x;
+          let v = base[i];
+          if (!REDUCED) v += (noise(x * 0.04 + t * 0.12, y * 0.04 + seed) - 0.5) * 0.05;
+          if (amp > 0.002) {
+            const dx = x * C - mx, dy = y * C - my;
+            v += amp * 0.38 * Math.exp(-(dx * dx + dy * dy) / sig2);
+          }
+          h[i] = v;
+        }
+        paint();
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 03 色觉测试图 ---------- */
+  (() => {
+    const el = footer('.s3', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(cv, cv);   // 只认画布上的指针，移到上面的链接区不算
+    const btn = $('#cvd-toggle'), LENS = 80;
+    // Machado 等人 2009 年的绿色盲（严重度 1.0）模拟矩阵，作用在线性 RGB 上
+    const M = [[0.367322, 0.860646, -0.227968], [0.280085, 0.672501, 0.047413], [-0.011820, 0.042940, 0.968881]];
+    // 这个矩阵几乎是降秩的：前两行的叉积就是模拟后“看不出差别”的颜色方向（偏红、减绿）
+    const V = (() => {
+      const [a, b] = M;
+      let v = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+      const l = Math.hypot(...v) * (v[0] < 0 ? -1 : 1);
+      return v.map(x => x / l);
+    })();
+    const lin = c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    const srgb = c => { c = clamp(c, 0, 1); return Math.round((c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055) * 255); };
+    const BASES = [[206, 170, 96], [190, 160, 84], [214, 184, 120], [176, 146, 78], [200, 156, 92], [222, 192, 132]].map(c => c.map(v => lin(v / 255)));
+    let W, H, dpr, dots = [], mix = 0, target = 0, t0 = 0, started = false, dirty = true, lensOn = false;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.4, 260));
+      const k = 0.5, mw = Math.ceil(W * k), mh = Math.ceil(H * k);
+      const { mask } = textMask(mw, mh, 0.84);
+      const inside = (x, y) => mask[clamp((y * k) | 0, 0, mh - 1) * mw + clamp((x * k) | 0, 0, mw - 1)] === 1;
+      // 随机撒圆：先撒大的，再一档档撒小的填缝，用网格加速碰撞检查
+      const rMax = clamp(W / 120, 3.2, 10), rMin = rMax * 0.32, gap = Math.max(1, rMax * 0.12);
+      const cell = rMax * 2 + gap, cols = Math.ceil(W / cell), rows = Math.ceil(H / cell);
+      const grid = Array.from({ length: cols * rows }, () => []);
+      const fits = (x, y, r) => {
+        const cx = (x / cell) | 0, cy = (y / cell) | 0;
+        for (let j = Math.max(0, cy - 1); j <= Math.min(rows - 1, cy + 1); j++)
+          for (let i = Math.max(0, cx - 1); i <= Math.min(cols - 1, cx + 1); i++)
+            for (const d of grid[j * cols + i]) {
+              const dx = d.x - x, dy = d.y - y, m = d.r + r + gap;
+              if (dx * dx + dy * dy < m * m) return false;
+            }
+        return true;
+      };
+      dots = [];
+      for (let band = 0; band < 6; band++) {
+        const r0 = rMax - (rMax - rMin) * band / 5, tries = Math.round(W * H / (r0 * r0) * 0.5);
+        for (let n = 0; n < tries; n++) {
+          const r = r0 * rand(0.85, 1), x = rand(r, W - r), y = rand(r, H - r);
+          if (!fits(x, y, r)) continue;
+          const d = { x, y, r, in: inside(x, y) };
+          grid[((y / cell) | 0) * cols + ((x / cell) | 0)].push(d);
+          dots.push(d);
+        }
+      }
+      // 上色：同一套底色，字里沿 V 加一点、字外减一点；亮度随机打乱
+      for (const d of dots) {
+        const b = pick(BASES), L = rand(0.72, 1.05), t = rand(0.13, 0.21) * (d.in ? 1 : -1);
+        const c = b.map((v, i) => v * L + t * V[i]);
+        const n = c.map(srgb), s = M.map(row => srgb(row[0] * c[0] + row[1] * c[1] + row[2] * c[2]));
+        Object.assign(d, { n, s, ns: `rgb(${n})`, ss: `rgb(${s})`, delay: (d.x / W) * 500 + rand(0, 600) });
+      }
+      started = false;
+      dirty = true;
+    }
+
+    function draw(now) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#f6f1e7';
+      ctx.fillRect(0, 0, W, H);
+      const m = smooth(mix);
+      let busy = false;
+      for (const d of dots) {
+        let s = 1;
+        if (!REDUCED) {
+          const e = (now - t0 - d.delay) / 450;
+          if (e < 1) { busy = true; if (e <= 0) continue; s = backOut(e); }
+        }
+        let k = m;   // 0 是正常视觉，1 是色弱
+        if (P.on) {   // 镜片里反过来
+          const dd = Math.hypot(d.x - P.x, d.y - P.y);
+          if (dd < LENS + d.r) k += (1 - 2 * k) * smooth((LENS + d.r - dd) / (d.r * 2 + 4));
+        }
+        ctx.fillStyle = k < 0.002 ? d.ns : k > 0.998 ? d.ss
+          : `rgb(${d.n.map((v, i) => Math.round(v + (d.s[i] - v) * k))})`;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r * s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (P.on) {
+        ctx.strokeStyle = 'rgba(60, 50, 40, .55)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(P.x, P.y, LENS, 0, Math.PI * 2); ctx.stroke();
+        const text = target ? '正常视觉' : '红绿色弱';
+        ctx.font = `600 12px ${SANS}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const tw = ctx.measureText(text).width + 14;
+        ctx.fillStyle = 'rgba(40, 34, 28, .8)';
+        ctx.beginPath(); ctx.roundRect(P.x - tw / 2, P.y + LENS - 11, tw, 22, 11); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillText(text, P.x, P.y + LENS);
+      }
+      return busy;
+    }
+
+    btn.addEventListener('click', () => {
+      target = target ? 0 : 1;
+      btn.textContent = target ? '换回正常视觉' : '用红绿色弱的眼睛看';
+    });
+    $('#cvd-new').addEventListener('click', build);
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now, dt) {
+        if (!started) {
+          if (!seen(cv, 0.85)) return;
+          started = true;
+          t0 = now;
+        }
+        const before = mix;
+        mix = target > mix ? Math.min(target, mix + dt / 900) : Math.max(target, mix - dt / 900);
+        if (mix !== before || P.on || lensOn) dirty = true;
+        lensOn = P.on;
+        if (!dirty) return;
+        dirty = draw(now);
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 04 音乐盒 ---------- */
+  (() => {
+    const el = footer('.s4', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const btn = $('#mb-sound');
+    const ROWS = 18, AUTO = 5;   // 18 个音；纸带每秒走 5 格
+    // 五声音阶，从 G3 往上数；第 0 行在最上面，音最高
+    const freq = r => { const n = ROWS - 1 - r; return 196 * 2 ** (([0, 2, 4, 7, 9][n % 5] + 12 * Math.floor(n / 5)) / 12); };
+    const tines = new Float32Array(ROWS);
+    let W, H, dpr, cell, xp, top, period, holes, off = 0, v = AUTO, drag = null, sound = false, lastCol = 0;
+
+    // 把品牌名缩成 18 行高的点阵：先画大 8 倍，再按每格被盖住多少决定打不打孔
+    function bitmap() {
+      const S = 8, hh = ROWS * S, c = document.createElement('canvas'), o = c.getContext('2d', { willReadFrequently: true });
+      o.font = `900 100px ${SANS}`;
+      const m = o.measureText(brand);
+      const tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight || 1, th = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || 1;
+      const k = hh * 0.96 / th;
+      c.width = Math.ceil(tw * k) + S * 2;
+      c.height = hh;
+      o.font = `900 ${100 * k}px ${SANS}`;
+      o.fillText(brand, S + m.actualBoundingBoxLeft * k, (hh - th * k) / 2 + m.actualBoundingBoxAscent * k);
+      const d = o.getImageData(0, 0, c.width, hh).data, cols = Math.ceil(c.width / S), bits = [];
+      for (let x = 0; x < cols; x++) {
+        const col = new Uint8Array(ROWS);
+        for (let r = 0; r < ROWS; r++) {
+          let sum = 0, n = 0;
+          for (let yy = r * S; yy < r * S + S; yy++) for (let xx = x * S; xx < Math.min(c.width, x * S + S); xx++) { sum += d[(yy * c.width + xx) * 4 + 3]; n++; }
+          col[r] = sum / (n * 255) > 0.42 ? 1 : 0;
+        }
+        bits.push(col);
+      }
+      return bits;
+    }
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.4, 260));
+      const bits = bitmap(), cols = bits.length;
+      xp = clamp(W * 0.17, 70, 210);   // 读谱线（音梳齿尖）的位置
+      cell = clamp((W - xp) * 0.96 / (cols + 3), 7, H / (ROWS + 5));
+      period = cols + Math.max(10, Math.ceil((W - xp) / cell) - cols + 6);
+      holes = Array.from({ length: period }, (_, i) => bits[i - 3] || new Uint8Array(ROWS));
+      top = (H - cell * ROWS) / 2;
+      lastCol = Math.floor(off);
+    }
+    const hole = (c, r) => holes[((c % period) + period) % period][r];
+    const tineLen = (r, Lmax) => Lmax * (0.45 + 0.55 * (r / (ROWS - 1)));   // 低音的齿长
+
+    function pluck(ac, f, t, g) {
+      const out = ac.createGain();
+      out.gain.setValueAtTime(0.0001, t);
+      out.gain.exponentialRampToValueAtTime(g, t + 0.005);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+      out.connect(ac.out);
+      // 音梳的泛音不是整数倍，带一点金属味
+      for (const [m, a] of [[1, 1], [3.9, 0.16], [8.1, 0.05]]) {
+        if (f * m > 9000) continue;
+        const o = ac.createOscillator(), og = ac.createGain();
+        o.frequency.value = f * m;
+        og.gain.setValueAtTime(a, t);
+        og.gain.exponentialRampToValueAtTime(0.0001, t + (m === 1 ? 1.8 : 0.35));
+        o.connect(og).connect(out);
+        o.start(t);
+        o.stop(t + 1.85);
+      }
+    }
+    // 第 c 列走到读谱线上；dir 是纸带前进方向，连成一段的孔只有第一个出声
+    function cross(c, dir) {
+      const notes = [];
+      for (let r = 0; r < ROWS; r++) if (hole(c, r) && !hole(c - dir, r)) notes.push(r);
+      for (const r of notes) tines[r] = 1;
+      if (!sound || !notes.length) return;
+      const ac = audio();
+      if (!ac || ac.state !== 'running') return;
+      const t = ac.currentTime + 0.01, g = 0.2 / Math.sqrt(notes.length);
+      notes.reverse().forEach((r, i) => pluck(ac, freq(r), t + i * 0.012, g));   // 从低音往上扫，像拨了一下竖琴
+    }
+    function setSound(on) {
+      sound = on;
+      btn.textContent = on ? '关声音' : '开声音';
+      if (on) audio();
+    }
+    btn.addEventListener('click', () => setSound(!sound));
+    cv.addEventListener('pointerdown', e => {
+      if (!sound) setSound(true);
+      drag = { x: e.clientX, t: performance.now(), v: 0 };
+      cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('click', () => audio());   // 触屏上 pointerdown 不算用户手势，补一次
+    cv.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, now = performance.now();
+      off -= dx / cell;
+      drag.v = drag.v * 0.5 + (-dx / cell) / Math.max(1, now - drag.t) * 1000 * 0.5;
+      drag.x = e.clientX;
+      drag.t = now;
+    });
+    const end = () => { if (drag) { v = clamp(drag.v, -40, 40); drag = null; } };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+
+    function draw(now) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#24170f';
+      ctx.fillRect(0, 0, W, H);
+      const py0 = top - cell * 1.2, ph = cell * (ROWS + 2.4);
+      // 纸带
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, .45)';
+      ctx.shadowBlur = 12 * dpr;
+      ctx.shadowOffsetY = 4 * dpr;
+      ctx.fillStyle = '#efe3c8';
+      ctx.fillRect(xp - 30, py0, W - xp + 40, ph);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(140, 100, 60, .2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let r = 0; r <= ROWS; r++) { const y = Math.round(top + r * cell) + 0.5; ctx.moveTo(xp - 30, y); ctx.lineTo(W, y); }
+      ctx.stroke();
+      // 孔；正在读的那一列亮一下
+      const cNow = Math.floor(off), c0 = Math.floor(off - 30 / cell) - 1, c1 = Math.ceil(off + (W - xp) / cell) + 1;
+      const holeAt = (p, c) => {
+        const x = xp + (c - off) * cell;
+        for (let r = 0; r < ROWS; r++) if (hole(c, r)) p.roundRect(x + cell * 0.13, top + r * cell + cell * 0.13, cell * 0.74, cell * 0.74, cell * 0.2);
+      };
+      ctx.fillStyle = '#1a100a';
+      ctx.beginPath();
+      for (let c = c0; c <= c1; c++) if (c !== cNow) holeAt(ctx, c);
+      ctx.fill();
+      ctx.fillStyle = '#ffc861';
+      ctx.beginPath();
+      holeAt(ctx, cNow);
+      ctx.fill();
+
+      // 琴盒
+      const bx = xp - 6;
+      const g = ctx.createLinearGradient(0, 0, bx, 0);
+      g.addColorStop(0, '#4a2a16');
+      g.addColorStop(1, '#6e4224');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.roundRect(-10, py0 - cell * 1.4, bx + 10, ph + cell * 2.8, 10); ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 220, 170, .12)';
+      ctx.stroke();
+      // 音梳：齿尖对齐在读谱线上，底座右边是斜的，低音的齿长、高音的齿短
+      const Lmax = Math.min(cell * 4, bx * 0.55), baseW = Math.max(6, cell * 0.6), tipX = xp - 1, baseX = tipX - Lmax - baseW;
+      ctx.fillStyle = '#9c7a35';
+      ctx.beginPath();
+      ctx.moveTo(baseX, top);
+      ctx.lineTo(tipX - tineLen(0, Lmax), top);
+      ctx.lineTo(tipX - tineLen(ROWS - 1, Lmax), top + ROWS * cell);
+      ctx.lineTo(baseX, top + ROWS * cell);
+      ctx.fill();
+      ctx.strokeStyle = '#e2c271';
+      ctx.lineWidth = cell * 0.5;
+      ctx.beginPath();
+      for (let r = 0; r < ROWS; r++) {
+        const y = top + (r + 0.5) * cell, L = tineLen(r, Lmax), w = tines[r] * cell * 0.22 * Math.sin(now * 0.12 + r * 1.3);
+        ctx.moveTo(tipX - L, y);
+        ctx.quadraticCurveTo(tipX - L * 0.4, y + w * 0.5, tipX, y + w);
+      }
+      ctx.stroke();
+      // 摇把，跟着纸带转
+      const cx = baseX / 2, cy = H / 2, rr = Math.min(cx - 8, cell * 2.4);
+      if (rr > 10) {
+        const a = off * 0.5, kx = cx + Math.cos(a) * rr, ky = cy + Math.sin(a) * rr;
+        ctx.strokeStyle = '#c9a24f';
+        ctx.lineWidth = Math.max(3, rr * 0.22);
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(kx, ky); ctx.stroke();
+        ctx.lineCap = 'butt';
+        ctx.fillStyle = '#e2c271';
+        ctx.beginPath(); ctx.arc(cx, cy, rr * 0.28, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#2b1a10';
+        ctx.beginPath(); ctx.arc(kx, ky, rr * 0.24, 0, Math.PI * 2); ctx.fill();
+      }
+      if (!sound) {
+        ctx.font = `600 12px ${SANS}`;
+        ctx.fillStyle = 'rgba(240, 225, 200, .7)';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('点纸带开声音 · 可以左右拖', W - 14, Math.max(14, py0 - 10));
+      }
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now, dt) {
+        const s = dt / 1000;
+        if (!drag) {
+          v += ((REDUCED ? 0 : AUTO) - v) * Math.min(1, s * 1.5);
+          off += v * s;
+        }
+        const c1 = Math.floor(off);
+        if (c1 !== lastCol) {
+          const dir = Math.sign(c1 - lastCol);
+          const from = Math.abs(c1 - lastCol) > 6 ? c1 - dir * 6 : lastCol;   // 拖得太快就只补最后几列
+          for (let c = from + dir; c !== c1 + dir; c += dir) cross(c, dir);
+          lastCol = c1;
+        }
+        for (let r = 0; r < ROWS; r++) tines[r] *= Math.exp(-s * 6);
+        draw(now);
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 05 针板 ---------- */
+  (() => {
+    const el = footer('.s5', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(cv, cv);   // 只认画布上的指针，移到上面的链接区不算
+    let W, H, dpr, sp, hr, cols, rows, ox, oy, Z, tz, z, vz, bg, head, shadow, waves = [], t0 = 0, started = false, calm = false, wasOn = false;
+
+    function sprites() {
+      const R = Math.ceil(hr * 1.3 * dpr);
+      head = canvas(R * 2, R * 2);
+      let o = head.getContext('2d'), g = o.createRadialGradient(R * 0.65, R * 0.6, R * 0.05, R, R, R);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.25, '#d8dce3');
+      g.addColorStop(0.7, '#7d838d');
+      g.addColorStop(1, '#2b2e34');
+      o.fillStyle = g;
+      o.beginPath(); o.arc(R, R, R, 0, Math.PI * 2); o.fill();
+      shadow = canvas(R * 2, R * 2);
+      o = shadow.getContext('2d');
+      g = o.createRadialGradient(R, R, 0, R, R, R);
+      g.addColorStop(0, 'rgba(0, 0, 0, .7)');
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      o.fillStyle = g;
+      o.fillRect(0, 0, R * 2, R * 2);
+      // 背板和针孔不会变，画一次存起来
+      bg = canvas(cv.width, cv.height);
+      o = bg.getContext('2d');
+      o.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g = o.createRadialGradient(W * 0.35, H * 0.3, 0, W * 0.5, H * 0.5, W * 0.7);
+      g.addColorStop(0, '#2c2f36');
+      g.addColorStop(1, '#17181c');
+      o.fillStyle = g;
+      o.fillRect(0, 0, W, H);
+      o.strokeStyle = '#0c0d10';
+      o.lineWidth = 10;
+      o.strokeRect(5, 5, W - 10, H - 10);
+      o.strokeStyle = 'rgba(255, 255, 255, .06)';
+      o.lineWidth = 1;
+      o.strokeRect(10.5, 10.5, W - 21, H - 21);
+      o.fillStyle = '#0b0c0e';
+      o.beginPath();
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const x = ox + c * sp, y = oy + r * sp;
+        o.moveTo(x + hr * 0.5, y);
+        o.arc(x, y, hr * 0.5, 0, Math.PI * 2);
+      }
+      o.fill();
+    }
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.38, 240));
+      sp = clamp(W / 120, 6, 10);
+      hr = sp * 0.4;
+      Z = sp * 1.7;
+      const m = sp * 1.8;
+      cols = Math.floor((W - m * 2) / sp);
+      rows = Math.floor((H - m * 2) / sp);
+      ox = (W - (cols - 1) * sp) / 2;
+      oy = (H - (rows - 1) * sp) / 2 - sp * 0.5;   // 凸出来的针头会往下偏，整体往上挪一点
+      // 字画在比针密 4 倍的格子上，数每根针被盖住多少，再模糊一次
+      const S = 4, { mask } = textMask(cols * S, rows * S, 0.86), cov = new Float32Array(cols * rows);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        let s = 0;
+        for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) s += mask[(r * S + y) * cols * S + c * S + x];
+        cov[r * cols + c] = s / (S * S);
+      }
+      tz = new Float32Array(cols * rows);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        let s = 0, n = 0;
+        for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+          const rr = r + j, cc = c + i;
+          if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) continue;
+          const w = i || j ? 1 : 2;
+          s += cov[rr * cols + cc] * w;
+          n += w;
+        }
+        tz[r * cols + c] = Z * smooth((s / n) * 1.25 - 0.1) * rand(0.92, 1.04);
+      }
+      z = new Float32Array(cols * rows);
+      vz = new Float32Array(cols * rows);
+      if (REDUCED) z.set(tz);
+      sprites();
+      started = false;
+      calm = false;
+    }
+
+    function draw() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(bg, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // 影子：光从左上来，影子往右下落在背板上
+      const sr = hr * 1.7;
+      for (let i = 0; i < z.length; i++) {
+        const zz = z[i];
+        if (zz < 0.3) continue;
+        const x = ox + (i % cols) * sp, y = oy + ((i / cols) | 0) * sp;
+        ctx.globalAlpha = Math.min(0.85, zz / Z * 0.85);
+        ctx.drawImage(shadow, x + zz * 0.7 - sr, y + zz * 0.9 - sr, sr * 2, sr * 2);
+      }
+      // 从下往上一排排画：凸出来的针头往下偏，要压在下面那排上
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#80868f';
+      ctx.lineWidth = sp * 0.14;
+      for (let r = rows - 1; r >= 0; r--) {
+        const y = oy + r * sp;
+        ctx.beginPath();
+        for (let c = 0; c < cols; c++) {
+          const zz = z[r * cols + c];
+          if (zz < 0.3) continue;
+          const x = ox + c * sp;
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + zz * 0.12, y + zz * 0.6);
+        }
+        ctx.stroke();
+        for (let c = 0; c < cols; c++) {
+          // 离灯越近越亮：贴着背板的针头偏暗，凸出来的亮，被按进去的更暗
+          const zz = z[r * cols + c], s = hr * (1 + zz / Z * 0.25);
+          ctx.globalAlpha = clamp(0.5 + 0.5 * zz / Z, 0.22, 1);
+          ctx.drawImage(head, ox + c * sp + zz * 0.12 - s, y + zz * 0.6 - s, s * 2, s * 2);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    cv.addEventListener('pointerdown', e => {
+      const r = cv.getBoundingClientRect();
+      waves.push({ x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now() });
+      calm = false;
+    });
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        if (!started) {
+          if (!seen(cv, 0.8)) { if (!calm) { draw(); calm = true; } return; }
+          started = true;
+          t0 = now;
+          calm = false;
+        }
+        if (calm && !P.on && !wasOn && !waves.length) return;
+        wasOn = P.on;
+        waves = waves.filter(w => now - w.t < 1400);
+        const R = sp * 6, rise = cols * 14 + rows * 3;
+        let moving = !REDUCED && now - t0 < rise + 200;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const i = r * cols + c, x = ox + c * sp, y = oy + r * sp;
+          let tg = REDUCED || now - t0 > c * 14 + r * 3 ? tz[i] : 0;   // 从左往右一列列被顶出来
+          for (const w of waves) {
+            const e = now - w.t, d = Math.hypot(x - w.x, y - w.y) - e * 0.5;
+            tg += Z * 0.55 * Math.exp(-d * d / (8 * sp * sp)) * (1 - e / 1400);
+          }
+          if (P.on) {   // 手按下去的地方往回压
+            const dx = x - P.x, dy = y - P.y, d2 = dx * dx + dy * dy;
+            if (d2 < R * R) tg += (-Z * 0.45 - tg) * smooth((1 - Math.sqrt(d2) / R) * 2);
+          }
+          if (REDUCED) {
+            if (z[i] !== tg) moving = true;
+            z[i] = tg;
+            continue;
+          }
+          vz[i] = (vz[i] + (tg - z[i]) * 0.16) * 0.76;
+          z[i] += vz[i];
+          if (Math.abs(vz[i]) > 0.005 || Math.abs(tg - z[i]) > 0.01) moving = true;
+        }
+        draw();
+        calm = !moving;
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 06 丝绒 ---------- */
+  (() => {
+    const el = footer('.s6', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const LIGHT = -2.3, SHADES = 14;   // 灯从左上方来
+    const wine = k => [40 + 160 * k ** 1.2, 6 + 52 * k ** 1.5, 18 + 66 * k ** 1.4].map(Math.round);   // 0 最暗，1 最亮
+    const PAL = Array.from({ length: SHADES }, (_, i) => `rgb(${wine(i / (SHADES - 1))})`);
+    const LUT = new Uint8Array(256 * 3);
+    for (let i = 0; i < 256; i++) LUT.set(wine(i / 255), i * 3);
+    const wrap = d => d - Math.PI * 2 * Math.round(d / (Math.PI * 2));
+    let W, H, dpr, C, cols, rows, ang, rest, jx, jy, len, grain, fiber, small, sctx, img, dirty = true, started = false, ghost = null, fastUntil = 0, lx = null, ly = null;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.38, 240));
+      C = W > 900 ? 5 : 4;
+      cols = Math.ceil(W / C) + 1;
+      rows = Math.ceil(H / C) + 1;
+      const { mask } = textMask(cols, rows, 0.84), n = cols * rows;
+      ang = new Float32Array(n); rest = new Float32Array(n);
+      jx = new Float32Array(n); jy = new Float32Array(n);
+      len = new Float32Array(n); grain = new Float32Array(n);
+      fiber = new Uint8Array(n);
+      for (let i = 0; i < n; i++) {
+        rest[i] = (mask[i] ? -1.95 : 1.95) + rand(-0.25, 0.25);   // 字里的绒毛朝上倒，字外的朝下倒
+        ang[i] = rest[i];
+        jx[i] = rand(-1.6, 1.6);
+        jy[i] = rand(-1.6, 1.6);
+        len[i] = C * rand(2, 3);
+        grain[i] = rand(-1, 1);
+        fiber[i] = Math.random() < 0.3 ? 1 : 0;   // 大约三成的格子画一根看得见的绒毛
+      }
+      small = canvas(cols, rows);
+      sctx = small.getContext('2d');
+      img = sctx.createImageData(cols, rows);
+      dirty = true;
+      started = false;
+      ghost = null;
+    }
+    // 在 (x, y) 处顺着 (vx, vy) 刷一下
+    function brush(x, y, vx, vy) {
+      const speed = Math.hypot(vx, vy);
+      if (speed < 0.5) return;
+      const a = Math.atan2(vy, vx), R = clamp(W / 40, 14, 28), w0 = Math.min(1, speed / 10) * 0.7;
+      const c0 = Math.max(0, Math.floor((x - R) / C)), c1 = Math.min(cols - 1, Math.ceil((x + R) / C));
+      const r0 = Math.max(0, Math.floor((y - R) / C)), r1 = Math.min(rows - 1, Math.ceil((y + R) / C));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const d = Math.hypot(c * C - x, r * C - y);
+        if (d >= R) continue;
+        const i = r * cols + c;
+        ang[i] += wrap(a - ang[i]) * (1 - d / R) ** 1.5 * w0;
+      }
+      dirty = true;
+    }
+    function stroke(x, y) {   // 两次事件之间按 8px 一步补齐，划得快也不会断
+      if (lx !== null) {
+        const dx = x - lx, dy = y - ly, n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 8));
+        for (let k = 1; k <= n; k++) brush(lx + dx * k / n, ly + dy * k / n, dx, dy);
+      }
+      lx = x;
+      ly = y;
+    }
+    cv.addEventListener('pointermove', e => {
+      const r = cv.getBoundingClientRect();
+      stroke(e.clientX - r.left, e.clientY - r.top);
+    });
+    cv.addEventListener('pointerleave', () => { lx = ly = null; });
+    $('#velvet-flat').addEventListener('click', () => { fastUntil = performance.now() + 800; dirty = true; });
+
+    function draw() {
+      // 绒面的明暗：一格一个像素，放大时平滑过渡
+      const n = cols * rows, d = img.data, shade = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        shade[i] = 0.5 + 0.5 * Math.cos(ang[i] - LIGHT);
+        const k = (clamp(shade[i] * 0.85 + grain[i] * 0.04, 0, 1) * 255 | 0) * 3;
+        d[i * 4] = LUT[k];
+        d[i * 4 + 1] = LUT[k + 1];
+        d[i * 4 + 2] = LUT[k + 2];
+        d[i * 4 + 3] = 255;
+      }
+      sctx.putImageData(img, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(small, -C / 2, -C / 2, cols * C, rows * C);
+      // 绒毛：比底下亮一点，按亮度分组，每组一条路径画完
+      ctx.lineWidth = C * 0.4;
+      const bucket = new Uint8Array(n);
+      for (let i = 0; i < n; i++) if (fiber[i]) bucket[i] = clamp(Math.round(shade[i] * (SHADES - 1) + grain[i] + 1.5), 1, SHADES - 1);
+      for (let b = 1; b < SHADES; b++) {
+        ctx.strokeStyle = PAL[b];
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          if (bucket[i] !== b) continue;
+          const x = (i % cols) * C + jx[i], y = ((i / cols) | 0) * C + jy[i];
+          const dx = Math.cos(ang[i]) * len[i], dy = Math.sin(ang[i]) * len[i];
+          ctx.moveTo(x - dx * 0.3, y - dy * 0.3);
+          ctx.lineTo(x + dx * 0.7, y + dy * 0.7);
+        }
+        ctx.stroke();
+      }
+      // 灯光的明暗过渡
+      const g = ctx.createRadialGradient(W * 0.2, 0, 0, W * 0.4, H * 0.4, W * 0.8);
+      g.addColorStop(0, 'rgba(255, 200, 210, .08)');
+      g.addColorStop(1, 'rgba(0, 0, 0, .3)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now, dt) {
+        // 第一次滚到这里，看不见的手先划一道，提示可以刷
+        if (!started && seen(cv, 0.65)) {
+          started = true;
+          if (!REDUCED) ghost = { t0: now + 400, lx: null };
+        }
+        if (ghost && now > ghost.t0) {
+          const e = Math.min(1, (now - ghost.t0) / 1600);
+          const x = W * (0.1 + 0.8 * e), y = H * (0.5 + 0.3 * Math.sin(e * Math.PI * 2.2));
+          if (ghost.lx !== null) {
+            const dx = x - ghost.lx, dy = y - ghost.ly, n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 8));
+            for (let k = 1; k <= n; k++) brush(ghost.lx + dx * k / n, ghost.ly + dy * k / n, dx * 2, dy * 2);
+          }
+          ghost.lx = x;
+          ghost.ly = y;
+          if (e >= 1) ghost = null;
+        }
+        // 绒毛慢慢倒回原来的方向：按比例回一点，再加一点匀速，免得尾巴拖太久
+        const fast = now < fastUntil, k = (fast ? 0.12 : 0.004) * dt / 16.7, lin = 0.001 * dt / 16.7;
+        let off = 0;
+        for (let i = 0; i < ang.length; i++) {
+          const d = wrap(rest[i] - ang[i]);
+          if (Math.abs(d) < 0.003) { ang[i] = rest[i]; continue; }
+          ang[i] += d * k + Math.sign(d) * Math.min(Math.abs(d), lin);
+          off++;
+        }
+        if (off) dirty = true;
+        if (!dirty) return;
+        dirty = false;
+        draw();
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 07 热成像 ---------- */
+  (() => {
+    const el = footer('.s7', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const P = trackPointer(cv, cv);   // 只认画布上的指针，移到上面的链接区不算
+    const C = 4, AMB = 21, LO = 10, HI = 52, HAND = 35.5;
+    // 色表：黑 → 紫 → 红 → 橙 → 黄白
+    const STOPS = [[0, 0, 0, 4], [0.13, 31, 12, 72], [0.25, 85, 15, 109], [0.38, 136, 34, 106], [0.5, 186, 54, 85], [0.63, 227, 89, 51], [0.75, 249, 140, 10], [0.88, 249, 201, 50], [1, 252, 255, 164]];
+    const LUT = new Uint8Array(256 * 3);
+    for (let i = 0; i < 256; i++) {
+      const v = i / 255;
+      let k = 0;
+      while (k < STOPS.length - 2 && v > STOPS[k + 1][0]) k++;
+      const [a, b] = [STOPS[k], STOPS[k + 1]], t = clamp((v - a[0]) / (b[0] - a[0]), 0, 1);
+      for (let j = 0; j < 3; j++) LUT[i * 3 + j] = a[j + 1] + (b[j + 1] - a[j + 1]) * t;
+    }
+    // T 是板子里的温度，会扩散；mark 是手和冰在表面留下的温差，不扩散、慢慢褪
+    let W, H, dpr, gw, gh, T, T2, heat, mark, small, sctx, img, bar, power = 0, started = false, hx = null, hy = null;
+
+    function step() {
+      for (let y = 0; y < gh; y++) {
+        const row = y * gw, up = (y > 0 ? y - 1 : y) * gw, dn = (y < gh - 1 ? y + 1 : y) * gw;
+        for (let x = 0; x < gw; x++) {
+          const i = row + x, l = x > 0 ? i - 1 : i, r = x < gw - 1 ? i + 1 : i;
+          let t = T[i] + 0.2 * (T[l] + T[r] + T[up + x] + T[dn + x] - 4 * T[i]);   // 热扩散
+          t += (AMB - t) * 0.004;                                                 // 往室温冷却
+          if (heat[i]) t += (heat[i] - t) * 0.06 * power;                         // 字里的加热器
+          T2[i] = t;
+        }
+      }
+      [T, T2] = [T2, T];
+    }
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.38, 240));
+      gw = Math.ceil(W / C);
+      gh = Math.ceil(H / C);
+      const { mask } = textMask(gw, gh, 0.82), s = rand(0, 99);
+      T = new Float32Array(gw * gh).fill(AMB);
+      T2 = new Float32Array(gw * gh);
+      heat = new Float32Array(gw * gh);
+      mark = new Float32Array(gw * gh);
+      for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+        const i = y * gw + x;
+        if (mask[i]) heat[i] = 44 + 8 * fbm(x * 0.08 + s, y * 0.08);
+      }
+      small = canvas(gw, gh);
+      sctx = small.getContext('2d');
+      img = sctx.createImageData(gw, gh);
+      bar = canvas(1, 256);
+      const bo = bar.getContext('2d'), bi = bo.createImageData(1, 256);
+      for (let i = 0; i < 256; i++) {
+        const k = (255 - i) * 3;
+        bi.data.set([LUT[k], LUT[k + 1], LUT[k + 2], 255], i * 4);
+      }
+      bo.putImageData(bi, 0, 0);
+      started = false;
+      power = 0;
+      if (REDUCED) { power = 1; for (let k = 0; k < 600; k++) step(); }   // 直接算到稳态
+    }
+    // 在 (x, y) 附近把表面温度往 temp 拉（记成相对板子温度的温差）
+    function touch(x, y, R, temp, k) {
+      const c0 = Math.max(0, Math.floor((x - R) / C)), c1 = Math.min(gw - 1, Math.ceil((x + R) / C));
+      const r0 = Math.max(0, Math.floor((y - R) / C)), r1 = Math.min(gh - 1, Math.ceil((y + R) / C));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const d = Math.hypot((c + 0.5) * C - x, (r + 0.5) * C - y);
+        if (d < R) { const i = r * gw + c; mark[i] += (temp - T[i] - mark[i]) * k * (1 - d / R); }
+      }
+    }
+    cv.addEventListener('pointerdown', e => {   // 放一块冰
+      const r = cv.getBoundingClientRect();
+      touch(e.clientX - r.left, e.clientY - r.top, 28, 2, 1);
+    });
+
+    function label(text, x, y, align = 'left') {
+      ctx.font = `600 11px Consolas, "Cascadia Mono", monospace`;
+      ctx.textAlign = align;
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(0, 0, 0, .55)';
+      const w = ctx.measureText(text).width, bx = align === 'left' ? x - 4 : x - w - 4;
+      ctx.fillRect(bx, y - 9, w + 8, 18);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(text, x, y);
+    }
+    function draw() {
+      const d = img.data;
+      let max = -1e9, min = 1e9, mi = 0;
+      for (let i = 0; i < gw * gh; i++) {
+        const t = T[i] + mark[i];
+        if (t > max) { max = t; mi = i; }
+        if (t < min) min = t;
+        const v = t + (REDUCED ? 0 : (Math.random() - 0.5) * 0.35);   // 传感器噪点
+        const k = (clamp((v - LO) / (HI - LO), 0, 1) * 255 | 0) * 3;
+        d[i * 4] = LUT[k];
+        d[i * 4 + 1] = LUT[k + 1];
+        d[i * 4 + 2] = LUT[k + 2];
+        d[i * 4 + 3] = 255;
+      }
+      sctx.putImageData(img, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(small, 0, 0, gw * C, gh * C);
+
+      // 最热点
+      const mx = (mi % gw + 0.5) * C, my = (((mi / gw) | 0) + 0.5) * C;
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(mx, my - 7); ctx.lineTo(mx + 6, my + 4); ctx.lineTo(mx - 6, my + 4); ctx.closePath(); ctx.stroke();
+      // 准星：没有鼠标时指着画面中心
+      const px = P.on ? P.x : W / 2, py = P.on ? P.y : H / 2;
+      const pi = clamp((py / C) | 0, 0, gh - 1) * gw + clamp((px / C) | 0, 0, gw - 1), tv = T[pi] + mark[pi];
+      ctx.strokeStyle = 'rgba(255, 255, 255, .95)';
+      ctx.beginPath();
+      ctx.moveTo(px - 14, py); ctx.lineTo(px - 5, py); ctx.moveTo(px + 5, py); ctx.lineTo(px + 14, py);
+      ctx.moveTo(px, py - 14); ctx.lineTo(px, py - 5); ctx.moveTo(px, py + 5); ctx.lineTo(px, py + 14);
+      ctx.stroke();
+      label(`${tv.toFixed(1)}°C`, px + 18, py - 14);
+      label(`最高 ${max.toFixed(1)}°C`, 14, 20);
+      label(`最低 ${min.toFixed(1)}°C`, 14, 42);
+      // 色标
+      const bx = W - 22, by = 18, bh = H - 36;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(bar, bx, by, 8, bh);
+      ctx.strokeStyle = 'rgba(255, 255, 255, .4)';
+      ctx.strokeRect(bx - 0.5, by - 0.5, 9, bh + 1);
+      label(`${HI}°`, bx - 6, by + 6, 'right');
+      label(`${LO}°`, bx - 6, by + bh - 6, 'right');
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now, dt) {
+        if (!started && seen(cv, 0.8)) started = true;
+        if (started && !REDUCED) power = Math.min(1, power + dt / 3000);
+        if (P.on) {   // 手划过的地方：从上一帧的位置到这一帧之间都留下体温
+          if (hx !== null) {
+            const dx = P.x - hx, dy = P.y - hy, n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 3));
+            for (let k = 1; k <= n; k++) touch(hx + dx * k / n, hy + dy * k / n, 18, HAND, 0.5);
+          }
+          hx = P.x;
+          hy = P.y;
+        } else hx = hy = null;
+        if (!REDUCED || P.on) { step(); step(); }
+        const fade = Math.pow(0.996, dt / 16.7);   // 表面痕迹大约 3 秒褪一半
+        for (let i = 0; i < mark.length; i++) mark[i] *= fade;
+        draw();
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 08 多米诺 ---------- */
+  (() => {
+    const el = footer('.s8', `<canvas class="stage-canvas" aria-hidden="true"></canvas>`);
+    const cv = $('canvas', el), ctx = cv.getContext('2d');
+    const DC = 24, DR = 16, FALL = 180;   // 相邻两张倒下的间隔、往上下排传开的间隔、一张倒下用的时间（毫秒）
+    const shades = (rgb, lo, hi) => Array.from({ length: 16 }, (_, k) => `rgb(${rgb.map(v => Math.round(v * (lo + (hi - lo) * k / 15)))})`);
+    const RED = shades([222, 66, 46], 0.45, 1), IVORY = shades([238, 231, 214], 0.45, 1), CAP = shades([48, 48, 50], 0.6, 1.4);
+    let W, H, dpr, Ld, th, wd, s, rp, rest, cols, rows, x0, y0, cells, angles, started = false, dirty = true, active = false;
+
+    function build() {
+      ({ W, H, dpr } = sizeCanvas(cv, 0.38, 240));
+      Ld = clamp(W / 60, 10, 18);   // 牌长
+      th = Ld * 0.2;                 // 厚度
+      wd = Ld * 0.5;                 // 宽度
+      s = Ld * 0.62;                 // 同一排的间距
+      rp = wd + Ld * 0.14;           // 排距
+      rest = Math.acos(th / s);      // 靠在下一张身上时的倾角
+      const m = 16;
+      cols = Math.floor((W - m * 2 - Ld) / s);
+      rows = Math.floor((H - m * 2 + (rp - wd)) / rp);
+      x0 = (W - ((cols - 1) * s + Ld)) / 2;
+      y0 = (H - (rows * rp - (rp - wd))) / 2;
+      const { mask } = textMask(W, H, 0.84);
+      cells = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        // 倒下后露出来的那截牌面的中心，用来决定这张是红还是白
+        const fx = Math.round(x0 + c * s + th + s * 0.5 - th * Math.cos(rest)), fy = Math.round(y0 + r * rp + wd / 2);
+        cells.push({ inside: mask[clamp(fy, 0, H - 1) * W + clamp(fx, 0, W - 1)] === 1, down: false, a0: 0, a1: 0, ts: 0, dur: 1 });
+      }
+      angles = new Float32Array(rows * cols);
+      if (REDUCED) cells.forEach((d, i) => { d.down = true; d.a0 = d.a1 = i % cols === cols - 1 ? Math.PI / 2 : rest; });
+      started = false;
+      dirty = true;
+    }
+    function angle(d, now) {
+      if (now <= d.ts) return d.a0;
+      const e = Math.min(1, (now - d.ts) / d.dur);
+      return d.a0 + (d.a1 - d.a0) * (d.a1 > d.a0 ? e * e : smooth(e));   // 倒下是越来越快，立起来是缓进缓出
+    }
+    function topple(c0, r0, now, loud) {
+      for (let r = 0; r < rows; r++) for (let c = c0; c < cols; c++) {
+        const d = cells[r * cols + c];
+        if (d.down) continue;
+        Object.assign(d, { down: true, a0: angle(d, now), a1: c === cols - 1 ? Math.PI / 2 : rest, ts: now + (c - c0) * DC + Math.abs(r - r0) * DR, dur: REDUCED ? 1 : FALL });
+      }
+      if (loud) ticks(cols - c0);
+      dirty = true;
+    }
+    function standUp(c0, r0, now) {
+      for (let r = 0; r < rows; r++) for (let c = c0; c < cols; c++) {
+        const d = cells[r * cols + c];
+        if (!d.down) continue;
+        Object.assign(d, { down: false, a0: angle(d, now), a1: 0, ts: now + (c - c0) * 8 + Math.abs(r - r0) * 5, dur: REDUCED ? 1 : 260 });
+      }
+      dirty = true;
+    }
+    // 每一列倒下时咔嗒一声
+    function ticks(n) {
+      const ac = audio();
+      if (!ac) return;
+      const buf = noiseBuf(ac), t0 = ac.currentTime + FALL / 1000;
+      for (let k = 0; k < Math.min(n, 140); k++) {
+        const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(), t = t0 + k * DC / 1000;
+        src.buffer = buf;
+        f.type = 'bandpass';
+        f.frequency.value = rand(2200, 4200);
+        f.Q.value = 3;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.35, t + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+        src.connect(f).connect(g).connect(ac.out);
+        src.start(t, rand(0, 0.15), 0.04);
+      }
+    }
+    cv.addEventListener('click', e => {
+      const r = cv.getBoundingClientRect(), now = performance.now();
+      const c = clamp(Math.floor((e.clientX - r.left - x0) / s), 0, cols - 1), row = clamp(Math.floor((e.clientY - r.top - y0) / rp), 0, rows - 1);
+      if (cells[row * cols + c].down) standUp(c, row, now); else topple(c, row, now, true);
+    });
+    $('#domino-reset').addEventListener('click', () => standUp(0, rows >> 1, performance.now()));
+
+    function draw(now) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const g = ctx.createRadialGradient(W * 0.4, H * 0.3, 0, W * 0.5, H * 0.5, W * 0.7);
+      g.addColorStop(0, '#24382e');
+      g.addColorStop(1, '#16221c');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      active = false;
+      for (let i = 0; i < cells.length; i++) {
+        const d = cells[i];
+        angles[i] = angle(d, now);
+        if (now < d.ts + d.dur) active = true;
+      }
+      for (let r = 0; r < rows; r++) {
+        const y = y0 + r * rp;
+        // 影子：光从左上来，立着的牌往右下拖出一条影子
+        ctx.fillStyle = 'rgba(0, 0, 0, .3)';
+        for (let c = 0; c < cols; c++) {
+          const a = angles[r * cols + c], ca = Math.cos(a), sa = Math.sin(a), px = x0 + c * s + th, hgt = Ld * ca + th * sa;
+          if (hgt > 1) ctx.fillRect(px - th * ca, y + wd * 0.35, Ld * sa + th * ca + hgt * 0.45, wd * 0.9);
+        }
+        // 从右往左画：倒下的牌压在右边那张身上
+        for (let c = cols - 1; c >= 0; c--) {
+          const d = cells[r * cols + c], a = angles[r * cols + c], ca = Math.cos(a), sa = Math.sin(a);
+          const px = x0 + c * s + th, fx = px - th * ca, fw = Ld * sa, cw = th * ca;
+          if (fw > 0.3) {   // 原来朝左的那一面，倒得越平越朝上、越亮
+            ctx.fillStyle = (d.inside ? RED : IVORY)[Math.round(sa * 15)];
+            ctx.fillRect(fx, y, fw, wd);
+            if (fw > 6) { ctx.fillStyle = 'rgba(0, 0, 0, .22)'; ctx.fillRect(fx + fw / 2 - 0.4, y + 1, 0.8, wd - 2); }
+          }
+          if (cw > 0.2) {   // 顶上那条窄边
+            ctx.fillStyle = CAP[Math.round(ca * 15)];
+            ctx.fillRect(fx + fw, y, cw, wd);
+          }
+        }
+      }
+    }
+
+    register(el, {
+      setText: build, resize: build,
+      frame(now) {
+        if (!started && seen(cv, 0.7)) {
+          started = true;
+          if (!REDUCED) topple(0, rows >> 1, now, false);
+        }
+        if (!dirty && !active) return;
+        dirty = false;
+        draw(now);
+      },
+    });
+    build();
+  })();
+
+  /* ---------- 页面最底 ---------- */
+  (() => {
+    const el = footer('.f-end', MARK);
+    const mark = $('.mark', el);
+    register(el, { setText: () => fitMark(mark), resize: () => fitMark(mark) });
+    fitMark(mark);
+  })();
+
+  // 换品牌名、改窗口宽度、字体加载完成时重排
+  let textTimer, resizeTimer, lastW = innerWidth;
+  input.addEventListener('input', () => {
+    brand = input.value.trim() || 'Lumen';
+    document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+    clearTimeout(textTimer);
+    textTimer = setTimeout(() => demos.forEach(d => d.setText?.()), 150);
+  });
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => demos.forEach(d => (d.resize || d.setText)?.()), 150);
+  });
+  document.fonts.ready.then(() => demos.forEach(d => d.setText?.()));
+</script>
+</body>
+</html>
