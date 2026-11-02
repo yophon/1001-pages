@@ -1,0 +1,1326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>风洞 · 一千零一页</title>
+<meta name="description" content="低速烟风洞的试验段，品牌名是放在气流里的模型。气流用格子玻尔兹曼方法在显卡上实时算，烟线绕过字形，在字背后卷出卡门涡街。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;900&display=swap" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --bg: #050607;
+    --text: #c9cdd3;
+    --muted: #8a9098;
+    --faint: #565c64;
+    --line: #1c1f23;
+    --amber: #ffb340;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+  body { font: 13px/1.5 var(--sans); -webkit-tap-highlight-color: transparent; }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  .lab { position: fixed; inset: 0; height: 100vh; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+
+  /* 顶上的铭牌 */
+  .plate { display: flex; align-items: baseline; gap: 10px 18px; flex-wrap: wrap; padding: 16px 150px 12px 22px; }
+  .plate h1 { margin: 0; font: 500 15px/1.2 var(--sans); letter-spacing: .12em; color: var(--text); }
+  .plate .sub { font: 400 11.5px/1.4 var(--mono); color: var(--faint); letter-spacing: .04em; }
+  .plate .sub b { font-weight: 500; color: var(--muted); }
+
+  /* 试验段：画布按格子数精确对齐，HUD 画墙、尺子、烟耙和探针 */
+  .section { position: relative; min-height: 0; }
+  #gl { position: absolute; display: block; touch-action: none; cursor: crosshair; outline: none; }
+  #gl:focus-visible { box-shadow: inset 0 0 0 2px var(--amber); }
+  #hud { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .hint {
+    position: absolute; left: 50%; top: 24px; transform: translateX(-50%); z-index: 3;
+    font: 400 12px/1 var(--sans); color: #aab0b8; letter-spacing: .04em; white-space: nowrap;
+    padding: 8px 14px; border-radius: 999px; background: rgb(8 9 11 / .62); backdrop-filter: blur(6px);
+    opacity: 0; transition: opacity .8s; pointer-events: none;
+  }
+  .hint.on { opacity: 1; }
+
+  /* 控制台 */
+  .console {
+    display: grid; grid-template-columns: auto minmax(220px, 1fr) auto; gap: 14px 40px; align-items: center;
+    padding: 16px 22px 18px; border-top: 1px solid var(--line);
+  }
+  .reads { display: flex; gap: 30px; align-items: flex-end; }
+  .read { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .read .k { font: 400 11px/1 var(--sans); color: var(--faint); letter-spacing: .08em; }
+  .read .v { font: 500 26px/1 var(--mono); color: #eef0f2; font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }
+  .read .v small { font-size: 12px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+  .read.state .v { font: 500 15px/26px var(--sans); color: var(--amber); letter-spacing: .04em; }
+
+  .fan { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .fan .row { display: flex; justify-content: space-between; font: 400 11px/1 var(--sans); color: var(--faint); letter-spacing: .06em; }
+  .fan .row b { font: 500 11px/1 var(--mono); color: var(--muted); }
+  .fan input { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; }
+  .fan input:focus { outline: none; }
+  .fan input::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, #2a3038 0 var(--za, 18%), #3b3324 var(--za, 18%) var(--zb, 67%), #43281f var(--zb, 67%) 100%);
+  }
+  .fan input::-moz-range-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #2a3038 0 var(--za, 18%), #3b3324 var(--za, 18%) var(--zb, 67%), #43281f var(--zb, 67%) 100%); }
+  .fan input::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #ffe2ad, var(--amber) 55%, #b8731e); box-shadow: 0 0 0 4px rgb(255 179 64 / .14), 0 2px 6px rgb(0 0 0 / .6);
+  }
+  .fan input::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: var(--amber); }
+  .fan input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(255 179 64 / .45); }
+  .zones { display: grid; grid-template-columns: 18fr 49fr 33fr; font: 400 11px/1 var(--sans); color: var(--faint); letter-spacing: .06em; }
+  .zones span:nth-child(2) { text-align: center; }
+  .zones span:nth-child(3) { text-align: right; }
+
+  .right { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .modes { display: flex; border: 1px solid #262a30; border-radius: 8px; overflow: hidden; }
+  .modes button, .snd {
+    font: 400 12.5px/1 var(--sans); color: var(--muted); background: transparent; border: 0; padding: 9px 13px; cursor: pointer; letter-spacing: .06em;
+  }
+  .modes button + button { border-left: 1px solid #262a30; }
+  .modes button[aria-pressed="true"] { color: #121212; background: #d9dde2; }
+  .modes button:hover:not([aria-pressed="true"]), .snd:hover { color: var(--text); }
+  .modes button:focus-visible, .snd:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
+  .legend { display: flex; align-items: center; gap: 8px; font: 400 10.5px/1 var(--mono); color: var(--faint); height: 12px; }
+  .legend i { display: block; width: 120px; height: 6px; border-radius: 3px; }
+  .bottom-row { display: flex; gap: 12px; align-items: center; }
+  .snd { border: 1px solid #262a30; border-radius: 8px; display: inline-flex; gap: 6px; align-items: center; }
+  .snd[aria-pressed="true"] { color: var(--amber); border-color: #5a4320; }
+  .snd svg { width: 14px; height: 14px; }
+  .snd .wave { display: none; }
+  .snd[aria-pressed="true"] .wave { display: inline; }
+  .snd[aria-pressed="true"] .mute { display: none; }
+
+  @media (max-width: 860px), (orientation: portrait) {
+    .plate { padding: 14px 120px 10px 16px; }
+    .plate .sub { display: none; }
+    .console { grid-template-columns: 1fr; gap: 12px; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); }
+    .reads { gap: 18px; justify-content: space-between; }
+    .read .v { font-size: 20px; }
+    .read.state .v { font-size: 13px; line-height: 20px; }
+    .right { flex-direction: row; align-items: center; justify-content: space-between; }
+    .legend { display: none; }
+    .modes button { padding: 9px 11px; }
+    .hint { top: auto; bottom: 14px; font-size: 11.5px; }
+  }
+</style>
+</head>
+<body>
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 010</a>
+
+<div class="lab">
+  <header class="plate">
+    <h1>低速烟风洞</h1>
+    <span class="sub">试验段 · 二维截面 · 模型 <b class="bn">Lumen</b>，字高 10 mm · 烟丝片光照明</span>
+  </header>
+
+  <div class="section" id="section">
+    <canvas id="gl" tabindex="0" aria-label="风洞试验段：品牌名是放在气流里的模型，烟线绕过字形，在背后卷成涡。拖动可以搅动气流，点一下放一团彩色烟。"></canvas>
+    <canvas id="hud" aria-hidden="true"></canvas>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div class="console">
+    <div class="reads">
+      <div class="read"><span class="k">风速</span><span class="v" id="spd">0.00<small>m/s</small></span></div>
+      <div class="read"><span class="k">雷诺数 Re</span><span class="v" id="re">0</span></div>
+      <div class="read state"><span class="k">流态</span><span class="v" id="state">风机未启动</span></div>
+    </div>
+    <div class="fan">
+      <div class="row"><span>风机</span><b id="fanpct">60%</b></div>
+      <input id="fan" type="range" min="0" max="1000" value="600" aria-label="风机转速">
+      <div class="zones" aria-hidden="true"><span>定常</span><span>卡门涡街</span><span>湍乱</span></div>
+    </div>
+    <div class="right">
+      <div class="bottom-row">
+        <div class="modes" role="group" aria-label="显示方式">
+          <button type="button" data-mode="0" aria-pressed="true">烟线</button>
+          <button type="button" data-mode="1" aria-pressed="false">涡量</button>
+          <button type="button" data-mode="2" aria-pressed="false">速度</button>
+          <button type="button" data-mode="3" aria-pressed="false">压力</button>
+        </div>
+        <button type="button" class="snd" id="snd" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z"/><path class="wave" d="M10.6 5.6a3.4 3.4 0 0 1 0 4.8M12.4 3.9a5.8 5.8 0 0 1 0 8.2"/><path class="mute" d="M11 6.2l3 3.6M14 6.2l-3 3.6"/></svg><span>声音</span></button>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COARSE = matchMedia('(pointer: coarse)').matches;
+  const isCJK = s => /[㐀-鿿豈-﫿]/.test(s);
+  const CJK = isCJK(brand);
+  const FONT = px => CJK ? `900 ${px}px "Noto Sans SC", "Microsoft YaHei", sans-serif` : `800 ${px}px Archivo, "Arial Black", sans-serif`;
+
+  const section = $('#section'), glc = $('#gl'), hud = $('#hud'), hintEl = $('#hint');
+  const MODEL_MM = 10, NU_AIR = 1.5e-5;     // 模型字高 10 mm，空气运动黏度
+  const RE_MIN = 30;
+  const ZONE = [60, 420];   // 这串字大致从 Re 60 开始脱涡，420 以上尾流开始乱
+  const RAKE = g => (g.portrait ? 7.4 : 8.2);   // 烟嘴间距（格）
+
+  /* ---------------- 布局：格子大小、试验段、字的位置 ---------------- */
+  let G = null;    // 当前几何
+  function layout() {
+    const r = section.getBoundingClientRect();
+    const W = Math.max(200, r.width), H = Math.max(160, r.height);
+    const portrait = H > W * 1.05;
+    const wall = portrait ? 9 : 12;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const availF = portrait ? H : W - 0, availC = (portrait ? W : H) - 2 * wall;
+    const budget = COARSE ? 62000 : 150000;
+    let cell = clamp(Math.sqrt(availF * availC / budget), 1.6, 6);
+    const NX = Math.max(80, Math.round(availF / cell));
+    cell = availF / NX;
+    const NY = Math.max(40, Math.floor(availC / cell));
+    const crossPx = NY * cell;
+    // 画布在 section 里的位置（CSS 像素），横屏时墙在上下，竖屏时墙在左右
+    const gw = portrait ? crossPx : NX * cell, gh = portrait ? NX * cell : crossPx;
+    const gx = portrait ? (W - crossPx) / 2 : 0, gy = portrait ? 0 : (H - crossPx) / 2;
+    // 烟的格子比风的格子密：一个烟格子差不多是一个设备像素
+    let k = clamp(Math.round(cell * dpr / 1.1), 2, 4);
+    while (k > 2 && NX * k * NY * k > 2.7e6) k--;
+    return { W, H, portrait, wall, dpr, cell, NX, NY, gx, gy, gw, gh, k,
+      devW: Math.round(gw * dpr), devH: Math.round(gh * dpr) };
+  }
+
+  // 逐字排开，字距拉大一些，让气流能从字缝里穿过去；量出整串字的墨迹范围
+  const QS = new URLSearchParams(location.search);
+  let TRACK = 0.55;
+  function runOf(size) {
+    const m = document.createElement('canvas').getContext('2d');
+    m.font = FONT(size);
+    const chars = [...brand], out = [];
+    let x = 0, l = Infinity, r = -Infinity, asc = 0, des = 0;
+    for (const ch of chars) {
+      const mt = m.measureText(ch);
+      l = Math.min(l, x - mt.actualBoundingBoxLeft); r = Math.max(r, x + mt.actualBoundingBoxRight);
+      asc = Math.max(asc, mt.actualBoundingBoxAscent); des = Math.max(des, mt.actualBoundingBoxDescent);
+      out.push({ ch, x });
+      x += mt.width + (ch.trim() ? size * TRACK : 0);
+    }
+    return { chars: out, l, r, asc, des };
+  }
+  // 按试验段大小定字号和位置（屏幕方向的 CSS 像素）
+  function placeText(g) {
+    TRACK = CJK ? (g.portrait ? 0.24 : 0.32) : (g.portrait ? 0.34 : 0.55);
+    const run = runOf(100);
+    const iw = run.r - run.l, ih = run.asc + run.des;
+    let size, cx, cy;
+    if (!g.portrait) {
+      const th = g.gh * (CJK ? 0.3 : 0.2), mw = g.gw * (CJK ? 0.42 : 0.6);
+      size = 100 * Math.min(th / ih, mw / iw);
+      cx = g.gw * (CJK ? 0.33 : 0.38); cy = g.gh * 0.5;
+    } else {
+      const th = g.gh * (CJK ? 0.2 : 0.11), mw = g.gw * (CJK ? 0.72 : 0.8);
+      size = 100 * Math.min(th / ih, mw / iw);
+      cx = g.gw * 0.47; cy = g.gh * 0.26;
+    }
+    const k = size / 100;
+    const x = cx - (run.l + run.r) * k / 2, y = cy + (run.asc - run.des) * k / 2;
+    return { size, x, y, cx, cy, inkH: ih * k, inkW: iw * k, chars: run.chars.map(c => ({ ch: c.ch, x: c.x * k })), l: run.l * k };
+  }
+
+  function drawText(ctx, t, scale) {
+    ctx.font = FONT(t.size * scale);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#fff';
+    for (const c of t.chars) ctx.fillText(c.ch, (t.x + c.x) * scale, t.y * scale);
+  }
+
+  // 一维盒式模糊，横竖各两遍，近似高斯
+  function blur(a, w, h, r) {
+    const tmp = new Float32Array(a.length);
+    for (let pass = 0; pass < 2; pass++) {
+      for (let y = 0; y < h; y++) {
+        let s = 0; const o = y * w;
+        for (let x = -r; x <= r; x++) s += a[o + clamp(x, 0, w - 1)];
+        for (let x = 0; x < w; x++) {
+          tmp[o + x] = s / (2 * r + 1);
+          s += a[o + Math.min(x + r + 1, w - 1)] - a[o + Math.max(x - r, 0)];
+        }
+      }
+      for (let x = 0; x < w; x++) {
+        let s = 0;
+        for (let y = -r; y <= r; y++) s += tmp[clamp(y, 0, h - 1) * w + x];
+        for (let y = 0; y < h; y++) {
+          a[y * w + x] = s / (2 * r + 1);
+          s += tmp[Math.min(y + r + 1, h - 1) * w + x] - tmp[Math.max(y - r, 0) * w + x];
+        }
+      }
+    }
+    return a;
+  }
+
+  // 模型：风的格子上是实心/空心，显示用的是设备像素上的抗锯齿字和它的模糊版；片光被字挡出影子
+  function buildModel(g, t) {
+    // 屏幕方向、格子分辨率
+    const sw = g.portrait ? g.NY : g.NX, sh = g.portrait ? g.NX : g.NY;
+    const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    drawText(x, t, 1 / g.cell);
+    const a = x.getImageData(0, 0, sw, sh).data;
+    const solidS = new Uint8Array(sw * sh);
+    for (let i = 0; i < sw * sh; i++) solidS[i] = a[i * 4 + 3] > 127 ? 1 : 0;
+    // 转到流向坐标：x 顺着风，y 横着风
+    const NX = g.NX, NY = g.NY;
+    const solid = new Uint8Array(NX * NY);
+    for (let fy = 0; fy < NY; fy++) for (let fx = 0; fx < NX; fx++) {
+      const si = g.portrait ? fx * sw + fy : fy * sw + fx;
+      solid[fy * NX + fx] = solidS[si] ? 255 : 0;
+    }
+    // 边上留出几格，免得字碰到入口、出口或墙
+    for (let fy = 0; fy < NY; fy++) for (let fx = 0; fx < NX; fx++) {
+      if (fx < 6 || fx > NX - 6 || fy < 2 || fy > NY - 3) solid[fy * NX + fx] = 0;
+    }
+    // 显示用：设备像素，R 是抗锯齿的字，G 是模糊过的字（算倒角法线）
+    const dw = g.devW, dh = g.devH;
+    const d = document.createElement('canvas'); d.width = dw; d.height = dh;
+    const dx = d.getContext('2d', { willReadFrequently: true });
+    drawText(dx, t, g.dpr);
+    const da = dx.getImageData(0, 0, dw, dh).data;
+    const sharp = new Float32Array(dw * dh);
+    for (let i = 0; i < dw * dh; i++) sharp[i] = da[i * 4 + 3] / 255;
+    const soft = blur(Float32Array.from(sharp), dw, dh, Math.max(2, Math.round(2.2 * g.dpr)));
+    const rg = new Uint8Array(dw * dh * 2);
+    for (let i = 0; i < dw * dh; i++) { rg[i * 2] = Math.round(sharp[i] * 255); rg[i * 2 + 1] = Math.round(soft[i] * 255); }
+    const band = g.portrait ? [t.cx / g.cell, (t.inkW / 2 + g.gw * 0.1) / g.cell] : [t.cy / g.cell, t.inkH * 1.4 / g.cell];
+    const refX = (g.portrait ? t.cy : t.cx) / g.cell;
+    return { solid, rg, Lc: t.inkH / g.cell, band, refX };
+  }
+
+  /* ---------------- WebGL ---------------- */
+  let gl = null, glOK = false, P = {}, sim = null, FLOAT32 = false;
+  const VS = `#version 300 es
+in vec2 aP;
+void main() { gl_Position = vec4(aP, 0.0, 1.0); }`;
+
+  // 格子玻尔兹曼：拉式迁移 + 碰撞。存的是 f - w（偏离静止平衡的量），半精度也够用
+  const FS_LBM = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uA, uB, uC, uS;
+uniform ivec2 uN;
+uniform float uU, uTau, uCs, uStep, uKick;
+uniform vec4 uStir;   // x, y, 半径, 强度
+uniform vec2 uStirV;
+layout(location = 0) out vec4 oA;
+layout(location = 1) out vec4 oB;
+layout(location = 2) out vec4 oC;
+const ivec2 E[9] = ivec2[9](ivec2(0,0), ivec2(1,0), ivec2(0,1), ivec2(-1,0), ivec2(0,-1), ivec2(1,1), ivec2(-1,1), ivec2(-1,-1), ivec2(1,-1));
+const float Wt[9] = float[9](4./9., 1./9., 1./9., 1./9., 1./9., 1./36., 1./36., 1./36., 1./36.);
+const int OPP[9] = int[9](0, 3, 4, 1, 2, 7, 8, 5, 6);
+const int MY[9] = int[9](0, 1, 4, 3, 2, 8, 7, 6, 5);
+bool solid(ivec2 p) { return texelFetch(uS, p, 0).r > 0.5; }
+float dev(ivec2 p, int i) {
+  if (i == 0) return texelFetch(uC, p, 0).x;
+  if (i < 5) return texelFetch(uA, p, 0)[i - 1];
+  return texelFetch(uB, p, 0)[i - 5];
+}
+float feqDev(int i, float rho, vec2 u) {
+  float eu = dot(vec2(E[i]), u);
+  return Wt[i] * (rho - 1.0) + Wt[i] * rho * (3.0 * eu + 4.5 * eu * eu - 1.5 * dot(u, u));
+}
+// 入口：均匀来流，叠一点点自由流湍流，开场再多踢一下，好让涡早点脱落
+vec2 inlet(int y) {
+  float fy = float(y);
+  float v = sin(fy * 0.173 + uStep * 0.0091) * sin(fy * 0.041 - uStep * 0.0057 + 1.3);
+  return vec2(uU, uU * (0.004 + uKick) * v);
+}
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  if (solid(x)) { oA = vec4(0.0); oB = vec4(0.0); oC = vec4(0.0); return; }
+  float f[9];
+  f[0] = dev(x, 0);
+  for (int i = 1; i < 9; i++) {
+    ivec2 e = E[i];
+    ivec2 s = x - e;
+    int j = i;
+    if (s.y < 0 || s.y >= uN.y) { s = ivec2(x.x - e.x, x.y); j = MY[i]; }   // 上下墙：镜面反射，不粘壁
+    if (s.x < 0) { f[i] = feqDev(i, 1.0, inlet(x.y)); continue; }
+    if (s.x >= uN.x) { f[i] = feqDev(i, 1.0, texelFetch(uC, ivec2(x.x - 1, x.y), 0).yz); continue; }   // 出口：固定压力，速度跟上一列
+    if (solid(s)) { f[i] = dev(x, OPP[i]); continue; }                       // 碰到字：原路弹回
+    f[i] = dev(s, j);
+  }
+  float rho = 1.0; vec2 m = vec2(0.0);
+  for (int i = 0; i < 9; i++) { rho += f[i]; m += vec2(E[i]) * f[i]; }
+  vec2 u = m / rho;
+  // 出了坏值就地恢复成来流，不让整场炸掉
+  if (!(rho > 0.4 && rho < 2.5) || !(abs(u.x) < 0.45 && abs(u.y) < 0.45)) {
+    rho = 1.0; u = vec2(uU, 0.0);
+    for (int i = 0; i < 9; i++) f[i] = feqDev(i, 1.0, u);
+  }
+  vec2 ue = u;
+  if (uStir.w > 0.0) {
+    vec2 d = vec2(x) + 0.5 - uStir.xy;
+    float g = exp(-dot(d, d) / (uStir.z * uStir.z));
+    ue += (uStirV - u) * g * uStir.w;
+  }
+  float l = length(ue);
+  if (l > 0.26) ue *= 0.26 / l;
+  float fe[9];
+  float pxx = 0.0, pyy = 0.0, pxy = 0.0;
+  for (int i = 0; i < 9; i++) {
+    fe[i] = feqDev(i, rho, ue);
+    float ne = f[i] - fe[i];
+    vec2 e = vec2(E[i]);
+    pxx += e.x * e.x * ne; pyy += e.y * e.y * ne; pxy += e.x * e.y * ne;
+  }
+  // Smagorinsky：剪切越强，局部黏度越大，高雷诺数时不发散
+  float Q = sqrt(pxx * pxx + pyy * pyy + 2.0 * pxy * pxy);
+  float tau = 0.5 * (uTau + sqrt(uTau * uTau + 25.456 * uCs * uCs * Q / rho));
+  // 出口前和入口后各一段海绵区：黏度调高，吸收来回反射的压力波，免得来流被它搅得发抖
+  float xf = float(x.x);
+  tau += 0.7 * smoothstep(float(uN.x) - 30.0, float(uN.x) - 2.0, xf) + 0.25 * smoothstep(10.0, 0.0, xf);
+  float om = 1.0 / tau;
+  for (int i = 0; i < 9; i++) f[i] -= om * (f[i] - fe[i]);
+  oA = vec4(f[1], f[2], f[3], f[4]);
+  oB = vec4(f[5], f[6], f[7], f[8]);
+  oC = vec4(f[0], u.x, u.y, rho - 1.0);
+}`;
+
+  // 导出量：速度、涡量、压力，存成半精度，可以硬件双线性取样
+  const FS_DER = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uC, uS; uniform ivec2 uN;
+out vec4 o;
+vec2 U(ivec2 p) { return texelFetch(uC, clamp(p, ivec2(0), uN - 1), 0).yz; }
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  vec4 c = texelFetch(uC, x, 0);
+  float w = 0.5 * (U(x + ivec2(1, 0)).y - U(x - ivec2(1, 0)).y) - 0.5 * (U(x + ivec2(0, 1)).x - U(x - ivec2(0, 1)).x);
+  // 压力做 3×3 平均（跳过字里面），压掉格子尺度的声学噪声
+  float ps = 0.0, pn = 0.0;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    ivec2 p = clamp(x + ivec2(i, j), ivec2(0), uN - 1);
+    if (texelFetch(uS, p, 0).r < 0.5) { ps += texelFetch(uC, p, 0).w; pn += 1.0; }
+  }
+  o = vec4(c.y, c.z, w, pn > 0.0 ? ps / pn / 3.0 : 0.0);
+}`;
+
+  // 烟：沿速度往回追（中点法），用带限幅的 Catmull-Rom 三次插值取样。
+  // 每帧只挪一两个格子，双线性插值每帧都会把细线抹宽一点，一百多帧下来就糊了；三次插值的抹宽小得多
+  const FS_DYE = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uD, uDye, uS;
+uniform vec2 uN; uniform float uK, uSteps;
+uniform float uRakeX, uRakeLen, uSpacing, uSigma, uRake, uDecay;
+uniform vec2 uBand;   // 烟耙只覆盖字附近这一段：中心、半宽
+uniform vec4 uPuff[4];
+uniform vec3 uPuffC[4];
+out vec4 o;
+float hash(float n) { return fract(sin(n * 127.1 + 3.7) * 43758.5453); }
+vec2 vel(vec2 q) { return textureLod(uD, q / uN, 0.0).xy; }
+vec4 cubic(vec2 p) {
+  vec2 t = p - 0.5, i = floor(t), f = t - i;
+  vec2 w[4];
+  w[0] = f * (-0.5 + f * (1.0 - 0.5 * f));
+  w[1] = 1.0 + f * f * (-2.5 + 1.5 * f);
+  w[2] = f * (0.5 + f * (2.0 - 1.5 * f));
+  w[3] = f * f * (-0.5 + 0.5 * f);
+  ivec2 b = ivec2(i) - 1, M = ivec2(uN * uK) - 1;
+  vec4 acc = vec4(0.0), mn = vec4(1e9), mx = vec4(-1e9);
+  for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) {
+    vec4 v = texelFetch(uDye, clamp(b + ivec2(x, y), ivec2(0), M), 0);
+    acc += v * w[x].x * w[y].y;
+    if (x == 1 || x == 2) if (y == 1 || y == 2) { mn = min(mn, v); mx = max(mx, v); }
+  }
+  return clamp(acc, mn, mx);
+}
+void main() {
+  vec2 q = gl_FragCoord.xy / uK;
+  vec4 r;
+  if (uSteps > 0.0) {
+    vec2 u1 = vel(q);
+    vec2 qb = q - uSteps * vel(q - 0.5 * uSteps * u1);
+    r = cubic(qb * uK);
+  } else r = texelFetch(uDye, ivec2(gl_FragCoord.xy), 0);
+  r *= uDecay;
+  r *= mix(0.94, 1.0, smoothstep(uN.x - 1.0, uN.x - 16.0, q.x));
+  // 烟耙：一排细烟嘴，烟浓度略有差别
+  if (uRake > 0.0 && q.x > uRakeX - 0.6 && q.x < uRakeX + uRakeLen) {
+    float j = floor(q.y / uSpacing);
+    float dy = q.y - (j + 0.5) * uSpacing;
+    float g = exp(-dy * dy / (2.0 * uSigma * uSigma));
+    float band = 1.0 - smoothstep(uBand.y - 2.0 * uSpacing, uBand.y, abs((j + 0.5) * uSpacing - uBand.x));
+    r.a = max(r.a, g * (0.8 + 0.2 * hash(j)) * uRake * band);
+  }
+  for (int i = 0; i < 4; i++) {
+    vec4 p = uPuff[i];
+    if (p.w > 0.0) { vec2 d = q - p.xy; r.rgb += uPuffC[i] * exp(-dot(d, d) / (p.z * p.z)) * p.w; }
+  }
+  r.rgb = min(r.rgb, vec3(3.0));
+  if (texture(uS, q / uN).r > 0.5) r = vec4(0.0);
+  o = max(r, vec4(0.0));
+}`;
+
+  // 成像：片光下的烟，加三种仪表叠层；字是哑光的金属模型，迎光的边亮一道
+  const FS_SHOW = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uDye, uDer, uModel, uNoise;
+uniform vec2 uView, uN;
+uniform float uCell, uLight, uU, uLref, uTime, uDpr, uRefX;
+uniform int uPortrait;
+uniform vec4 uMix;
+out vec4 o;
+float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+vec3 warm(float t) { return mix(mix(vec3(0.0), vec3(0.92, 0.32, 0.08), smoothstep(0.0, 0.55, t)), vec3(1.0, 0.86, 0.55), smoothstep(0.5, 1.0, t)); }
+vec3 cool(float t) { return mix(mix(vec3(0.0), vec3(0.1, 0.42, 0.95), smoothstep(0.0, 0.55, t)), vec3(0.6, 0.93, 1.0), smoothstep(0.5, 1.0, t)); }
+vec3 inferno(float t) {
+  t = clamp(t, 0.0, 1.0);
+  vec3 a = mix(vec3(0.0, 0.0, 0.02), vec3(0.26, 0.04, 0.41), smoothstep(0.0, 0.25, t));
+  a = mix(a, vec3(0.73, 0.21, 0.33), smoothstep(0.22, 0.5, t));
+  a = mix(a, vec3(0.98, 0.55, 0.04), smoothstep(0.48, 0.78, t));
+  return mix(a, vec3(0.99, 0.98, 0.64), smoothstep(0.76, 1.0, t));
+}
+float lic(vec2 q) {
+  float acc = 0.0, ws = 0.0;
+  for (int dir = -1; dir <= 1; dir += 2) {
+    vec2 p = q;
+    for (int i = 0; i < 14; i++) {
+      vec2 v = textureLod(uDer, p / uN, 0.0).xy;
+      float l = length(v);
+      if (l < 1e-6) break;
+      p += float(dir) * v / l * 0.6;
+      float s = float(i + 1) / 14.0;
+      float w = (0.5 + 0.5 * cos(3.14159 * s)) * (0.6 + 0.4 * sin(6.2832 * (float(dir) * s * 0.8 - uTime * 0.7)));
+      acc += texture(uNoise, p / uN).r * w; ws += w;
+    }
+  }
+  return ws > 0.0 ? acc / ws : 0.5;
+}
+void main() {
+  vec2 sp = vec2(gl_FragCoord.x, uView.y - gl_FragCoord.y);
+  vec2 sc = sp / uCell;
+  vec2 q = uPortrait == 1 ? sc.yx : sc;
+  vec2 uv = q / uN, suv = sp / uView;
+  // 片光：从横向一侧打进来，越往里越弱，带几道片光固有的条纹
+  float depth = q.y / uN.y;
+  float beam = 0.8 + 0.2 * exp(-pow((q.x / uN.x - 0.42) / 0.5, 2.0));
+  float stri = 1.0 + 0.018 * sin(q.x * 0.31 + 2.0 * sin(q.x * 0.053)) + 0.01 * sin(q.x * 1.3 + 1.0);
+  float L = uLight * (1.16 - 0.3 * depth) * beam * stri;
+  vec3 bg = vec3(0.013, 0.015, 0.018) + vec3(0.012, 0.014, 0.02) * uLight * exp(-depth * 3.0);
+  vec4 d = textureLod(uDye, uv, 0.0);
+  vec4 dh = textureLod(uDye, uv, 2.3);
+  float sm = 1.0 - exp(-3.4 * d.a);
+  float halo = 1.0 - exp(-1.3 * dh.a);
+  vec3 tracer = (1.0 - exp(-2.6 * d.rgb)) * 1.1 + 0.3 * (1.0 - exp(-1.4 * dh.rgb));
+  vec3 cS = bg + (vec3(0.9, 0.93, 1.0) * (sm * 0.95 + halo * 0.08) + tracer) * L;
+  vec3 col = cS * uMix.x;
+  vec4 f = textureLod(uDer, uv, 0.0);
+  float Ue = max(uU, 1e-4);
+  if (uMix.y > 0.001) {
+    // 格子 y 朝下，横屏时正涡量就是屏幕上的顺时针；竖屏的格子相对屏幕是镜像，要翻一下
+    float wn = f.z * uLref / Ue * (uPortrait == 1 ? -1.0 : 1.0);
+    float t = clamp(abs(wn) / 7.0, 0.0, 1.0);
+    vec3 cv = (wn > 0.0 ? warm(pow(t, 0.75)) : cool(pow(t, 0.75))) + cS * 0.16;
+    col += cv * uMix.y;
+  }
+  if (uMix.z > 0.001) {
+    float s = length(f.xy) / Ue;
+    float li = lic(q);
+    vec3 cv = inferno(s / 2.0) * (0.45 + 1.15 * li) + cS * 0.06;
+    col += cv * uMix.z;
+  }
+  if (uMix.w > 0.001) {
+    float pref = 0.5 * (textureLod(uDer, vec2(uRefX, 3.0) / uN, 0.0).w + textureLod(uDer, vec2(uRefX, uN.y - 3.0) / uN, 0.0).w);
+    float cp = (f.w - pref) / (0.5 * Ue * Ue);
+    float t = clamp(cp / 1.4, -1.0, 1.0);
+    vec3 cv = t > 0.0 ? mix(vec3(0.02), vec3(0.95, 0.36, 0.22), pow(t, 0.8)) : mix(vec3(0.02), vec3(0.2, 0.5, 1.0), pow(-t, 0.8));
+    float lv = cp * 5.0;
+    float dist = abs(fract(lv + 0.5) - 0.5);
+    float line = 1.0 - smoothstep(0.0, fwidth(lv) * 1.4, dist);
+    cv += vec3(0.55) * line * 0.45 + cS * 0.1;
+    col += cv * uMix.w;
+  }
+  // 模型
+  vec2 m = texture(uModel, suv).rg;
+  if (m.r > 0.002 || m.g > 0.002) {
+    vec2 px = 1.6 / uView;
+    float gx = texture(uModel, suv + vec2(px.x, 0.0)).g - texture(uModel, suv - vec2(px.x, 0.0)).g;
+    float gy = texture(uModel, suv + vec2(0.0, px.y)).g - texture(uModel, suv - vec2(0.0, px.y)).g;
+    vec3 n = normalize(vec3(-gx * 3.0, -gy * 3.0, 1.0));
+    vec3 ld = uPortrait == 1 ? normalize(vec3(-1.0, -0.15, 0.35)) : normalize(vec3(-0.15, -1.0, 0.35));
+    float edge = smoothstep(0.97, 0.5, m.g);
+    float rim = pow(max(dot(n, ld), 0.0), 2.0) * edge;
+    float brushed = 0.92 + 0.08 * hash(vec2(floor(sp.x / (1.5 * uDpr)), floor(sp.y / (40.0 * uDpr))));
+    // 哑光深灰的金属块：迎光一侧稍亮；整圈有一道很细的受光边，在灰烟里也分得清字形
+    float face = uPortrait == 1 ? 1.0 - clamp(sc.x / (uN.y * 1.0), 0.0, 1.0) : 1.0 - depth;
+    vec3 body = vec3(0.07, 0.075, 0.085) * brushed * (0.8 + 0.35 * face * uLight);
+    float isField = 1.0 - uMix.x;
+    body = mix(body, vec3(0.17, 0.18, 0.2), isField * 0.6);
+    vec3 cm = body + vec3(0.88, 0.91, 1.0) * (rim * 0.95 + edge * 0.16) * (0.12 + 0.88 * uLight);
+    col = mix(col, cm, m.r);
+  }
+  // 底片感：暗角、颗粒、抖动去色带
+  vec2 vv = (suv - 0.5) * vec2(1.0, 1.15);
+  col *= 1.0 - 0.32 * smoothstep(0.25, 0.85, length(vv));
+  col += (hash(sp + fract(uTime * 7.3) * 91.0) - 0.5) * 0.018;
+  col = col / (1.0 + 0.18 * max(col - 0.75, 0.0));
+  col += (hash(sp * 1.37 + 17.0) - 0.5) / 255.0;
+  o = vec4(clamp(col, 0.0, 1.0), 1.0);
+}`;
+
+  // 探针：把某一点的速度、压力、涡量打包成 8 位颜色读回来（任何设备都能读）
+  const FS_PROBE = `#version 300 es
+precision highp float; precision highp sampler2D;
+uniform sampler2D uDer; uniform vec2 uP, uN; uniform float uRefX;
+out vec4 o;
+vec2 pack(float v) { float x = floor(clamp(v * 0.5 + 0.5, 0.0, 1.0) * 65535.0 + 0.5); float hi = floor(x / 256.0); return vec2(hi, x - hi * 256.0) / 255.0; }
+void main() {
+  vec4 f = textureLod(uDer, uP / uN, 0.0);
+  float pref = 0.5 * (textureLod(uDer, vec2(uRefX, 3.0) / uN, 0.0).w + textureLod(uDer, vec2(uRefX, uN.y - 3.0) / uN, 0.0).w);
+  o = gl_FragCoord.x < 1.0 ? vec4(pack(f.x / 0.4), pack(f.y / 0.4)) : vec4(pack((f.w - pref) / 0.03), pack(f.z / 0.25));
+}`;
+
+  function compile(fs, name) {
+    const mk = (type, src) => {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(name + ': ' + gl.getShaderInfoLog(s));
+      return s;
+    };
+    const p = gl.createProgram();
+    gl.attachShader(p, mk(gl.VERTEX_SHADER, VS)); gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+    gl.bindAttribLocation(p, 0, 'aP');
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(name + ': ' + gl.getProgramInfoLog(p));
+    const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name); }
+    return { p, u };
+  }
+
+  function initGL() {
+    gl = glc.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: false, depth: false, stencil: false, powerPreference: 'high-performance' });
+    if (!gl) return false;
+    const cbf = gl.getExtension('EXT_color_buffer_float');
+    const cbh = cbf || gl.getExtension('EXT_color_buffer_half_float');
+    if (!cbh) return false;
+    // 桌面上用单精度算风，手机上用半精度省带宽
+    FLOAT32 = !!cbf && !COARSE;
+    P.lbm = compile(FS_LBM, 'lbm'); P.der = compile(FS_DER, 'der');
+    P.dye = compile(FS_DYE, 'dye');
+    P.show = compile(FS_SHOW, 'show'); P.probe = compile(FS_PROBE, 'probe');
+    const vb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    glc.addEventListener('webglcontextlost', e => { e.preventDefault(); glOK = false; });
+    return true;
+  }
+
+  function tex(w, h, ifmt, fmt, type, filter, data = null, mip = false) {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, ifmt, w, h, 0, fmt, type, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (mip) gl.generateMipmap(gl.TEXTURE_2D);
+    return t;
+  }
+  function fbo(...texs) {
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    texs.forEach((t, i) => gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, t, 0));
+    return f;
+  }
+
+  function freeSim() {
+    if (!sim) return;
+    sim.textures.forEach(t => gl.deleteTexture(t));
+    sim.fbos.forEach(f => gl.deleteFramebuffer(f));
+    if (sim.pbo) gl.deleteBuffer(sim.pbo);
+    sim = null;
+  }
+
+  function buildSim(g, model) {
+    freeSim();
+    const { NX, NY, k } = g;
+    const F = FLOAT32 ? [gl.RGBA32F, gl.FLOAT] : [gl.RGBA16F, gl.HALF_FLOAT];
+    const mkL = () => tex(NX, NY, F[0], gl.RGBA, F[1], gl.NEAREST);
+    const L = [[mkL(), mkL(), mkL()], [mkL(), mkL(), mkL()]];
+    const S = tex(NX, NY, gl.R8, gl.RED, gl.UNSIGNED_BYTE, gl.NEAREST, model.solid);
+    const D = tex(NX, NY, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, gl.LINEAR);
+    const dw = NX * k, dh = NY * k;
+    const Y = [tex(dw, dh, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, gl.LINEAR, null, true), tex(dw, dh, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, gl.LINEAR, null, true)];
+    const MD = tex(g.devW, g.devH, gl.RG8, gl.RG, gl.UNSIGNED_BYTE, gl.LINEAR, model.rg);
+    const nz = new Uint8Array(dw * dh);
+    for (let i = 0; i < nz.length; i++) nz[i] = Math.random() * 255;
+    const NZ = tex(dw, dh, gl.R8, gl.RED, gl.UNSIGNED_BYTE, gl.LINEAR, nz);
+    const PR = tex(2, 1, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, gl.NEAREST);
+    const fL = [fbo(...L[0]), fbo(...L[1])];
+    const fD = fbo(D), fY = [fbo(Y[0]), fbo(Y[1])], fPR = fbo(PR);
+    for (const f of [...fL, fD, ...fY]) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('帧缓冲不完整');
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    const pbo = gl.createBuffer();
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pbo);
+    gl.bufferData(gl.PIXEL_PACK_BUFFER, 8, gl.STREAM_READ);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    sim = { g, band: model.band, refX: model.refX, NX, NY, k, L, S, D, Y, MD, NZ, PR, fL, fD, fY, fPR, pbo, cur: 0, dye: 0, step: 0, fence: null,
+      Lc: model.Lc, textures: [...L[0], ...L[1], S, D, ...Y, MD, NZ, PR], fbos: [...fL, fD, ...fY, fPR] };
+  }
+
+  function bindTex(prog, name, unit, t) {
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.uniform1i(prog.u[name], unit);
+  }
+
+  /* ---------------- 状态 ---------------- */
+  const FAN0 = QS.has('fan') ? clamp(+QS.get('fan') / 100, 0, 1) : 0.6;
+  const st = {
+    t: 0, s: FAN0, sT: FAN0, p: 0, light: 0, rake: 0, kick: 0, acc: 0, perf: 1, ema: 16,
+    mode: 0, mix: [1, 0, 0, 0], probe: null, stir: null, puffs: [], puffN: 0,
+    hist: [], reShown: 0, started: false, lastRead: 0, ready: false
+  };
+  const PUFF_COLORS = [[1.0, 0.62, 0.15], [0.2, 0.78, 1.0], [1.0, 0.3, 0.62], [0.55, 1.0, 0.45]];
+  const reMax = () => sim ? clamp(Math.round(sim.Lc * 0.11 / 0.0022 / 50) * 50, 600, COARSE ? 1000 : 1500) : 1500;
+  const ReOf = s => RE_MIN * Math.pow(reMax() / RE_MIN, s);
+  const UOf = s => 0.04 + 0.055 * s;
+
+  function physics() {
+    const Uset = UOf(st.s), Re = ReOf(st.s);
+    const nu = Uset * sim.Lc / Re;
+    const tau = Math.max(0.5 + 3 * nu, 0.503);
+    const U = Uset * st.p;
+    const ReNow = U * sim.Lc / ((tau - 0.5) / 3);
+    const Uphys = ReNow * NU_AIR / (MODEL_MM / 1000);
+    return { U, tau, Re: ReNow, Uphys, Uset };
+  }
+
+  /* ---------------- 每帧 ---------------- */
+  function lbmSteps(n, ph) {
+    const g = sim.g, pr = P.lbm;
+    gl.useProgram(pr.p);
+    gl.viewport(0, 0, sim.NX, sim.NY);
+    gl.uniform2i(pr.u.uN, sim.NX, sim.NY);
+    gl.uniform1f(pr.u.uU, ph.U);
+    gl.uniform1f(pr.u.uTau, ph.tau);
+    gl.uniform1f(pr.u.uCs, 0.16);
+    gl.uniform1f(pr.u.uKick, st.kick);
+    const sv = st.stir;
+    if (sv && sv.on) {
+      gl.uniform4f(pr.u.uStir, sv.x, sv.y, sv.r, 0.22);
+      gl.uniform2f(pr.u.uStirV, sv.vx, sv.vy);
+    } else gl.uniform4f(pr.u.uStir, 0, 0, 1, 0);
+    bindTex(pr, 'uS', 3, sim.S);
+    for (let i = 0; i < n; i++) {
+      const src = sim.L[sim.cur], dst = sim.cur ^ 1;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, sim.fL[dst]);
+      gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2]);
+      bindTex(pr, 'uA', 0, src[0]); bindTex(pr, 'uB', 1, src[1]); bindTex(pr, 'uC', 2, src[2]);
+      gl.uniform1f(pr.u.uStep, sim.step++);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      sim.cur = dst;
+    }
+    // 导出量
+    const pd = P.der;
+    gl.useProgram(pd.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, sim.fD);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+    gl.uniform2i(pd.u.uN, sim.NX, sim.NY);
+    bindTex(pd, 'uC', 0, sim.L[sim.cur][2]); bindTex(pd, 'uS', 1, sim.S);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  function dyeStep(n, dtSec, U = 0.08) {
+    gl.viewport(0, 0, sim.NX * sim.k, sim.NY * sim.k);
+    const pr = P.dye, src = sim.Y[sim.dye], dst = sim.dye ^ 1;
+    gl.useProgram(pr.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, sim.fY[dst]);
+    gl.uniform2f(pr.u.uN, sim.NX, sim.NY); gl.uniform1f(pr.u.uK, sim.k); gl.uniform1f(pr.u.uSteps, n);
+    bindTex(pr, 'uD', 0, sim.D); bindTex(pr, 'uDye', 1, src); bindTex(pr, 'uS', 2, sim.S);
+    gl.uniform1f(pr.u.uRakeX, 3.5); gl.uniform1f(pr.u.uRakeLen, Math.max(1.6, U * n * 1.3 + 0.8)); gl.uniform1f(pr.u.uSpacing, RAKE(sim.g)); gl.uniform1f(pr.u.uSigma, 0.42);
+    gl.uniform1f(pr.u.uRake, st.rake);
+    gl.uniform2f(pr.u.uBand, sim.band[0], sim.band[1]);
+    gl.uniform1f(pr.u.uDecay, Math.exp(-n * 0.00011));
+    const pv = new Float32Array(16), pc = new Float32Array(12);
+    st.puffs.forEach((p, i) => {
+      if (i > 3) return;
+      const life = clamp(1 - (st.t - p.t0) / 0.32, 0, 1);
+      pv.set([p.x, p.y, p.r, life * 0.2 * Math.min(1, dtSec * 60)], i * 4);
+      pc.set(p.c, i * 3);
+    });
+    gl.uniform4fv(pr.u.uPuff, pv); gl.uniform3fv(pr.u.uPuffC, pc);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    sim.dye = dst;
+    gl.bindTexture(gl.TEXTURE_2D, sim.Y[dst]);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    st.puffs = st.puffs.filter(p => st.t - p.t0 < 0.32);
+  }
+
+  function show(ph) {
+    const g = sim.g, pr = P.show;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, glc.width, glc.height);
+    gl.useProgram(pr.p);
+    gl.uniform2f(pr.u.uView, glc.width, glc.height);
+    gl.uniform2f(pr.u.uN, sim.NX, sim.NY);
+    gl.uniform1f(pr.u.uCell, g.cell * glc.width / g.gw);
+    gl.uniform1i(pr.u.uPortrait, g.portrait ? 1 : 0);
+    gl.uniform1f(pr.u.uLight, st.light);
+    gl.uniform1f(pr.u.uU, Math.max(ph.U, 0.012));
+    gl.uniform1f(pr.u.uLref, sim.Lc);
+    gl.uniform1f(pr.u.uRefX, sim.refX);
+    gl.uniform1f(pr.u.uTime, st.t);
+    gl.uniform1f(pr.u.uDpr, g.dpr);
+    gl.uniform4fv(pr.u.uMix, st.mix);
+    bindTex(pr, 'uDye', 0, sim.Y[sim.dye]); bindTex(pr, 'uDer', 1, sim.D); bindTex(pr, 'uModel', 2, sim.MD);
+    bindTex(pr, 'uNoise', 3, sim.NZ);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  // 探针读数：异步读回，读到了就记进历史
+  function probe(ph) {
+    if (sim.fence) {
+      const r = gl.clientWaitSync(sim.fence, 0, 0);
+      if (r === gl.ALREADY_SIGNALED || r === gl.CONDITION_SATISFIED) {
+        gl.deleteSync(sim.fence); sim.fence = null;
+        const b = new Uint8Array(8);
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, sim.pbo);
+        gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, b);
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+        const un = (hi, lo) => ((hi * 256 + lo) / 65535) * 2 - 1;
+        const rd = { ux: un(b[0], b[1]) * 0.4, uy: un(b[2], b[3]) * 0.4, p: un(b[4], b[5]) * 0.03, w: un(b[6], b[7]) * 0.25, step: sim.fenceStep, U: sim.fenceU };
+        if (st.probe) { st.probe.rd = rd; st.hist.push(rd); if (st.hist.length > 900) st.hist.shift(); }
+      } else return;
+    }
+    if (!st.probe || sim.fence) return;
+    const pr = P.probe;
+    gl.useProgram(pr.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, sim.fPR);
+    gl.viewport(0, 0, 2, 1);
+    gl.uniform2f(pr.u.uP, st.probe.qx, st.probe.qy);
+    gl.uniform2f(pr.u.uN, sim.NX, sim.NY);
+    gl.uniform1f(pr.u.uRefX, sim.refX);
+    bindTex(pr, 'uDer', 0, sim.D);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, sim.pbo);
+    gl.readPixels(0, 0, 2, 1, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    sim.fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    sim.fenceStep = sim.step; sim.fenceU = ph.U;
+    gl.flush();
+  }
+
+  /* ---------------- HUD：墙、尺子、烟耙、探针 ---------------- */
+  let hudStatic = null;
+  function drawHudStatic(g, t, model) {
+    const c = document.createElement('canvas');
+    c.width = Math.round(g.W * g.dpr); c.height = Math.round(g.H * g.dpr);
+    const x = c.getContext('2d');
+    x.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+    const wallRect = g.portrait
+      ? [[g.gx - g.wall, 0, g.wall, g.H, 'l'], [g.gx + g.gw, 0, g.wall, g.H, 'r']]
+      : [[0, g.gy - g.wall, g.W, g.wall, 't'], [0, g.gy + g.gh, g.W, g.wall, 'b']];
+    for (const [wx, wy, ww, wh, side] of wallRect) {
+      const lg = g.portrait ? x.createLinearGradient(wx, 0, wx + ww, 0) : x.createLinearGradient(0, wy, 0, wy + wh);
+      const inner = side === 'b' || side === 'r';
+      lg.addColorStop(0, inner ? '#24272c' : '#111316');
+      lg.addColorStop(1, inner ? '#101215' : '#26292e');
+      x.fillStyle = lg; x.fillRect(wx, wy, ww, wh);
+      x.fillStyle = 'rgba(255,255,255,0.08)';
+      if (g.portrait) x.fillRect(side === 'l' ? wx + ww - 1 : wx, wy, 1, wh);
+      else x.fillRect(wx, side === 't' ? wy + wh - 1 : wy, ww, 1);
+      // 螺栓
+      const len = g.portrait ? wh : ww, n = Math.max(3, Math.round(len / 150));
+      for (let i = 0; i < n; i++) {
+        const a = (i + 0.5) / n * len;
+        const bx = g.portrait ? wx + ww / 2 : a, by = g.portrait ? a : wy + wh / 2;
+        x.fillStyle = '#2f343a'; x.beginPath(); x.arc(bx, by, 2.2, 0, Math.PI * 2); x.fill();
+        x.fillStyle = 'rgba(255,255,255,0.18)'; x.beginPath(); x.arc(bx - 0.6, by - 0.6, 0.9, 0, Math.PI * 2); x.fill();
+      }
+    }
+    // 尺子：贴着下墙（竖屏是右墙）的内边，按模型字高 10 mm 换算
+    const pxmm = t.inkH / MODEL_MM;
+    const along = g.portrait ? g.gh : g.gw;
+    const step = pxmm >= 5 ? 1 : 2;
+    x.font = '500 9px "IBM Plex Mono", ui-monospace, monospace';
+    x.textBaseline = 'middle';
+    for (let mm = 0; mm * pxmm <= along; mm += step) {
+      const a = mm * pxmm, major = mm % 10 === 0, half = mm % 5 === 0;
+      const len = major ? 7 : half ? 4.5 : 2.5;
+      x.fillStyle = major ? 'rgba(220,226,234,0.42)' : 'rgba(220,226,234,0.2)';
+      if (!g.portrait) x.fillRect(g.gx + a, g.gy + g.gh - len, 1, len);
+      else x.fillRect(g.gx + g.gw - len, g.gy + a, len, 1);
+      if (major && mm > 0 && a < along - 30 && (!g.portrait || mm % 20 === 0)) {
+        x.fillStyle = 'rgba(220,226,234,0.34)';
+        if (!g.portrait) { x.textAlign = 'center'; x.fillText(mm + (mm === 10 ? ' mm' : ''), g.gx + a, g.gy + g.gh - 14); }
+        else { x.textAlign = 'right'; x.fillStyle = 'rgba(220,226,234,0.26)'; x.fillText(mm + (mm === 20 ? ' mm' : ''), g.gx + g.gw - 11, g.gy + a); }
+      }
+    }
+    // 烟耙：入口一排细管，烟从管口出来
+    const spacing = RAKE(g) * g.cell, tip = 3.5 * g.cell;
+    const cross = g.portrait ? g.gw : g.gh;
+    x.fillStyle = '#1b1e22';
+    if (!g.portrait) x.fillRect(g.gx, g.gy, 3, g.gh); else x.fillRect(g.gx, g.gy, g.gw, 3);
+    const bc = model ? model.band[0] * g.cell : cross / 2, bh = model ? model.band[1] * g.cell : cross;
+    for (let a = spacing / 2; a < cross; a += spacing) {
+      if (Math.abs(a - bc) > bh - spacing * 0.5) continue;
+      x.fillStyle = 'rgba(190,198,208,0.55)';
+      if (!g.portrait) x.fillRect(g.gx + 2, g.gy + a - 0.5, tip - 2, 1);
+      else x.fillRect(g.gx + a - 0.5, g.gy + 2, 1, tip - 2);
+    }
+    // 流向
+    x.font = '400 10.5px "IBM Plex Mono", ui-monospace, monospace';
+    x.fillStyle = 'rgba(200,206,214,0.38)';
+    x.textAlign = 'left'; x.textBaseline = 'top';
+    if (!g.portrait) x.fillText('气流 →', g.gx + 16, g.gy + 10);
+    else { x.save(); x.translate(g.gx + 12, g.gy + 14); x.fillText('气流 ↓', 0, 0); x.restore(); }
+    hudStatic = c;
+  }
+
+  // 用最近一段 v 的过零次数估斯特劳哈尔数 St = f·H/U
+  function strouhal() {
+    const h = st.hist;
+    if (h.length < 60) return null;
+    const last = h[h.length - 1], span = 9000;
+    const seg = h.filter(r => last.step - r.step < span);
+    if (seg.length < 60 || last.step - seg[0].step < span * 0.6) return null;
+    const mean = seg.reduce((a, r) => a + r.uy, 0) / seg.length;
+    const amp = Math.sqrt(seg.reduce((a, r) => a + (r.uy - mean) ** 2, 0) / seg.length);
+    if (amp < 0.004) return null;
+    const cross = [];
+    for (let i = 1; i < seg.length; i++) {
+      const a = seg[i - 1].uy - mean, b = seg[i].uy - mean;
+      if (a < 0 && b >= 0) cross.push(seg[i - 1].step + (seg[i].step - seg[i - 1].step) * (-a / (b - a)));
+    }
+    if (cross.length < 3) return null;
+    const per = [];
+    for (let i = 1; i < cross.length; i++) per.push(cross[i] - cross[i - 1]);
+    const pm = per.reduce((a, b) => a + b, 0) / per.length;
+    const sd = Math.sqrt(per.reduce((a, b) => a + (b - pm) ** 2, 0) / per.length);
+    if (sd / pm > 0.3) return null;
+    return (1 / pm) * sim.Lc / Math.max(last.U, 1e-4);
+  }
+
+  function drawHud(ph) {
+    const g = sim.g, x = hud.getContext('2d');
+    if (hud.width !== Math.round(g.W * g.dpr)) { hud.width = Math.round(g.W * g.dpr); hud.height = Math.round(g.H * g.dpr); }
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.clearRect(0, 0, hud.width, hud.height);
+    if (hudStatic) x.drawImage(hudStatic, 0, 0);
+    const pb = st.probe;
+    if (!pb || !pb.rd || st.mode < 0) return;
+    x.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+    const px = pb.sx, py = pb.sy;
+    // 探针杆：从片光那一侧的墙伸进来
+    x.strokeStyle = 'rgba(205,212,222,0.75)'; x.lineWidth = 1.2;
+    x.beginPath();
+    if (!g.portrait) { x.moveTo(px, g.gy); x.lineTo(px, py - 5); } else { x.moveTo(g.gx, py); x.lineTo(px - 5, py); }
+    x.stroke();
+    x.beginPath(); x.arc(px, py, 4, 0, Math.PI * 2); x.stroke();
+    x.fillStyle = '#ffb340'; x.beginPath(); x.arc(px, py, 1.6, 0, Math.PI * 2); x.fill();
+    // 读数框
+    const rd = pb.rd, U = Math.max(rd.U, 1e-4);
+    const scale = ph.Uphys / Math.max(ph.U, 1e-4);
+    const u = rd.ux * scale, v = rd.uy * scale, cp = rd.p / (0.5 * U * U);
+    const mmx = (pb.qx * g.cell) / (sim.Lc * g.cell / MODEL_MM), mmy = (pb.qy * g.cell) / (sim.Lc * g.cell / MODEL_MM);
+    const St = strouhal();
+    const bw = 172, bh = St ? 104 : 88;
+    let bx = px + 14, by = py + 14;
+    if (bx + bw > g.gx + g.gw - 6) bx = px - 14 - bw;
+    if (by + bh > g.gy + g.gh - 6) by = py - 14 - bh;
+    x.fillStyle = 'rgba(6,7,9,0.78)'; x.strokeStyle = 'rgba(255,255,255,0.1)'; x.lineWidth = 1;
+    x.beginPath(); x.roundRect ? x.roundRect(bx, by, bw, bh, 6) : x.rect(bx, by, bw, bh); x.fill(); x.stroke();
+    x.font = '400 10.5px "IBM Plex Mono", ui-monospace, monospace';
+    x.textAlign = 'left'; x.textBaseline = 'top';
+    x.fillStyle = 'rgba(160,168,178,0.9)';
+    x.fillText(`探针  x ${mmx.toFixed(1)}  y ${mmy.toFixed(1)} mm`, bx + 10, by + 9);
+    x.fillStyle = '#e8ebee';
+    const f = (n, d = 2) => (n < 0 ? '−' : ' ') + Math.abs(n).toFixed(d);
+    x.fillText(`u ${f(u)}  v ${f(v)} m/s`, bx + 10, by + 26);
+    x.fillText(`Cp ${f(cp)}`, bx + 10, by + 42);
+    if (St) { x.fillStyle = '#ffb340'; x.fillText(`St ${St.toFixed(2)}  涡脱落`, bx + 10, by + 58); }
+    // 横向速度的波形，像热线风速仪
+    const wy = by + (St ? 76 : 60), ww = bw - 20, whh = 18;
+    const hs = st.hist.slice(-240);
+    if (hs.length > 2) {
+      x.strokeStyle = 'rgba(255,179,64,0.85)'; x.lineWidth = 1;
+      x.beginPath();
+      const span = Math.max(hs[hs.length - 1].step - hs[0].step, 1);
+      hs.forEach((r, i) => {
+        const X = bx + 10 + (r.step - hs[0].step) / span * ww;
+        const Y = wy + whh / 2 - clamp(r.uy / Math.max(r.U, 1e-4) / 0.9, -1, 1) * whh / 2;
+        i ? x.lineTo(X, Y) : x.moveTo(X, Y);
+      });
+      x.stroke();
+      x.fillStyle = 'rgba(255,255,255,0.08)'; x.fillRect(bx + 10, wy + whh / 2, ww, 1);
+    }
+  }
+
+  /* ---------------- 读数和控件 ---------------- */
+  const fanEl = $('#fan'), spdEl = $('#spd'), reEl = $('#re'), stateEl = $('#state'), pctEl = $('#fanpct'), legend = $('#legend');
+  function stateText(ph) {
+    if (st.p < 0.6) return '风机启动';
+    const Re = ph.Re;
+    if (Re < ZONE[0]) return '定常绕流';
+    if (Re < ZONE[1]) return '卡门涡街';
+    if (Re < 900) return '涡街变乱';
+    return '尾流湍乱';
+  }
+  function updateReadouts(ph) {
+    spdEl.innerHTML = `${ph.Uphys.toFixed(2)}<small>m/s</small>`;
+    st.reShown = ph.Re;
+    reEl.textContent = Math.round(ph.Re).toLocaleString('en-US');
+    stateEl.textContent = stateText(ph);
+    pctEl.textContent = Math.round(st.sT * 100) + '%';
+  }
+  const LEGENDS = [
+    '',
+    '<span>逆时针</span><i style="background:linear-gradient(90deg,#9eeeff,#1a6bf2 25%,#000 50%,#eb5214 75%,#ffdc8c)"></i><span>顺时针 · ωH/U ±7</span>',
+    '<span>0</span><i style="background:linear-gradient(90deg,#000005,#420a68 25%,#ba3654 50%,#f98c0a 75%,#fcfaa3)"></i><span>2 U · 来流 = U</span>',
+    '<span>Cp −1.4</span><i style="background:linear-gradient(90deg,#3380ff,#050505 50%,#f25c38)"></i><span>+1.4 · 等压线间隔 0.2</span>'
+  ];
+  function setMode(m) {
+    st.mode = m;
+    document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.mode === m)));
+    legend.innerHTML = LEGENDS[m];
+    if (REDUCED) { st.mix = [0, 0, 0, 0].map((_, i) => (i === m ? 1 : 0)); if (sim && glOK && st.ready) show(physics()); }
+  }
+  document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => setMode(+b.dataset.mode)));
+  fanEl.addEventListener('input', () => { st.sT = fanEl.value / 1000; if (REDUCED) settle(); });
+  addEventListener('keydown', e => {
+    if (e.target === fanEl || e.target.closest?.('button')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { fanEl.value = Math.min(1000, +fanEl.value + 50); st.sT = fanEl.value / 1000; e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { fanEl.value = Math.max(0, +fanEl.value - 50); st.sT = fanEl.value / 1000; e.preventDefault(); }
+    if ('1234'.includes(e.key) && e.key.length === 1) setMode(+e.key - 1);
+  });
+
+  /* ---------------- 指针：拖动搅动，轻点放彩色烟，悬停是探针 ---------------- */
+  function toFlow(e) {
+    const r = glc.getBoundingClientRect(), g = sim.g;
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const cx = sx / g.cell, cy = sy / g.cell;
+    return { sx: sx + g.gx, sy: sy + g.gy, qx: g.portrait ? cy : cx, qy: g.portrait ? cx : cy, t: performance.now() };
+  }
+  let down = null;
+  glc.addEventListener('pointerdown', e => {
+    if (!sim) return;
+    glc.setPointerCapture(e.pointerId);
+    const p = toFlow(e);
+    down = { ...p, moved: false, last: p, id: e.pointerId };
+    hideHint();
+  });
+  glc.addEventListener('pointermove', e => {
+    if (!sim) return;
+    const p = toFlow(e);
+    if (e.pointerType === 'mouse' && !COARSE && !(down && down.moved)) {
+      const a = st.probe?.anchor;
+      if (!a || Math.hypot(p.sx - a[0], p.sy - a[1]) > 6) { st.hist = []; st.probe = { ...p, anchor: [p.sx, p.sy], rd: null }; }
+      else st.probe = { ...p, anchor: a, rd: st.probe.rd };
+    }
+    if (!down || down.id !== e.pointerId) return;
+    if (!down.moved && Math.hypot(p.sx - down.sx, p.sy - down.sy) > 5) { down.moved = true; st.probe = null; st.hist = []; }
+    if (down.moved) {
+      const dt = Math.max((p.t - down.last.t) / 1000, 1 / 240);
+      // 指针速度换成每步多少格：屏幕上的速度 ÷ 每秒步数
+      const sps = stepsPerSec();
+      const vx = (p.qx - down.last.qx) / dt / sps, vy = (p.qy - down.last.qy) / dt / sps;
+      const sv = st.stir || { on: true, vx: 0, vy: 0 };
+      sv.on = true; sv.x = p.qx; sv.y = p.qy; sv.r = Math.max(5, sim.Lc * 0.14);
+      sv.vx = lerp(sv.vx, clamp(vx, -0.2, 0.2), 0.5); sv.vy = lerp(sv.vy, clamp(vy, -0.2, 0.2), 0.5);
+      st.stir = sv;
+    }
+    down.last = p;
+  });
+  const endPointer = e => {
+    if (!down || down.id !== e.pointerId) return;
+    if (!down.moved && e.type === 'pointerup') {
+      st.puffs.push({ x: down.qx, y: down.qy, r: Math.max(6, sim.Lc * 0.2), t0: st.t, c: PUFF_COLORS[st.puffN++ % PUFF_COLORS.length] });
+      if (st.puffs.length > 4) st.puffs.shift();
+      audio?.puff();
+    }
+    down = null;
+    if (st.stir) st.stir.on = false;
+  };
+  glc.addEventListener('pointerup', endPointer);
+  glc.addEventListener('pointercancel', endPointer);
+  glc.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') st.probe = null; st.hist = []; });
+
+  // 每秒算多少步：风越大算得越多一点，抵掉格子速度上限压低的那部分
+  function stepsPerSec() { return sim.NX / (0.075 * 5.6) * st.perf * (0.8 + 0.4 * st.s) / 1.04; }
+
+  /* ---------------- 提示 ---------------- */
+  let hintTimer = 0;
+  function showHint() {
+    hintEl.textContent = COARSE ? '手指拖动搅动气流 · 轻点放一团彩色烟' : '拖动搅动气流 · 点一下放一团彩色烟 · 指着看探针读数';
+    hintEl.classList.add('on');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(hideHint, 7000);
+  }
+  function hideHint() { hintEl.classList.remove('on'); }
+
+  /* ---------------- 声音：风机叶片的基频和谐波、气流噪声、湍流的呼啸 ---------------- */
+  let audio = null;
+  function makeAudio(ac) {
+    const out = ac.createGain(); out.gain.value = 0;
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.01; comp.release.value = 0.25;
+    out.connect(comp); comp.connect(ac.destination);
+    // 粉噪声，循环 4 秒
+    const len = ac.sampleRate * 4, nb = ac.createBuffer(1, len, ac.sampleRate), d = nb.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, seed = 12345;
+    const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296 * 2 - 1; };
+    for (let i = 0; i < len; i++) {
+      const w = rnd();
+      b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.969 * b2 + w * 0.153852;
+      b3 = 0.8665 * b3 + w * 0.3104856; b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898;
+      d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11; b6 = w * 0.115926;
+    }
+    // 头尾交叉淡化，循环时没有咔嗒
+    const fade = Math.round(ac.sampleRate * 0.05);
+    for (let i = 0; i < fade; i++) { const a = i / fade; d[len - fade + i] = d[len - fade + i] * (1 - a) + d[i] * a; }
+    const mkNoise = rate => { const s = ac.createBufferSource(); s.buffer = nb; s.loop = true; s.loopStart = fade / ac.sampleRate; s.loopEnd = (len - fade) / ac.sampleRate; s.playbackRate.value = rate; return s; };
+    const n1 = mkNoise(1), n2 = mkNoise(0.83);
+    const air = ac.createBiquadFilter(); air.type = 'lowpass'; air.Q.value = 0.5; air.frequency.value = 200;
+    const airG = ac.createGain(); airG.gain.value = 0;
+    n1.connect(air); air.connect(airG); airG.connect(out);
+    const wb = ac.createBiquadFilter(); wb.type = 'bandpass'; wb.Q.value = 0.9; wb.frequency.value = 600;
+    const wG = ac.createGain(); wG.gain.value = 0;
+    n2.connect(wb); wb.connect(wG); wG.connect(out);
+    // 风机：叶片通过频率的前三阶，加一点慢的颤动
+    const fanBus = ac.createGain(); fanBus.gain.value = 0;
+    const fanLp = ac.createBiquadFilter(); fanLp.type = 'lowpass'; fanLp.frequency.value = 900;
+    fanBus.connect(fanLp); fanLp.connect(out);
+    const osc = [1, 2, 3, 7].map((h, i) => {
+      const o = ac.createOscillator(); o.type = i === 3 ? 'triangle' : 'sine'; o.frequency.value = 20 * h;   // 默认 440 Hz，先放低，打开时不会往下滑一声
+      const g = ac.createGain(); g.gain.value = [0.5, 0.22, 0.1, 0.025][i];
+      o.connect(g); g.connect(fanBus); return { o, h };
+    });
+    const lfo = ac.createOscillator(); lfo.frequency.value = 0.31;
+    const lfoG = ac.createGain(); lfoG.gain.value = 0.12;
+    lfo.connect(lfoG); lfoG.connect(fanBus.gain);
+    const nodes = [n1, n2, lfo, ...osc.map(o => o.o)];
+    return {
+      out,
+      start(t = ac.currentTime) { nodes.forEach(n => n.start(t)); },
+      // s：风机设定 0–1，p：转速比例，turb：湍流程度 0–1
+      set(s, p, turb, t = ac.currentTime) {
+        const f0 = (22 + 70 * s) * p + 0.01;
+        osc.forEach(({ o, h }) => o.frequency.setTargetAtTime(f0 * h, t, 0.25));
+        fanBus.gain.setTargetAtTime((0.05 + 0.14 * s) * Math.min(1, p * 1.4), t, 0.3);
+        air.frequency.setTargetAtTime(180 + 2400 * s * s * p + 200 * p, t, 0.3);
+        airG.gain.setTargetAtTime((0.04 + 0.32 * s * s) * p, t, 0.3);
+        wb.frequency.setTargetAtTime(500 + 1100 * s, t, 0.4);
+        wG.gain.setTargetAtTime(0.22 * turb * p, t, 0.25);
+      },
+      level(v, t = ac.currentTime) { out.gain.setTargetAtTime(v, t, 0.35); },
+      puff(t = ac.currentTime) {
+        const s = ac.createBufferSource(); s.buffer = nb; s.playbackRate.value = 1.3;
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.7;
+        const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.35, t + 0.015); g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+        s.connect(bp); bp.connect(g); g.connect(out);
+        s.start(t, Math.random() * 3); s.stop(t + 0.36);
+      }
+    };
+  }
+  const sndBtn = $('#snd');
+  let soundOn = false;
+  sndBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    sndBtn.setAttribute('aria-pressed', String(soundOn));
+    if (soundOn && !audio) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ac = new AC();
+      audio = makeAudio(ac); audio.ac = ac; audio.start();
+    }
+    if (audio) { audio.ac.resume?.(); audio.level(soundOn ? 0.9 : 0); }
+  });
+  window.__tunnelAudio = makeAudio;   // 测试时用离线音频渲染同一套声音
+
+  /* ---------------- 降级：没有 WebGL2 或者不能往浮点纹理上画 ---------------- */
+  function fallback() {
+    const g = G, t = placeText(g);
+    glc.style.left = g.gx + 'px'; glc.style.top = g.gy + 'px'; glc.style.width = g.gw + 'px'; glc.style.height = g.gh + 'px';
+    glc.width = g.devW; glc.height = g.devH;
+    const x = glc.getContext('2d');
+    if (!x) return;
+    x.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+    x.fillStyle = '#060708'; x.fillRect(0, 0, g.gw, g.gh);
+    // 示意：绕一个椭圆的势流。把坐标按椭圆半轴缩放成绕单位圆柱，流函数 ψ = Y(1 − 1/(X²+Y²))，逐点用牛顿法解出 Y
+    x.strokeStyle = 'rgba(225,230,240,0.62)'; x.lineWidth = 1;
+    const along = g.portrait ? g.gh : g.gw;
+    const ca = g.portrait ? t.cy : t.cx, cc = g.portrait ? t.cx : t.cy;
+    const ra = (g.portrait ? t.inkH : t.inkW) / 2 * 1.06, rc = (g.portrait ? t.inkW : t.inkH) / 2 * 1.25;
+    const spacing = RAKE(g) * g.cell, bandH = g.portrait ? t.inkW / 2 + g.gw * 0.1 : t.inkH * 1.4;
+    for (let c = -bandH; c <= bandH; c += spacing) {
+      const psi = c / rc;
+      if (Math.abs(psi) < 0.08) continue;
+      x.beginPath();
+      for (let a = 0; a <= along; a += 3) {
+        const X = (a - ca) / ra, sg = Math.sign(psi);
+        let Y = sg * (Math.abs(psi) + Math.sqrt(Math.max(0, 1 - X * X)));
+        for (let it = 0; it < 24; it++) {
+          const r2 = X * X + Y * Y, f = Y - Y / r2 - psi, d = 1 - (X * X - Y * Y) / (r2 * r2);
+          Y -= f / (Math.abs(d) < 1e-3 ? 1e-3 : d);
+        }
+        const P0 = a, P1 = cc + Y * rc;
+        const PX = g.portrait ? P1 : P0, PY = g.portrait ? P0 : P1;
+        a ? x.lineTo(PX, PY) : x.moveTo(PX, PY);
+      }
+      x.stroke();
+    }
+    x.font = FONT(t.size);
+    for (const c of t.chars) {
+      x.fillStyle = '#16181c'; x.fillText(c.ch, t.x + c.x, t.y);
+      x.strokeStyle = 'rgba(230,235,245,0.6)'; x.lineWidth = 1; x.strokeText(c.ch, t.x + c.x, t.y);
+    }
+    drawHudStatic(g, t);
+    const h = hud.getContext('2d'); hud.width = hudStatic.width; hud.height = hudStatic.height; h.drawImage(hudStatic, 0, 0);
+    stateEl.textContent = '示意图';
+    spdEl.innerHTML = '—<small>m/s</small>'; reEl.textContent = '—';
+    hintEl.textContent = '这台设备跑不了实时流体，这里是一张示意图';
+    hintEl.classList.add('on');
+    fanEl.disabled = true;
+    document.querySelectorAll('.modes button').forEach(b => { b.disabled = true; });
+  }
+
+  /* ---------------- 搭建 ---------------- */
+  function build() {
+    G = layout();
+    const t = placeText(G);
+    glc.style.left = G.gx + 'px'; glc.style.top = G.gy + 'px';
+    glc.style.width = G.gw + 'px'; glc.style.height = G.gh + 'px';
+    if (!glOK) { fallback(); return; }
+    glc.width = G.devW; glc.height = G.devH;
+    const model = buildModel(G, t);
+    buildSim(G, model);
+    drawHudStatic(G, t, model);
+    // 滑杆下的分区按雷诺数换算到滑杆位置
+    const za = Math.log(ZONE[0] / RE_MIN) / Math.log(reMax() / RE_MIN), zb = Math.log(ZONE[1] / RE_MIN) / Math.log(reMax() / RE_MIN);
+    fanEl.style.setProperty('--za', (za * 100).toFixed(1) + '%'); fanEl.style.setProperty('--zb', (zb * 100).toFixed(1) + '%');
+    $('.zones').style.gridTemplateColumns = `${za}fr ${zb - za}fr ${1 - zb}fr`;
+    st.hist = []; st.probe = null; st.acc = 0;
+  }
+
+  // 减少动画：后台先把气流算稳，再定格成一张照片
+  let settling = 0;
+  function settle() {
+    if (!sim) return;
+    const id = ++settling;
+    st.s = st.sT; st.p = 1; st.light = 1; st.rake = 1; st.kick = 0.02;
+    const total = Math.round(sim.NX / (UOf(st.s) * 0.85) * 1.35);
+    let done = 0;
+    if (!st.shownStill) { st.rake = 0; show(physics()); st.rake = 1; st.shownStill = true; }
+    const chunk = () => {
+      if (id !== settling || !sim) return;
+      const ph = physics();
+      for (let i = 0; i < 6 && done < total; i++) {
+        const n = Math.min(36, total - done);
+        lbmSteps(n, ph); for (let k = 0; k < 3; k++) dyeStep(n / 3, 1 / 180, ph.U); done += n;
+        if (done > total * 0.4) st.kick = 0.004;
+      }
+      updateReadouts(ph);
+      if (done < total) requestAnimationFrame(chunk);
+      else show(ph);
+    };
+    requestAnimationFrame(chunk);
+  }
+
+  let last = performance.now(), skip = 0;
+  const HZ60 = QS.has('hz60');
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (HZ60 && (skip ^= 1)) return;
+    let dt = (now - last) / 1000;
+    last = now;
+    if (!(dt > 0)) dt = 0;                 // 时间戳偶尔会比上一帧还早
+    dt = Math.min(dt, 0.05);
+    if (!sim || !glOK || REDUCED) return;
+    st.t += dt;
+    const t = st.t;
+    // 开场：先黑着，片光闪两下亮起来，风机转起来，烟耙开始放烟
+    if (t < 0.25) st.light = 0;
+    else if (t < 0.75) { const k = (t - 0.25) / 0.5; st.light = k < 0.18 ? 0.55 : k < 0.3 ? 0.08 : k < 0.42 ? 0.8 : k < 0.5 ? 0.3 : Math.min(1, 0.85 + k * 0.15); }
+    else st.light = 1;
+    st.p = t < 0.55 ? 0 : 1 - Math.exp(-(t - 0.55) / 0.6);
+    st.rake = clamp((t - 0.75) / 0.3, 0, 1);
+    st.kick = t > 1.6 && t < 4.5 ? 0.02 : 0.0;
+    st.s += (st.sT - st.s) * (1 - Math.exp(-dt / 0.7));
+    // 模式交叉淡入淡出
+    st.mix = st.mix.map((v, i) => v + ((i === st.mode ? 1 : 0) - v) * (1 - Math.exp(-dt / 0.14)));
+    const ph = physics();
+    // 帧太慢就放慢流动（慢动作），不硬算
+    st.ema = lerp(st.ema, dt * 1000, 0.05);
+    if (st.ema > 21 && st.perf > 0.35) st.perf *= 0.985;
+    else if (st.ema < 15 && st.perf < 1) st.perf = Math.min(1, st.perf * 1.01);
+    st.acc += dt * stepsPerSec();
+    let n = Math.floor(st.acc);
+    st.acc -= n;
+    n = Math.min(n, 44);
+    if (st.stir && st.stir.on && down && performance.now() - down.last.t > 90) { st.stir.vx *= 0.8; st.stir.vy *= 0.8; }
+    lbmSteps(n, ph);
+    // 烟每次最多挪一格半左右：位移大就拆成几个子步，免得烟线断成虚线、锋面出锯齿
+    const sub = clamp(Math.ceil(1.8 * ph.U * n / 1.6), 1, 4);
+    for (let i = 0; i < sub; i++) dyeStep(n / sub, dt / sub, ph.U);
+    show(ph);
+    probe(ph);
+    drawHud(ph);
+    if (now - st.lastRead > 110) {
+      st.lastRead = now; updateReadouts(ph);
+      if (audio && soundOn) audio.set(st.s, st.p, clamp((ph.Re - 150) / 900, 0, 1));
+    }
+    if (!st.started && t > 6) { st.started = true; showHint(); }
+  }
+
+  // 首帧前就给画布和底一样的颜色；字体最多等 2 秒，到了再搭，不会演到一半换字体
+  const fontWait = Promise.race([
+    (document.fonts ? Promise.all([document.fonts.load(FONT(100), brand), document.fonts.load('500 10px "IBM Plex Mono"')]) : Promise.resolve()).catch(() => {}),
+    new Promise(r => setTimeout(r, 2000))
+  ]);
+  try { glOK = !QS.has('nogl') && initGL(); } catch (err) { console.error(err); glOK = false; }
+  fontWait.then(() => {
+    try { build(); } catch (err) { console.error(err); glOK = false; build(); }
+    setMode(0);
+    fanEl.value = Math.round(st.sT * 1000);
+    if (glOK) {
+      if (REDUCED) { settle(); showHint(); }
+      else { last = performance.now(); requestAnimationFrame(loop); }
+    }
+    st.ready = true;
+  });
+
+  let rt = 0, lastW = innerWidth, lastH = innerHeight;
+  addEventListener('resize', () => {
+    if (Math.abs(innerWidth - lastW) < 2 && Math.abs(innerHeight - lastH) < 60) return;
+    lastW = innerWidth; lastH = innerHeight;
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      try { build(); } catch (err) { console.error(err); }
+      if (glOK && sim) { st.t = Math.max(st.t, 1.2); if (REDUCED) settle(); }
+    }, 250);
+  });
+
+  window.__tunnel = { st, get gl() { return gl; }, get sim() { return sim; }, physics: () => sim && physics(), get G() { return G; }, FLOAT32: () => FLOAT32 };
+})();
+</script>
+</body>
+</html>

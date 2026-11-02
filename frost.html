@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>结霜 · 一千零一页</title>
+<meta name="description" content="冬夜隔着一扇窗往外看，玻璃上的冰花从品牌名的笔画里长出来，一枝枝蕨叶似的枝晶爬满窗角。按住玻璃哈一口气，冰会化开、起雾，还能用手指在雾上写字。">
+<meta name="theme-color" content="#0c1322">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="font-css" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Playfair+Display:ital,wght@0,900;1,600&display=swap" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --night: #0c1322;
+    --ink: #f3e7d5;
+    --muted: #b9a68d;
+    --faint: #8a785f;
+    --sill: 66px;
+    --frame: 30px;
+    --serif: "Playfair Display", "Noto Serif SC", Georgia, serif;
+    --cn: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--night); }
+  body { color: var(--ink); font: 14px/1.5 var(--sans); -webkit-tap-highlight-color: transparent; }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  .win { position: fixed; inset: 0; height: 100dvh; }
+  /* 画布不做 CSS 透明度动画（整屏画布做合成动画会卡一下），淡入在着色器里做 */
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #gl.press { cursor: none; }
+
+  /* 窗台：品牌名、提示和按钮 */
+  .sill {
+    position: absolute; left: 0; right: 0; bottom: 0; height: var(--sill); z-index: 2;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+    padding: 4px calc(var(--frame) + 4px) 0; pointer-events: none;
+    opacity: 0; transition: opacity 1s ease;
+  }
+  .on .sill { opacity: 1; }
+  .sill > * { pointer-events: auto; }
+  .title { display: flex; align-items: baseline; gap: 12px; min-width: 0; text-shadow: 0 1px 0 rgb(0 0 0 / .45); }
+  .title b { font: italic 600 22px/1 var(--serif); letter-spacing: .01em; white-space: nowrap; }
+  .title small { font: 600 12.5px/1.2 var(--cn); color: var(--muted); letter-spacing: .12em; white-space: nowrap; }
+  .hint { margin: 0; font: 13px/1.4 var(--sans); color: var(--muted); letter-spacing: .06em; text-align: center; transition: opacity .6s; text-shadow: 0 1px 0 rgb(0 0 0 / .45); }
+  .hint.off { opacity: 0; }
+  .ctl { display: flex; justify-content: flex-end; gap: 8px; }
+  .ctl button {
+    display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 14px; border-radius: 16px;
+    font: 13px/1 var(--sans); color: var(--ink); background: rgb(20 13 8 / .45); border: 1px solid rgb(243 231 213 / .2);
+    cursor: pointer; transition: border-color .2s, background .2s, opacity .3s;
+  }
+  .ctl button:hover { border-color: rgb(243 231 213 / .45); background: rgb(20 13 8 / .6); }
+  .ctl button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .ctl button:disabled { opacity: .4; cursor: default; }
+  .ctl svg { width: 14px; height: 14px; flex: none; }
+  #sound .wave { display: none; }
+  #sound[aria-pressed="true"] .wave { display: inline; }
+  #sound[aria-pressed="true"] .mute { display: none; }
+
+  @media (max-width: 640px) {
+    :root { --sill: 84px; }
+    .sill { grid-template-columns: 1fr auto; grid-template-rows: auto auto; row-gap: 6px; column-gap: 10px; padding: 8px 14px calc(6px + env(safe-area-inset-bottom)); align-content: center; }
+    .title { grid-column: 1 / -1; justify-content: space-between; }
+    .title b { font-size: 20px; }
+    .hint {
+      position: absolute; left: 50%; bottom: calc(var(--sill) + 14px); transform: translateX(-50%);
+      padding: 6px 14px; border-radius: 16px; background: rgb(8 12 22 / .55); color: var(--ink); white-space: nowrap;
+      font-size: 12.5px; backdrop-filter: blur(4px);
+    }
+    .ctl { grid-column: 1 / -1; justify-content: stretch; }
+    .ctl button { flex: 1; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sill { transition: none; }
+  }
+</style>
+</head>
+<body>
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 009</a>
+
+<main class="win" id="win">
+  <canvas id="gl" aria-label="冬夜的窗，玻璃上的冰花从品牌名里长出来；按住玻璃是哈气，按住拖动是用手指在雾上写字"></canvas>
+  <div class="sill">
+    <div class="title"><b id="f-name">Lumen</b><small>结霜 · 窗外零下十四度</small></div>
+    <p class="hint off" id="hint" aria-live="polite">按住玻璃，哈一口气</p>
+    <div class="ctl">
+      <button type="button" id="again" disabled><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5M8 1.5 6.4 3.1M8 1.5l1.6 1.6M8 14.5l-1.6-1.6M8 14.5l1.6-1.6"/></svg><span>重新结霜</span></button>
+      <button type="button" id="sound" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z"/><path class="wave" d="M10.6 5.6a3.4 3.4 0 0 1 0 4.8M12.4 3.9a5.8 5.8 0 0 1 0 8.2"/><path class="mute" d="M11 6.2l3 3.6M14 6.2l-3 3.6"/></svg><span>声音 · 关</span></button>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const Q = new URLSearchParams(location.search);
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (Q.get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+  const isCJK = s => /[㐀-鿿豈-﫿]/.test(s);
+  const BRAND_FONT = px => `900 ${px}px "Playfair Display", "Noto Serif SC", Georgia, serif`;
+
+  // 固定种子的随机数：同一个名字每次长出来的冰花一样
+  function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const seedOf = s => [...s].reduce((h, ch) => Math.imul(h ^ ch.codePointAt(0), 16777619), 2166136261);
+
+  const glc = $('#gl'), hintEl = $('#hint'), againBtn = $('#again'), soundBtn = $('#sound');
+  let W = 0, H = 0, dpr = 1, mobile = false, FR = 30, SILL = 66, RAIL = 22;
+  let glass = { x: 0, y: 0, w: 1, h: 1 }, cell = 1.4, GW = 1, GH = 1;
+
+  function layout() {
+    W = innerWidth; H = innerHeight;
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    mobile = W < 640;
+    FR = mobile ? 12 : Math.round(clamp(W * 0.026, 22, 38));
+    SILL = mobile ? 84 : 66;
+    RAIL = mobile ? 10 : Math.round(FR * 0.75);
+    glass = { x: FR, y: FR, w: W - 2 * FR, h: H - SILL - RAIL - FR };
+    cell = mobile ? 1.15 : 1.2;
+    // 格子数封顶，防止大屏上一步算太久
+    while ((glass.w / cell) * (glass.h / cell) > 640000) cell += 0.1;
+    RK = clamp(1.4 / cell, 1, 1.4); BUDGET = Math.round(BUDGET0 * RK);
+    GW = Math.max(16, Math.round(glass.w / cell));
+    GH = Math.max(16, Math.round(glass.h / cell));
+    document.documentElement.style.setProperty('--sill', SILL + 'px');
+    document.documentElement.style.setProperty('--frame', FR + 'px');
+    glc.width = Math.round(W * dpr);
+    glc.height = Math.round(H * dpr);
+  }
+
+  // ---------- 冰核、晶粒和耗尽带：都在模拟网格上，行号从下往上 ----------
+  let AUX, LET, INIT, letBox;
+  function buildAux() {
+    const R = rng(seedOf(brand) ^ 0x9e3779b9);
+    const cv = document.createElement('canvas'); cv.width = GW; cv.height = GH;
+    const m = cv.getContext('2d', { willReadFrequently: true });
+    m.fillStyle = '#000'; m.fillRect(0, 0, GW, GH);
+    m.font = BRAND_FONT(100);
+    const mt = m.measureText(brand);
+    const tw = (mt.actualBoundingBoxLeft + mt.actualBoundingBoxRight) || mt.width;
+    const th = (mt.actualBoundingBoxAscent + mt.actualBoundingBoxDescent) || 70;
+    const size = 100 * Math.min(GW * (mobile ? 0.84 : 0.74) / tw, GH * (mobile ? 0.2 : 0.34) / th);
+    m.font = BRAND_FONT(size);
+    const m2 = m.measureText(brand);
+    const cx = GW / 2 - (m2.actualBoundingBoxRight - m2.actualBoundingBoxLeft) / 2;
+    const capH = (m2.actualBoundingBoxAscent + m2.actualBoundingBoxDescent) || size * 0.7;
+    const baseY = GH * (mobile ? 0.44 : 0.47) + (m2.actualBoundingBoxAscent - m2.actualBoundingBoxDescent) / 2;
+    m.fillStyle = '#fff'; m.textBaseline = 'alphabetic';
+    m.fillText(brand, cx, baseY);
+    letBox = { y0: baseY - m2.actualBoundingBoxAscent, y1: baseY + m2.actualBoundingBoxDescent, capH };
+    const md = m.getImageData(0, 0, GW, GH).data;
+    const N = GW * GH;
+    const inL = new Float32Array(N);
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) inL[y * GW + x] = md[((GH - 1 - y) * GW + x) * 4] / 255;
+    // 到字的距离（倒角两遍）
+    const D = new Float32Array(N).fill(1e9);
+    for (let i = 0; i < N; i++) if (inL[i] > 0.5) D[i] = 0;
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+      const i = y * GW + x; let d = D[i];
+      if (x > 0) d = Math.min(d, D[i - 1] + 1);
+      if (y > 0) { d = Math.min(d, D[i - GW] + 1); if (x > 0) d = Math.min(d, D[i - GW - 1] + 1.414); if (x < GW - 1) d = Math.min(d, D[i - GW + 1] + 1.414); }
+      D[i] = d;
+    }
+    for (let y = GH - 1; y >= 0; y--) for (let x = GW - 1; x >= 0; x--) {
+      const i = y * GW + x; let d = D[i];
+      if (x < GW - 1) d = Math.min(d, D[i + 1] + 1);
+      if (y < GH - 1) { d = Math.min(d, D[i + GW] + 1); if (x < GW - 1) d = Math.min(d, D[i + GW + 1] + 1.414); if (x > 0) d = Math.min(d, D[i + GW - 1] + 1.414); }
+      D[i] = d;
+    }
+    // 字周围一圈不结冰：冰把附近的水汽吸走了（耗尽带），也让字形更清楚
+    const MOAT = Math.round(clamp(capH * 0.05, 4, 9));
+    const aux = new Uint8Array(N * 4);
+    // 晶粒朝向：Voronoi，每块一个随机的晶轴角
+    const grains = Array.from({ length: Math.round(16 + N / 14000) }, () => [R() * GW, R() * GH, R()]);
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+      const i = y * GW + x;
+      let best = 1e18, g = 0;
+      for (const [gx, gy, a] of grains) { const d = (gx - x) * (gx - x) + (gy - y) * (gy - y); if (d < best) { best = d; g = a; } }
+      aux[i * 4] = Math.round(inL[i] * 255);
+      aux[i * 4 + 1] = Math.round(g * 255);
+      aux[i * 4 + 2] = D[i] > 0.5 && D[i] <= MOAT ? 0 : 255;
+    }
+    // 冰核时间表：单位是 30 步
+    const slot = steps => clamp(Math.round(steps / 30), 1, 255);
+    const disc = (cx, cy, r, s) => {
+      for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r) {
+        const X = Math.round(cx + x), Y = Math.round(cy + y);
+        if (X < 0 || Y < 0 || X >= GW || Y >= GH) continue;
+        const i = Y * GW + X;
+        if (D[i] > 0.5 && D[i] <= MOAT) continue;
+        if (!aux[i * 4 + 3] || aux[i * 4 + 3] > s) aux[i * 4 + 3] = s;
+      }
+    };
+    // 字里：密密的小核，最先冻上
+    for (let i = 0; i < N; i++) if (inL[i] > 0.5 && R() < 0.0016) disc(i % GW, (i / GW) | 0, 2, slot(20 + R() * 260));
+    // 字外：贴着耗尽带外沿
+    let ring = 0;
+    const ringN = Math.round(clamp(N * 0.00012, 18, 60));
+    for (let k = 0; k < ringN * 40 && ring < ringN; k++) {
+      const x = R() * GW, y = R() * GH, d = D[(y | 0) * GW + (x | 0)];
+      if (d > MOAT + 1 && d < MOAT + 3.5) { disc(x, y, 2, slot(900 + R() * 2400)); ring++; }
+    }
+    // 窗边：底边最冷，角上最早，两侧次之，顶边少
+    const edgeN = Math.round(clamp((GW + GH) * 0.028, 14, 46));
+    for (let k = 0; k < edgeN; k++) {
+      const r = R(); let x, y, t = 400 + R() * 3600;
+      if (r < 0.3) { x = R() * GW; y = 1 + R() * 2; }
+      else if (r < 0.7) { x = R() < 0.5 ? 1 + R() * 2 : GW - 2 - R() * 2; y = R() * GH; }
+      else { x = R() * GW; y = GH - 2 - R() * 2; }
+      const corner = Math.min(x, GW - x) + Math.min(y, GH - y);
+      if (corner < GH * 0.25) t *= 0.4;
+      disc(x, y, 2, slot(t));
+    }
+    // 玻璃中间零星几处（灰尘、划痕）
+    for (let k = 0; k < Math.round(clamp(N / 70000, 3, 8)); k++) disc(R() * GW, R() * GH, 2, slot(1800 + R() * 3200));
+    // 初始状态：冷玻璃，底边积着一点水
+    const init = new Float32Array(N * 4);
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+      const i = y * GW + x;
+      init[i * 4 + 1] = 0;
+      init[i * 4 + 3] = y < 5 ? 0.45 * (1 - y / 5) * (0.6 + 0.4 * R()) : 0;
+    }
+    AUX = aux; INIT = init;
+    LET = new Uint8Array(N); for (let i = 0; i < N; i++) LET[i] = aux[i * 4];
+  }
+
+  // ---------- 窗外：虚掉的街灯、人家的窗、雪地，全是散景 ----------
+  const bgCv = document.createElement('canvas');
+  function buildBg() {
+    const R = rng(0x5eed + (mobile ? 7 : 0));
+    const bw = Math.max(64, Math.round(W * 0.5)), bh = Math.max(64, Math.round(H * 0.5));
+    bgCv.width = bw; bgCv.height = bh;
+    const o = bgCv.getContext('2d');
+    const s = bw / 640;
+    const hor = bh * (mobile ? 0.58 : 0.6);
+    const sky = o.createLinearGradient(0, 0, 0, bh);
+    sky.addColorStop(0, '#050916'); sky.addColorStop(0.42, '#0b1530'); sky.addColorStop(hor / bh, '#2b2538'); sky.addColorStop(Math.min(0.99, hor / bh + 0.06), '#1d1f2e'); sky.addColorStop(1, '#232838');
+    o.fillStyle = sky; o.fillRect(0, 0, bw, bh);
+    // 城市的光把低云染成暗橙
+    const glow = o.createRadialGradient(bw * 0.55, hor, 0, bw * 0.55, hor, bw * 0.7);
+    glow.addColorStop(0, 'rgba(120,70,40,.32)'); glow.addColorStop(1, 'rgba(120,70,40,0)');
+    o.fillStyle = glow; o.fillRect(0, 0, bw, bh);
+    // 远处的楼：很虚的深色块
+    o.fillStyle = 'rgba(8,10,20,.75)';
+    for (let x = -20 * s; x < bw; ) {
+      const w = (26 + R() * 60) * s, hh = (18 + R() * 70) * s * (mobile ? 1.4 : 1);
+      const g = o.createLinearGradient(0, hor - hh, 0, hor);
+      g.addColorStop(0, 'rgba(10,12,24,0)'); g.addColorStop(0.18, 'rgba(10,12,24,.7)'); g.addColorStop(1, 'rgba(12,14,26,.85)');
+      o.fillStyle = g; o.fillRect(x, hor - hh, w, hh + 2);
+      x += w * (0.7 + R() * 0.5);
+    }
+    // 雪地：被街灯照出一片片暖色
+    const ground = o.createLinearGradient(0, hor, 0, bh);
+    ground.addColorStop(0, '#2a2c3a'); ground.addColorStop(1, '#3a3c4b');
+    o.fillStyle = ground; o.fillRect(0, hor + 2 * s, bw, bh - hor);
+    const disc = (x, y, r, col, a, rim = 0.35) => {
+      const g = o.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `rgba(${col},${a * 0.5})`);
+      g.addColorStop(0.78, `rgba(${col},${a * 0.62})`);
+      g.addColorStop(0.93, `rgba(${col},${a * (0.62 + rim)})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      o.fillStyle = g; o.beginPath(); o.arc(x, y, r, 0, Math.PI * 2); o.fill();
+    };
+    o.globalCompositeOperation = 'lighter';
+    // 路灯照在雪地上的光斑
+    const lamps = [];
+    const nL = mobile ? 3 : 5;
+    for (let k = 0; k < nL; k++) lamps.push([bw * ((k + 0.2 + R() * 0.6) / nL), hor - (6 + R() * 22) * s * (mobile ? 1.6 : 1), 0.55 + R() * 0.6]);
+    for (const [x] of lamps) {
+      const g = o.createRadialGradient(x, hor + 30 * s, 0, x, hor + 30 * s, 120 * s);
+      g.addColorStop(0, 'rgba(255,160,80,.26)'); g.addColorStop(1, 'rgba(255,160,80,0)');
+      o.save(); o.scale(1, 0.45); o.fillStyle = g; o.beginPath(); o.arc(x, (hor + 30 * s) / 0.45, 120 * s, 0, Math.PI * 2); o.fill(); o.restore();
+    }
+    // 远处的小灯
+    for (let k = 0; k < 70; k++) {
+      const x = R() * bw, y = hor - R() * 46 * s * (mobile ? 1.6 : 1) + R() * 10 * s;
+      const warm = R() < 0.7;
+      disc(x, y, (2.2 + R() * 3.4) * s, warm ? '255,190,120' : '200,215,255', 0.35 + R() * 0.4, 0.2);
+    }
+    // 人家的窗：中等大小的暖色光斑
+    for (let k = 0; k < (mobile ? 18 : 30); k++) {
+      const x = R() * bw, y = hor - (14 + R() * 60) * s * (mobile ? 1.5 : 1);
+      const c = R() < 0.8 ? (R() < 0.5 ? '255,196,128' : '255,170,96') : '190,205,255';
+      disc(x, y, (4 + R() * 7) * s, c, 0.2 + R() * 0.24);
+    }
+    // 路灯本身：大而亮的钠灯光斑
+    for (const [x, y, z] of lamps) disc(x, y, (11 + 13 * z) * s, z > 0.9 ? '255,176,96' : '255,158,78', 0.42 + 0.22 * (1.15 - z), 0.3);
+    // 一红一绿两个信号灯
+    disc(bw * (0.18 + R() * 0.2), hor - 22 * s, 6 * s, '255,70,60', 0.55);
+    disc(bw * (0.62 + R() * 0.2), hor - 18 * s, 5.5 * s, '90,255,170', 0.4);
+    o.globalCompositeOperation = 'source-over';
+  }
+
+  // ---------- 窗框和窗台：画一次，盖在最上面 ----------
+  const frameCv = document.createElement('canvas');
+  function buildFrame() {
+    const R = rng(0xf2a3e);
+    frameCv.width = Math.round(W * dpr); frameCv.height = Math.round(H * dpr);
+    const o = frameCv.getContext('2d');
+    o.setTransform(dpr, 0, 0, dpr, 0, 0);
+    o.clearRect(0, 0, W, H);
+    const g = glass, gx1 = g.x + g.w, gy1 = g.y + g.h, sillY = H - SILL;
+    o.save();
+    o.beginPath(); o.rect(0, 0, W, H); o.rect(g.x, g.y, g.w, g.h); o.clip('evenodd');
+    // 深色胡桃木，屋里的灯从左下方照过来
+    o.fillStyle = '#2b1d13'; o.fillRect(0, 0, W, H);
+    // 木纹：横料横纹，竖料竖纹
+    const grain = (x0, y0, w, h, vertical) => {
+      o.save(); o.beginPath(); o.rect(x0, y0, w, h); o.clip();
+      const n = Math.ceil((vertical ? w : h) / 1.6);
+      for (let k = 0; k < n; k++) {
+        const t = (k + R() * 0.8) / n;
+        o.strokeStyle = R() < 0.5 ? `rgba(12,7,3,${0.08 + R() * 0.14})` : `rgba(120,80,48,${0.04 + R() * 0.08})`;
+        o.lineWidth = 0.5 + R() * 1.1;
+        o.beginPath();
+        const amp = 0.6 + R() * 2.2, f = 0.004 + R() * 0.01, ph = R() * 6;
+        const L = vertical ? h : w;
+        for (let u = 0; u <= L; u += 6) {
+          const v = (vertical ? x0 + t * w : y0 + t * h) + Math.sin(u * f + ph) * amp + Math.sin(u * f * 3.1 + ph * 2) * amp * 0.3;
+          if (vertical) (u ? o.lineTo(v, y0 + u) : o.moveTo(v, y0 + u)); else (u ? o.lineTo(x0 + u, v) : o.moveTo(x0 + u, v));
+        }
+        o.stroke();
+      }
+      o.restore();
+    };
+    grain(0, 0, W, g.y, false);
+    grain(0, gy1, W, sillY - gy1, false);
+    grain(0, g.y, g.x, g.h, true);
+    grain(gx1, g.y, W - gx1, g.h, true);
+    grain(0, sillY, W, SILL, false);
+    // 屋里的灯光
+    const lamp = o.createRadialGradient(W * -0.1, H * 1.15, 0, W * -0.1, H * 1.15, Math.hypot(W, H) * 1.05);
+    lamp.addColorStop(0, 'rgba(255,170,96,.42)'); lamp.addColorStop(0.45, 'rgba(255,150,80,.14)'); lamp.addColorStop(1, 'rgba(255,150,80,0)');
+    o.fillStyle = lamp; o.fillRect(0, 0, W, H);
+    o.fillStyle = 'rgba(0,0,0,.18)'; o.fillRect(0, 0, W, g.y * 0.5);
+    // 压条（玻璃四周的斜面）：下面和左面迎着灯亮，上面和右面暗
+    const bev = mobile ? 4 : Math.round(clamp(FR * 0.28, 5, 10));
+    const quad = (pts, c0, c1, x0, y0, x1, y1) => {
+      const gr = o.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, c0); gr.addColorStop(1, c1);
+      o.fillStyle = gr; o.beginPath(); pts.forEach(([x, y], i) => (i ? o.lineTo(x, y) : o.moveTo(x, y))); o.closePath(); o.fill();
+    };
+    quad([[g.x - bev, g.y - bev], [gx1 + bev, g.y - bev], [gx1, g.y], [g.x, g.y]], '#1a110a', '#0d0805', 0, g.y - bev, 0, g.y);
+    quad([[g.x, gy1], [gx1, gy1], [gx1 + bev, gy1 + bev], [g.x - bev, gy1 + bev]], '#8a6040', '#5b3d26', 0, gy1, 0, gy1 + bev);
+    quad([[g.x - bev, g.y - bev], [g.x, g.y], [g.x, gy1], [g.x - bev, gy1 + bev]], '#4a3220', '#6b4a2f', g.x - bev, 0, g.x, 0);
+    quad([[gx1, g.y], [gx1 + bev, g.y - bev], [gx1 + bev, gy1 + bev], [gx1, gy1]], '#140d08', '#24180f', gx1, 0, gx1 + bev, 0);
+    // 斜面接缝
+    o.strokeStyle = 'rgba(0,0,0,.35)'; o.lineWidth = 0.8;
+    for (const [a, b] of [[[g.x - bev, g.y - bev], [g.x, g.y]], [[gx1 + bev, g.y - bev], [gx1, g.y]], [[g.x - bev, gy1 + bev], [g.x, gy1]], [[gx1 + bev, gy1 + bev], [gx1, gy1]]]) { o.beginPath(); o.moveTo(...a); o.lineTo(...b); o.stroke(); }
+    // 窗台：顶上一道亮边，正面往下变暗
+    const sill = o.createLinearGradient(0, sillY, 0, H);
+    sill.addColorStop(0, 'rgba(255,190,130,.16)'); sill.addColorStop(0.08, 'rgba(0,0,0,0)'); sill.addColorStop(1, 'rgba(0,0,0,.35)');
+    o.fillStyle = sill; o.fillRect(0, sillY, W, SILL);
+    o.fillStyle = 'rgba(255,205,150,.28)'; o.fillRect(0, sillY, W, 1.5);
+    o.fillStyle = 'rgba(0,0,0,.45)'; o.fillRect(0, sillY - 2, W, 2);
+    o.restore();
+    // 玻璃边上一道油灰的暗线
+    o.strokeStyle = 'rgba(6,4,2,.85)'; o.lineWidth = 1.2;
+    o.strokeRect(g.x - 0.4, g.y - 0.4, g.w + 0.8, g.h + 0.8);
+    // 底框正中一枚黄铜窗扣
+    if (RAIL >= 14) {
+      const cx = W / 2, cy = gy1 + bev + (sillY - gy1 - bev) / 2, w = Math.min(54, RAIL * 2.6), h = Math.min(RAIL - 6, 14);
+      const br = o.createLinearGradient(0, cy - h / 2, 0, cy + h / 2);
+      br.addColorStop(0, '#e6c27a'); br.addColorStop(0.5, '#9a7334'); br.addColorStop(1, '#5e4218');
+      o.fillStyle = 'rgba(0,0,0,.4)'; o.beginPath(); o.roundRect(cx - w / 2 + 1, cy - h / 2 + 2, w, h, 3); o.fill();
+      o.fillStyle = br; o.beginPath(); o.roundRect(cx - w / 2, cy - h / 2, w, h, 3); o.fill();
+      o.fillStyle = 'rgba(255,240,200,.55)'; o.fillRect(cx - w / 2 + 3, cy - h / 2 + 1, w - 6, 1);
+      o.fillStyle = '#3a2810'; for (const dx of [-w / 2 + 6, w / 2 - 6]) { o.beginPath(); o.arc(cx + dx, cy, 1.6, 0, 7); o.fill(); }
+    }
+  }
+
+  // ---------- WebGL ----------
+  let gl = null, glOK = false;
+  const P = {};
+  if (!Q.has('nogl')) {
+    try {
+      gl = glc.getContext('webgl2', { alpha: true, premultipliedAlpha: false, antialias: false, preserveDrawingBuffer: false });
+      glOK = !!(gl && gl.getExtension('EXT_color_buffer_float'));
+    } catch (err) { glOK = false; }
+  }
+  const VS = `#version 300 es
+in vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }`;
+
+  // 相场（Kobayashi 1993）：φ 是冰，T 是温度；另外两个通道存雾和水
+  const SIM_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uS, uA;
+uniform float uSeed, uProg, uPF, uDtR, uCool, uHeat, uThaw, uLetNuc, uDropNuc, uReset, uOpen;
+uniform vec4 uB;        // 哈气：x, y（格）, 半径（格）, 强度
+uniform vec4 uWp[6];    // 手指划过的线段（格）
+uniform int uWn;
+uniform float uWr;      // 指尖半径（格）
+uniform vec2 uGrid;
+out vec4 o;
+const float TAU = .0003, EPS = .01, DELTA = .04, J = 6., ALPHA = .9, GAMMA = 10., DT = .0001, DX = .03, NOISE = .01, KOUT = 1.9, KIN = 1.;
+float hash(vec2 p, float s){ p = fract(p * vec2(443.897, 441.423) + s); p += dot(p, p.yx + 19.19); return fract((p.x + p.y) * p.x); }
+vec4 F(ivec2 p){ return texelFetch(uS, clamp(p, ivec2(0), textureSize(uS, 0) - 1), 0); }
+vec2 ee(float px, float py, float t0){ float a = J * (atan(py, px + 1e-9) - t0); return vec2(EPS * (1. + DELTA * cos(a)), -EPS * J * DELTA * sin(a)); }
+float segD(vec2 p, vec2 a, vec2 b){ vec2 ab = b - a; float t = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0., 1.); return length(p - a - ab * t); }
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  vec2 fp = vec2(p) + .5;
+  vec4 c = F(p);
+  vec4 ax = texelFetch(uA, p, 0);
+  float inL = ax.r, t0 = ax.g * 1.0471976, mob = ax.b;
+  float C = c.r, T = c.g, fog = c.b, wet = c.a;
+  float wipe = 0.;
+  for (int i = 0; i < 6; i++) { if (i >= uWn) break; wipe = max(wipe, 1. - smoothstep(uWr * .4, uWr, segD(fp, uWp[i].xy, uWp[i].zw))); }
+  vec2 bd = fp - uB.xy;
+  float breath = uB.w * exp(-dot(bd, bd) / max(uB.z * uB.z, 1.));
+  // 化冰：从左下角往右上扫过去
+  vec2 g01 = fp / uGrid;
+  float thaw = uThaw > 0. ? smoothstep(0., .25, uThaw * 1.5 - (g01.x * .55 + g01.y * .45)) : 0.;
+  float nphi = C, nT = T;
+  if (uPF > .5) {
+    float E = F(p + ivec2(1, 0)).r, Wv = F(p - ivec2(1, 0)).r, N = F(p + ivec2(0, 1)).r, S = F(p - ivec2(0, 1)).r;
+    float NE = F(p + ivec2(1, 1)).r, NW = F(p + ivec2(-1, 1)).r, SE = F(p + ivec2(1, -1)).r, SW = F(p + ivec2(-1, -1)).r;
+    float EE = F(p + ivec2(2, 0)).r, WW = F(p - ivec2(2, 0)).r, NN = F(p + ivec2(0, 2)).r, SS = F(p - ivec2(0, 2)).r;
+    float i2 = 1. / (2. * DX);
+    vec2 e = ee((E - Wv) * i2, (N - S) * i2, t0);
+    vec2 eE = ee((EE - C) * i2, (NE - SE) * i2, t0), eW = ee((C - WW) * i2, (NW - SW) * i2, t0);
+    vec2 eN = ee((NE - NW) * i2, (NN - C) * i2, t0), eS = ee((SE - SW) * i2, (C - SS) * i2, t0);
+    float t1 = (eE.x * eE.y * (NE - SE) * i2 - eW.x * eW.y * (NW - SW) * i2) * i2;
+    float t2 = (eN.x * eN.y * (NE - NW) * i2 - eS.x * eS.y * (SE - SW) * i2) * i2;
+    float lap = (4. * (E + Wv + N + S) + (NE + NW + SE + SW) - 20. * C) / (6. * DX * DX);
+    float TE = F(p + ivec2(1, 0)).g, TW = F(p - ivec2(1, 0)).g, TN = F(p + ivec2(0, 1)).g, TS = F(p - ivec2(0, 1)).g;
+    float lapT = (TE + TW + TN + TS - 4. * T) / (DX * DX);
+    float m = ALPHA / 3.14159265 * atan(GAMMA * (1. - T));
+    float r = C * (1. - C) * (C - .5 + m + NOISE * (hash(fp, uSeed) - .5));
+    // 开场时整块玻璃都在长；之后只有湿的（化开的、雾凝的）和热的地方会动，别的冰保持原样
+    float gate = max(uOpen, max(smoothstep(.02, .12, wet), smoothstep(.95, 1.3, T)));
+    float dphi = DT / TAU * (-t1 + t2 + e.x * e.x * lap + r) * mob * gate;
+    nphi = clamp(C + dphi, 0., 1.);
+    // 字里的霜厚，化得慢一些
+    float heat = uHeat * (breath * mix(1., .45, inL) + wipe * 1.8) + thaw * 90.;
+    nT = T + DT * lapT + mix(KOUT, KIN, inL) * (nphi - C) - DT * (uCool * T + 18. * max(T - .85, 0.)) + DT * heat;
+    // 按时间表起核
+    if (ax.a > 0. && ax.a * 255. <= uProg + .5 && nT < .6) nphi = max(nphi, .999);
+    // 冷下来以后，字里和冻住的水珠上会自己重新起核；3×3 一块一起，单格的核长不起来
+    if (mob > .5 && nT < .3 && nphi < .5) {
+      float rr = hash(floor(fp / 3.), uSeed * 1.37);
+      if (inL > .5 && rr < uLetNuc) nphi = 1.;
+      if (wet > .25 && rr < uDropNuc * wet) nphi = 1.;
+    }
+  }
+  // 雾：哈气生雾，慢慢散，散的时候在玻璃上留下水珠；手指一抹就没了
+  float fogN = (F(p + ivec2(1, 0)).b + F(p - ivec2(1, 0)).b + F(p + ivec2(0, 1)).b + F(p - ivec2(0, 1)).b) * .25;
+  float nfog = fog + uDtR * (breath * 2.4 + thaw * 1.2 - fog * (.2 + .25 * (1. - smoothstep(0., .6, fog)))) + (fogN - fog) * min(1., uDtR * 5.);
+  nfog *= 1. - wipe;
+  float melt = max(0., C - nphi), frz = max(0., nphi - C);
+  // 化冰留下的水正好记着原来哪里有冰，回冻只往有水的地方长
+  float nwet = wet + melt * .7 - frz * .4 - uDtR * wet * .012;
+  nwet = max(nwet, wipe * .5);
+  if (uReset > .5) { nphi = 0.; nT = 0.; nwet = 0.; }   // 重来：冰、温度、水都清掉，只留雾慢慢散
+  o = vec4(nphi, nT, clamp(nfog, 0., 1.), clamp(nwet, 0., 1.));
+}`;
+
+  // 每帧把状态整理成一张可插值的半精度图：冰、糊过的冰（算法线和厚度）、雾、水
+  const PREP_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uS;
+out vec4 o;
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy), s = textureSize(uS, 0) - 1;
+  vec4 c = texelFetch(uS, p, 0);
+  float b = 0., w = 0.;
+  for (int y = -2; y <= 2; y++) for (int x = -2; x <= 2; x++) {
+    float k = (3. - abs(float(x))) * (3. - abs(float(y)));
+    b += texelFetch(uS, clamp(p + ivec2(x, y), ivec2(0), s), 0).r * k; w += k;
+  }
+  o = vec4(c.r, b / w, c.b, c.a);
+}`;
+
+  const MAIN_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uBg, uView, uFrame, uLet, uAux;
+uniform vec2 uRes, uVS, uGrid, uPar, uGlint;
+uniform float uDpr, uTime, uWind, uFade, uSnowOn;
+uniform vec4 uGlass, uCar;
+out vec4 o;
+float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+vec2 h22(vec2 p){ float n = h21(p); return vec2(n, h21(p + n * 17.17)); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
+vec3 srgb2lin(vec3 c){ return pow(c, vec3(2.2)); }
+// 窗外（屏幕坐标，CSS 像素，左上为原点）
+vec3 outside(vec2 q, float lod){
+  vec2 uv = clamp((q + uPar) / uVS, vec2(.002), vec2(.998));
+  return textureLod(uBg, uv, lod).rgb * 1.55;
+}
+// 车灯：两只亮的光斑，外加一大片照到冰上的光
+vec3 car(vec2 q, float spread){
+  if (uCar.z <= 0.) return vec3(0.);
+  vec3 col = vec3(1., .86, .66) * uCar.z;
+  float r = 19. + spread;
+  vec3 s = vec3(0.);
+  for (int i = 0; i < 2; i++) {
+    vec2 c = vec2(uCar.x + (float(i) - .5) * 34. * uCar.w, uCar.y);
+    float d = length(q - c);
+    // 虚掉的车灯：软边的光斑，边上略亮一圈
+    s += col * (spread > 0. ? exp(-d * d / (r * r)) * .45 : (1. - smoothstep(r * .5, r, d)) * (.42 + .3 * smoothstep(r * .45, r * .85, d)));
+  }
+  // 雪地上拖出的一道反光
+  vec2 g = (q - vec2(uCar.x, uCar.y + 26.)) / vec2(70. + spread, 9. + spread * .4);
+  s += col * exp(-dot(g, g)) * .22;
+  return s;
+}
+// 窗外的雪：近的大而虚，远的小
+vec3 snow(vec2 q){
+  vec3 s = vec3(0.);
+  for (int i = 0; i < 3; i++) {
+    float fi = float(i) / 2.;
+    float cs = mix(74., 24., fi), sp = mix(58., 22., fi), r = mix(6., 1.3, fi), soft = mix(.85, .35, fi);
+    vec2 g = q - vec2(uWind * mix(1.2, .5, fi), sp) * uTime * uSnowOn;
+    vec2 id = floor(g / cs), f = fract(g / cs) * cs;
+    if (h21(id + fi * 7.1) > mix(.3, .2, fi)) continue;
+    vec2 c = (.2 + .6 * h22(id + fi * 3.3)) * cs;
+    c.x += sin(uTime * (.5 + h21(id + 2.)) * uSnowOn + h21(id + 1.) * 6.28) * cs * .1;
+    float d = length(f - c);
+    s += (1. - smoothstep(r * (1. - soft), r, d)) * mix(.18, .34, h21(id + 9.)) * mix(.55, 1., fi);
+  }
+  return s * (.3 + 1.6 * outside(q, 5.5));
+}
+// 屋里的灯在左下方，照在玻璃和冰上
+vec3 lamp(vec2 q){
+  float d = length((q - vec2(-.12, 1.15) * uVS) / length(uVS));
+  return vec3(1., .72, .46) * (.05 + .85 * exp(-d * 2.7));
+}
+vec4 bspline(sampler2D t, vec2 uv){
+  vec2 ts = vec2(textureSize(t, 0)), p = uv * ts - .5, f = fract(p);
+  vec2 f2 = f * f, f3 = f2 * f;
+  vec2 w0 = (1. - 3. * f + 3. * f2 - f3) / 6., w1 = (4. - 6. * f2 + 3. * f3) / 6., w2 = (1. + 3. * f + 3. * f2 - 3. * f3) / 6., w3 = f3 / 6.;
+  vec2 g0 = w0 + w1, g1 = w2 + w3, h0 = (w1 / g0) - 1. + floor(p) + .5, h1 = (w3 / g1) + 1. + floor(p) + .5;
+  return (texture(t, vec2(h0.x, h0.y) / ts) * g0.x + texture(t, vec2(h1.x, h0.y) / ts) * g1.x) * g0.y
+       + (texture(t, vec2(h0.x, h1.y) / ts) * g0.x + texture(t, vec2(h1.x, h1.y) / ts) * g1.x) * g1.y;
+}
+vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+void main(){
+  vec2 q = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr;
+  vec2 gu = (q - uGlass.xy) / uGlass.zw;
+  vec2 su = vec2(gu.x, 1. - gu.y);
+  vec2 tx = 1. / uGrid;
+  vec4 v = texture(uView, su);
+  float phi = bspline(uView, su).r;
+  float bL = texture(uView, su - vec2(tx.x, 0.)).g, bR = texture(uView, su + vec2(tx.x, 0.)).g;
+  float bD = texture(uView, su - vec2(0., tx.y)).g, bU = texture(uView, su + vec2(0., tx.y)).g;
+  vec2 gs = vec2(bR - bL, bD - bU) * .5;        // 屏幕方向（y 朝下）
+  float thick = v.g, fog = v.b, wet = v.a;
+  float let = texture(uLet, su).r;
+  float ice = smoothstep(.4, .6, phi);
+  vec3 n = normalize(vec3(-gs * 3.4, 1.));
+  // 透过薄冰看出去会偏一点
+  vec2 off = -gs * 26. * ice;
+  // 水珠：越湿越多越大，像一颗颗小透镜
+  vec2 dc = vec2(9.), did = floor(q / dc), df = fract(q / dc) * dc;
+  vec2 dcen = (.22 + .56 * h22(did)) * dc;
+  float need = .12 + .7 * h21(did + 3.7);
+  float dr = (1.1 + 2.7 * h21(did + 1.3)) * smoothstep(need, need + .2, wet) * (1. - ice * .6);
+  vec2 dk = (df - dcen) / max(dr, .01);
+  float dIn = dr > .35 ? 1. - smoothstep(.82, 1., length(dk)) : 0.;
+  off += -dk * dr * 2.4 * dIn;
+  vec3 view = outside(q + off, .6) + car(q + off, 0.) + snow(q + off);
+  // 夜里的玻璃会淡淡映出屋里的灯
+  view += lamp(q) * .05 * (1. - fog);
+  // 雾：把外面糊掉，自己也被灯照亮一点
+  vec3 blur = outside(q, 3.4) + car(q, 40.) * .8;
+  // 三层旋转过的值噪声，免得取阈值以后露出网格方向
+  mat2 rot = mat2(.8, .6, -.6, .8);
+  vec2 nq = q / 34.;
+  float fn = vnoise(nq) * .5; nq = rot * nq * 2.03 + 3.1; fn += vnoise(nq) * .3; nq = rot * nq * 2.07 + 1.7; fn += vnoise(nq) * .2;
+  float fogV = smoothstep(.04, .3, fog * (.65 + .7 * fn)) * (.55 + .45 * smoothstep(.2, .8, fog));
+  vec3 fogCol = blur * .75 + lamp(q) * .5 + vec3(.1, .11, .14);
+  vec3 col = mix(view, fogCol, fogV * .92);
+  // 冰：灯从屋里照着，窗外的光从背后透过来
+  vec3 L = normalize(vec3(-.5, .55, .68));
+  float nd = clamp(dot(n, L), 0., 1.);
+  vec3 scat = (outside(q, 4.8) + car(q, 110.)) * 1.3;
+  // 羽状细纹：沿这一块晶粒的三条晶轴，断断续续的细针
+  float th0 = texture(uAux, su).g * 1.0471976;
+  // 只取和这里生长方向最接近的一条晶轴；平的地方按小块随机挑
+  vec2 gdir = length(gs) > .004 ? normalize(gs) : normalize(h22(floor(q / 22.)) - .5 + 1e-4);
+  float best = -1., ak = th0;
+  for (int k = 0; k < 3; k++) { float a = th0 + float(k) * 1.0471976; float c = abs(dot(vec2(cos(a), -sin(a)), gdir)); if (c > best) { best = c; ak = a; } }
+  vec2 d = vec2(cos(ak), -sin(ak));
+  float along = dot(q, d), across = dot(q, vec2(-d.y, d.x)) / 2.4;
+  vec2 cid = vec2(floor(across), floor(along / 16. + h21(vec2(floor(across), 1.))));
+  float fe = smoothstep(.62, .96, 1. - abs(fract(across) * 2. - 1.)) * step(.62, h21(cid));
+  float letM = smoothstep(.3, .7, let);
+  float grainV = h21(vec2(th0 * 97.1, 3.3));
+  float body = smoothstep(.5, .95, thick);
+  vec3 alb = mix(vec3(.80, .87, .98), vec3(.95, .96, 1.), letM) * (.9 + .1 * grainV);
+  alb *= 1. + fe * mix(.16, .07, letM) * body;
+  vec3 iceCol = (alb * (lamp(q) * (.3 + 1.15 * nd) + vec3(.085, .115, .19) * (.7 + .5 * n.z)) + scat * mix(.95, .55, letM)) * 1.25;
+  float op = ice * mix(mix(.16, .66, body), .9, letM);
+  col = mix(col, iceCol, op);
+  // 冰的边缘：一道细亮边，带一点虹彩
+  float rim = 4. * ice * (1. - ice);
+  float edge = ice * clamp(length(gs) * 5. - .15, 0., 1.) * (1. - letM * .6);
+  vec3 irid = .5 + .5 * cos(6.2832 * (thick * 1.6 + n.x * .6 + vec3(0., .33, .67)));
+  col += (edge * 1.1 + rim * .7) * (lamp(q) * .6 + scat * .35 + vec3(.03, .04, .06)) * mix(vec3(1.), irid, .4);
+  vec3 Hh = normalize(L + vec3(0., 0., 1.));
+  col += ice * pow(clamp(dot(n, Hh), 0., 1.), 50.) * lamp(q) * .9;
+  // 闪点：跟着视角（指针）和时间轮流亮
+  vec2 sid = floor(q / 3.);
+  float sh = h21(sid + 4.4);
+  if (sh > .965 && ice > .5) {
+    float tw = pow(max(0., cos(6.2832 * (h21(sid + 8.8) + dot(uGlint, vec2(.0021, .0017)) + uTime * .04))), 24.);
+    vec2 sf = fract(q / 3.) - .5;
+    col += vec3(1., .95, .88) * tw * (1. - smoothstep(0., .45, length(sf))) * (1.6 + let);
+  }
+  // 水珠的边和高光
+  if (dIn > 0.) {
+    col *= 1. - .35 * smoothstep(.55, 1., length(dk)) * dIn;
+    col += lamp(q) * 1.6 * (1. - smoothstep(.08, .36, length(dk - vec2(-.38, -.42)))) * dIn;
+    col += vec3(.9, .95, 1.) * ice * .25 * dIn;
+  }
+  // 玻璃四边冷得早，靠边微微发白
+  float ed = min(min(gu.x, 1. - gu.x) * uGlass.z, min(gu.y, 1. - gu.y) * uGlass.w);
+  col += vec3(.05, .06, .08) * (1. - smoothstep(0., 26., ed));
+  col = aces(col * 1.05);
+  col = pow(col, vec3(1. / 2.2));
+  // 窗框盖在最上面（已是显示色）
+  vec4 fr = texture(uFrame, q / uVS);
+  col = mix(col, fr.rgb, fr.a);
+  col += (h21(gl_FragCoord.xy + fract(uTime) * 61.) - .5) / 255.;
+  o = vec4(col, uFade);
+}`;
+
+  let progSim, progPrep, progMain, VB, U = {};
+  let texA, texS = [], fbS = [], texV, fbV, texBg, texFrame, texLet, cur = 0;
+  function compile(fs) {
+    const mk = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const p = gl.createProgram();
+    gl.attachShader(p, mk(gl.VERTEX_SHADER, VS)); gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+    gl.bindAttribLocation(p, 0, 'a'); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS), u = {};
+    for (let i = 0; i < n; i++) { const a = gl.getActiveUniform(p, i), nm = a.name.replace(/\[0\]$/, ''); u[nm] = gl.getUniformLocation(p, a.name); }
+    U[fs] = u;
+    return p;
+  }
+  function initGL() {
+    progSim = compile(SIM_FS); progPrep = compile(PREP_FS); progMain = compile(MAIN_FS);
+    VB = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, VB);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  }
+  function tex(w, h, ifmt, fmt, type, data, filt) {
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, ifmt, w, h, 0, fmt, type, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filt); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filt === gl.LINEAR_MIPMAP_LINEAR ? gl.LINEAR : filt);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  }
+  function fbo(t) { const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return f; }
+  function upload() {
+    for (const t of [texA, ...texS, texV, texBg, texFrame, texLet]) if (t) gl.deleteTexture(t);
+    for (const f of [...fbS, fbV]) if (f) gl.deleteFramebuffer(f);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    texA = tex(GW, GH, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, AUX, gl.NEAREST);
+    texLet = tex(GW, GH, gl.R8, gl.RED, gl.UNSIGNED_BYTE, LET, gl.LINEAR);
+    texS = [0, 1].map(() => tex(GW, GH, gl.RGBA32F, gl.RGBA, gl.FLOAT, INIT, gl.NEAREST));
+    fbS = texS.map(fbo);
+    texV = tex(GW, GH, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null, gl.LINEAR);
+    fbV = fbo(texV);
+    texBg = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, texBg);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, gl.RGBA, gl.UNSIGNED_BYTE, bgCv);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    texFrame = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, texFrame);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, frameCv);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    cur = 0;
+  }
+
+  // ---------- 模拟：每帧按节奏跑若干步 ----------
+  const S = {
+    started: false, t: 0, openSteps: 0, steps: 0, acc: 0, fogIdle: 99,
+    press: null, b: 0, breathT: 0, breathX: 0, breathY: 0, breathR: 40, firstBreath: false, wiped: 0,
+    lastAct: -99, act: 0, thaw: -1, wipes: [], speed: 0, par: [0, 0], parT: [0, 0], glint: [0, 0],
+    car: null, nextCar: 16, wind: 0, hint: 0, fade: 0,
+  };
+  // 枝晶每步长的是“格”，格子越小，要同样的像素速度就得多跑几步
+  const BUDGET0 = 4300;
+  let BUDGET = BUDGET0, RK = 1;
+  // 开场：头 2.6 秒冻字，之后枝晶一路长，越长越慢，总共不超过 BUDGET 步
+  function openRate(t) {
+    if (t < 0) return 0;
+    if (t < 2.6) return 620 * RK;
+    return Math.max(70, 260 * Math.exp(-(t - 2.6) / 14)) * RK;
+  }
+  function simStep(n, dtR, pf) {
+    gl.useProgram(progSim);
+    const u = U[SIM_FS];
+    gl.viewport(0, 0, GW, GH);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texA); gl.uniform1i(u.uA, 1);
+    gl.uniform1i(u.uS, 0);
+    gl.uniform2f(u.uGrid, GW, GH);
+    gl.uniform1f(u.uPF, pf ? 1 : 0);
+    gl.uniform1f(u.uDtR, dtR);
+    gl.uniform1f(u.uCool, S.opening ? 1.5 : 6);
+    gl.uniform1f(u.uOpen, S.opening || S.thaw >= 0 ? 1 : 0);
+    gl.uniform1f(u.uHeat, 110);
+    gl.uniform1f(u.uThaw, S.thaw >= 0 ? S.thaw : 0);
+    gl.uniform1f(u.uLetNuc, 0.0009);
+    gl.uniform1f(u.uDropNuc, 0.00035);
+    gl.uniform1f(u.uReset, 0);
+    const bx = (S.breathX - glass.x) / cell, by = (glass.y + glass.h - S.breathY) / cell;
+    gl.uniform4f(u.uB, bx, by, S.breathR / cell, S.b);
+    const segs = S.wipes.slice(-6);
+    const arr = new Float32Array(24);
+    segs.forEach((s, i) => arr.set([(s[0] - glass.x) / cell, (glass.y + glass.h - s[1]) / cell, (s[2] - glass.x) / cell, (glass.y + glass.h - s[3]) / cell], i * 4));
+    gl.uniform4fv(u.uWp, arr);
+    gl.uniform1i(u.uWn, segs.length);
+    gl.uniform1f(u.uWr, 6.5 / cell);
+    for (let i = 0; i < n; i++) {
+      gl.uniform1f(u.uSeed, Math.random());
+      gl.uniform1f(u.uProg, S.openSteps / 30);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texS[cur]);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbS[1 - cur]);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      cur = 1 - cur;
+      if (pf) { S.steps++; if (S.openSteps < BUDGET && S.opening) S.openSteps++; }
+    }
+  }
+  function resetSim() {
+    gl.useProgram(progSim);
+    const u = U[SIM_FS];
+    gl.viewport(0, 0, GW, GH);
+    gl.uniform1f(u.uReset, 1); gl.uniform1f(u.uPF, 0); gl.uniform1f(u.uDtR, 0); gl.uniform1i(u.uWn, 0); gl.uniform4f(u.uB, 0, 0, 1, 0); gl.uniform1f(u.uThaw, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texA); gl.uniform1i(u.uA, 1);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texS[cur]); gl.uniform1i(u.uS, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbS[1 - cur]); gl.drawArrays(gl.TRIANGLES, 0, 3); cur = 1 - cur;
+  }
+  function prep() {
+    gl.useProgram(progPrep);
+    gl.viewport(0, 0, GW, GH);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texS[cur]); gl.uniform1i(U[PREP_FS].uS, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbV); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function draw(time) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, glc.width, glc.height);
+    gl.useProgram(progMain);
+    const u = U[MAIN_FS];
+    const bind = (unit, t, name) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); gl.uniform1i(u[name], unit); };
+    bind(0, texBg, 'uBg'); bind(1, texV, 'uView'); bind(2, texFrame, 'uFrame'); bind(3, texLet, 'uLet'); bind(4, texA, 'uAux');
+    gl.uniform2f(u.uRes, glc.width, glc.height);
+    gl.uniform2f(u.uVS, W, H);
+    gl.uniform2f(u.uGrid, GW, GH);
+    gl.uniform1f(u.uDpr, glc.width / W);
+    gl.uniform4f(u.uGlass, glass.x, glass.y, glass.w, glass.h);
+    gl.uniform1f(u.uTime, time);
+    gl.uniform1f(u.uWind, S.wind);
+    gl.uniform1f(u.uSnowOn, REDUCED ? 0 : 1);
+    gl.uniform2f(u.uPar, S.par[0], S.par[1]);
+    gl.uniform2f(u.uGlint, S.glint[0], S.glint[1]);
+    gl.uniform1f(u.uFade, S.fade);
+    const c = S.car;
+    if (c) gl.uniform4f(u.uCar, c.x, c.y, c.k, c.dir); else gl.uniform4f(u.uCar, 0, 0, 0, 1);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  // ---------- 声音：默认关，点开才建 ----------
+  function makeSound(ac, out) {
+    const sr = ac.sampleRate;
+    const noise = (sec, color) => {
+      const b = ac.createBuffer(1, Math.round(sr * sec), sr), d = b.getChannelData(0);
+      let l = 0; const p = [0, 0, 0, 0, 0, 0, 0];
+      for (let i = 0; i < d.length; i++) {
+        const w = Math.random() * 2 - 1;
+        if (color === 'pink') {
+          p[0] = 0.99886 * p[0] + w * 0.0555179; p[1] = 0.99332 * p[1] + w * 0.0750759; p[2] = 0.969 * p[2] + w * 0.153852;
+          p[3] = 0.8665 * p[3] + w * 0.3104856; p[4] = 0.55 * p[4] + w * 0.5329522; p[5] = -0.7616 * p[5] - w * 0.016898;
+          d[i] = (p[0] + p[1] + p[2] + p[3] + p[4] + p[5] + p[6] + w * 0.5362) * 0.11; p[6] = w * 0.115926;
+        } else if (color === 'brown') { l = (l + 0.02 * w) / 1.02; d[i] = l * 3.5; }
+        else d[i] = w;
+      }
+      // 首尾淡接，循环时不咔嗒
+      const fade = Math.round(sr * 0.02);
+      for (let i = 0; i < fade; i++) { const k = i / fade; d[i] *= k; d[d.length - 1 - i] *= k; }
+      return b;
+    };
+    const loop = buf => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; return s; };
+    const srcs = [];
+    // 风：低沉的粉噪声，阵风时加一缕窗缝的哨声
+    const wind = loop(noise(5, 'pink')); srcs.push(wind);
+    const wBp = ac.createBiquadFilter(); wBp.type = 'bandpass'; wBp.frequency.value = 380; wBp.Q.value = 0.55;
+    const wLp = ac.createBiquadFilter(); wLp.type = 'lowpass'; wLp.frequency.value = 900;
+    const wG = ac.createGain(); wG.gain.value = 0;
+    wind.connect(wBp).connect(wLp).connect(wG).connect(out);
+    const wh = loop(noise(4, 'white')); srcs.push(wh);
+    const whBp = ac.createBiquadFilter(); whBp.type = 'bandpass'; whBp.frequency.value = 840; whBp.Q.value = 24;
+    const whG = ac.createGain(); whG.gain.value = 0;
+    wh.connect(whBp).connect(whG).connect(out);
+    // 哈气：白噪声过几个共振峰，像“哈——”
+    const br = loop(noise(4, 'white')); srcs.push(br);
+    const brHp = ac.createBiquadFilter(); brHp.type = 'highpass'; brHp.frequency.value = 260;
+    const brG = ac.createGain(); brG.gain.value = 0;
+    br.connect(brHp);
+    for (const [f, q, g] of [[640, 2.2, 0.9], [1150, 3, 0.7], [2500, 4, 0.42], [4300, 2, 0.14]]) {
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+      const gg = ac.createGain(); gg.gain.value = g; brHp.connect(bp).connect(gg).connect(brG);
+    }
+    brG.connect(out);
+    // 手指擦玻璃：一顿一顿的吱声
+    const sq = ac.createOscillator(); sq.type = 'sawtooth'; sq.frequency.value = 1150;
+    const vib = ac.createOscillator(); vib.frequency.value = 6.5;
+    const vibG = ac.createGain(); vibG.gain.value = 30; vib.connect(vibG).connect(sq.frequency);
+    const slip = ac.createOscillator(); slip.type = 'square'; slip.frequency.value = 36;
+    const slipG = ac.createGain(); slipG.gain.value = 0.5;
+    const sqAm = ac.createGain(); sqAm.gain.value = 0.5; slip.connect(slipG).connect(sqAm.gain);
+    const sqBp = ac.createBiquadFilter(); sqBp.type = 'bandpass'; sqBp.frequency.value = 1500; sqBp.Q.value = 2.6;
+    const sqG = ac.createGain(); sqG.gain.value = 0;
+    sq.connect(sqAm).connect(sqBp).connect(sqG).connect(out);
+    srcs.push(sq, vib, slip);
+    // 冰晶长的时候细碎的噼啪声
+    const clicks = Array.from({ length: 10 }, () => {
+      const n = Math.round(sr * (0.003 + 0.009 * Math.random())), b = ac.createBuffer(1, n, sr), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (n * 0.2)) * Math.min(1, i / 8);
+      return b;
+    });
+    function crack(t, amp) {
+      const s = ac.createBufferSource(); s.buffer = clicks[(Math.random() * clicks.length) | 0];
+      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2400 + Math.random() * 2600;
+      const g = ac.createGain(); g.gain.value = amp;
+      const pn = ac.createStereoPanner(); pn.pan.value = Math.random() * 1.6 - 0.8;
+      s.connect(hp).connect(g).connect(pn).connect(out); s.start(t);
+    }
+    // 远处开过一辆车，隔着玻璃闷闷的
+    const carBuf = noise(6.5, 'brown');
+    function car(t, dir) {
+      const s = ac.createBufferSource(); s.buffer = carBuf;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(260, t); lp.frequency.linearRampToValueAtTime(820, t + 2.6); lp.frequency.linearRampToValueAtTime(240, t + 5.6);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.2, t + 2.6); g.gain.linearRampToValueAtTime(0, t + 5.8);
+      const pn = ac.createStereoPanner(); pn.pan.setValueAtTime(-0.75 * dir, t); pn.pan.linearRampToValueAtTime(0.75 * dir, t + 5.6);
+      s.connect(lp).connect(g).connect(pn).connect(out); s.start(t); s.stop(t + 6.2);
+    }
+    srcs.forEach(s => s.start());
+    return {
+      // 每帧调一次：风、哈气、擦玻璃的目标音量
+      set(t, st) {
+        wG.gain.setTargetAtTime(0.08 + 0.11 * st.gust, t, 0.4);
+        whG.gain.setTargetAtTime(0.02 * smooth(0.55, 1, st.gust), t, 0.6);
+        whBp.frequency.setTargetAtTime(780 + 140 * st.gust, t, 0.8);
+        brG.gain.setTargetAtTime(0.34 * st.breath, t, st.breath > 0.05 ? 0.08 : 0.18);
+        sqG.gain.setTargetAtTime(0.1 * st.squeak, t, 0.03);
+        sq.frequency.setTargetAtTime(1000 + 380 * st.squeak, t, 0.05);
+        slip.frequency.setTargetAtTime(28 + 30 * st.squeak, t, 0.05);
+      },
+      crack, car,
+    };
+  }
+  const SND = { ac: null, on: false, s: null };
+  function ensureAudio() {
+    if (SND.ac) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    SND.ac = new AC();
+    const master = SND.ac.createGain(); master.gain.value = 0;
+    const comp = SND.ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3;
+    master.connect(comp).connect(SND.ac.destination);
+    SND.master = master;
+    SND.s = makeSound(SND.ac, master);
+  }
+  function setSound(on) {
+    SND.on = on;
+    soundBtn.setAttribute('aria-pressed', on);
+    soundBtn.querySelector('span').textContent = on ? '声音 · 开' : '声音 · 关';
+    if (on) { ensureAudio(); if (!SND.ac) return; SND.ac.resume(); }
+    if (SND.ac) SND.master.gain.setTargetAtTime(on ? 1 : 0, SND.ac.currentTime, 0.25);
+  }
+  soundBtn.addEventListener('click', () => setSound(!SND.on));
+  // 离线渲染一段，测试用：风、冰裂、哈气、擦玻璃、车
+  function renderOffline(sec = 10) {
+    const sr = 44100, oac = new OfflineAudioContext(2, sr * sec, sr);
+    const comp = oac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3; comp.connect(oac.destination);
+    const s = makeSound(oac, comp);
+    for (let t = 0; t < sec; t += 0.02) {
+      const st = { gust: 0.5 + 0.5 * Math.sin(t * 0.7), breath: t > 3 && t < 5.5 ? 1 : 0, squeak: t > 6 && t < 7.5 ? 0.8 : 0 };
+      s.set(t, st);
+      const rate = t > 1 && t < 3 ? 7 : 0.5;
+      if (Math.random() < rate * 0.02) s.crack(t + Math.random() * 0.02, 0.05 + Math.random() * 0.1);
+    }
+    s.car(8, 1);
+    return oac.startRendering();
+  }
+
+  // ---------- 交互：按住是哈气，按住拖动是手指写字 ----------
+  const local = e => { const r = glc.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const onGlass = (x, y) => x > glass.x && x < glass.x + glass.w && y > glass.y && y < glass.y + glass.h;
+  glc.addEventListener('pointerdown', e => {
+    const [x, y] = local(e);
+    if (!onGlass(x, y) || !S.started) return;
+    glc.setPointerCapture(e.pointerId);
+    S.press = { id: e.pointerId, x, y, lx: x, ly: y, t: performance.now(), lt: performance.now(), still: 0 };
+    S.breathX = x; S.breathY = y; S.breathT = 0; S.breathR = mobile ? 30 : 38;
+    glc.classList.add('press');
+    if (SND.on) { ensureAudio(); SND.ac && SND.ac.resume(); }
+  });
+  glc.addEventListener('pointermove', e => {
+    const [x, y] = local(e);
+    if (e.pointerType === 'mouse') { S.parT = [(x / W - 0.5) * -14, (y / H - 0.5) * -8]; S.glint = [x, y]; }
+    const p = S.press;
+    if (!p || p.id !== e.pointerId) return;
+    const now = performance.now();
+    const d = Math.hypot(x - p.lx, y - p.ly);
+    if (d > 0.6) {
+      const dt = Math.max(1, now - p.lt) / 1000;
+      S.speed = S.speed * 0.6 + (d / dt) * 0.4;
+      if (S.speed > 70 || d > 3) { S.wipes.push([p.lx, p.ly, x, y]); S.wiped += d; S.act = 1; S.lastAct = S.t; }
+      p.lx = x; p.ly = y; p.lt = now;
+    }
+  });
+  const release = e => {
+    if (!S.press || S.press.id !== e.pointerId) return;
+    if (S.breathT > 0.6 && !S.firstBreath) S.firstBreath = true;
+    S.press = null; S.speed = 0;
+    glc.classList.remove('press');
+  };
+  glc.addEventListener('pointerup', release);
+  glc.addEventListener('pointercancel', release);
+  glc.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') S.parT = [0, 0]; });
+  againBtn.addEventListener('click', () => {
+    if (S.thaw >= 0 || !S.started) return;
+    S.thaw = 0; againBtn.disabled = true; S.act = 1; S.lastAct = S.t;
+  });
+
+  // ---------- 提示 ----------
+  const HINTS = () => ['按住玻璃，哈一口气', mobile ? '再用手指在雾上写字' : '再按住拖动，在雾上写字', '松开以后，冰会从边上慢慢长回来'];
+  function setHint(k) {
+    if (S.hint === k) return;
+    S.hint = k;
+    hintEl.classList.add('off');
+    if (k > 0) setTimeout(() => { if (S.hint === k) { hintEl.textContent = HINTS()[k - 1]; hintEl.classList.remove('off'); } }, 380);
+  }
+
+  // ---------- 主循环 ----------
+  let last = performance.now(), T0 = 0, wipeShown = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = clamp((now - last) / 1000, 0, 0.05);
+    last = now;
+    if (!S.started || glFailed) return;
+    if (S.prewarming) {
+      if (prewarmStep()) { S.prewarming = false; S.opening = false; show(); againBtn.disabled = false; }
+      return;
+    }
+    S.t += dt;
+    const t = S.t;
+    S.fade = onAt ? (REDUCED ? 1 : smooth(0, 1, (now - onAt) / 1000)) : 0;
+    // 视差、阵风
+    S.par[0] += (S.parT[0] - S.par[0]) * Math.min(1, dt * 3);
+    S.par[1] += (S.parT[1] - S.par[1]) * Math.min(1, dt * 3);
+    if (!S.glint[0] && !S.glint[1]) S.glint = [W * 0.5, H * 0.5];
+    if (!REDUCED) S.glint[0] += dt * 3;
+    const gust = 0.5 + 0.3 * Math.sin(t * 0.31) + 0.2 * Math.sin(t * 0.83 + 1.7);
+    S.wind = 12 + 34 * gust;
+    // 哈气：按住不动时越吹越大，吹久了气就弱了；一拖动就变成手指
+    const p = S.press;
+    let target = 0;
+    if (p) {
+      S.speed *= Math.pow(0.02, dt);
+      const still = S.speed < 60;
+      if (still) { S.breathT += dt; S.breathX += (p.lx - S.breathX) * Math.min(1, dt * 4); S.breathY += (p.ly - S.breathY) * Math.min(1, dt * 4); }
+      target = still ? (S.breathT < 2.6 ? 1 : Math.max(0.3, 1 - (S.breathT - 2.6) / 1.4)) : 0;
+      S.breathR = (mobile ? 26 : 34) + (mobile ? 42 : 60) * smooth(0, 2.4, S.breathT);
+      S.act = 1; S.lastAct = t;
+    }
+    S.b += (target - S.b) * Math.min(1, dt * (target > S.b ? 5 : 9));
+    if (S.b < 0.002) S.b = 0;
+    // 化冰重来
+    if (S.thaw >= 0) {
+      S.thaw += dt / 1.8;
+      S.act = 1; S.lastAct = t;
+      if (S.thaw >= 1) {
+        S.thaw = -1;
+        resetSim();
+        S.openSteps = 0; S.opening = true; S.openT0 = t; S.acc = 0;
+        setTimeout(() => { againBtn.disabled = false; }, 4000);
+      }
+    }
+    // 这一帧跑多少步
+    let rate = 0;
+    if (S.opening) { rate = S.openSteps < BUDGET ? openRate(t - S.openT0) : 0; if (S.openSteps >= BUDGET) S.opening = false; }
+    const since = t - S.lastAct;
+    if (S.act) {
+      const r2 = (since < 2.5 ? 460 : 460 * Math.max(0, 1 - (since - 2.5) / 11)) * RK;
+      rate = Math.max(rate, r2);
+      if (since > 13.5) S.act = 0;
+    }
+    if (REDUCED && !S.press && S.thaw < 0 && !S.act) rate = 0;
+    S.acc += rate * dt;
+    let n = Math.floor(S.acc);
+    S.acc -= n;
+    n = Math.min(n, mobile ? 16 : 24);
+    const fogActive = since < 30;
+    if (n > 0) simStep(n, dt / n, true);
+    else if (fogActive) simStep(1, dt, false);
+    S.wipes.length = 0;
+    prep();
+    // 车：每隔半分钟到一分钟开过一辆
+    if (!REDUCED && t > S.nextCar && !S.car) {
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      S.car = { t0: t, dir, x: 0, y: H * (mobile ? 0.6 : 0.63), k: 0 };
+      S.nextCar = t + 38 + Math.random() * 30;
+      if (SND.on && SND.s) SND.s.car(SND.ac.currentTime + 0.05, dir);
+    }
+    if (S.car) {
+      const u = (t - S.car.t0) / 5.6;
+      if (u >= 1) S.car = null;
+      else { S.car.x = W * (S.car.dir > 0 ? -0.1 + 1.2 * u : 1.1 - 1.2 * u); S.car.k = 1.3 * Math.sin(Math.PI * u) ** 0.6; }
+    }
+    draw(REDUCED ? 0 : t);   // 减少动画：闪点和雪都停住
+    // 声音
+    if (SND.on && SND.s && SND.ac.state === 'running') {
+      const at = SND.ac.currentTime;
+      const squeak = p && S.speed > 60 ? clamp((S.speed - 60) / 700, 0, 1) : 0;
+      SND.s.set(at, { gust, breath: S.b, squeak });
+      const cr = rate * 0.012 + (S.b > 0.3 ? 1.5 : 0);
+      let k = cr * dt;
+      while (k > 0) { if (Math.random() < Math.min(1, k)) SND.s.crack(at + 0.03 + Math.random() * dt, 0.05 + Math.random() * 0.1); k -= 1; }
+    }
+    // 提示
+    const ot = t - (S.openT0 || 0);
+    if (S.hint === 0 && ot > 4.2 && !S.firstBreath) setHint(1);
+    if (S.firstBreath && S.wiped < 140 && S.hint !== 2 && !S.press) setHint(2);
+    if (S.wiped >= 140 && !S.press && S.hint === 2) { setHint(3); wipeShown = t; }
+    if (S.hint === 3 && t - wipeShown > 6) setHint(-1);
+  }
+
+  // ---------- 降级：没有 WebGL2 或不能渲染浮点时，画一张静止的窗 ----------
+  function fallback() {
+    const o = glc.getContext('2d');
+    if (!o) return;
+    o.setTransform(dpr, 0, 0, dpr, 0, 0);
+    o.drawImage(bgCv, 0, 0, W, H);
+    const g = glass;
+    o.save(); o.beginPath(); o.rect(g.x, g.y, g.w, g.h); o.clip();
+    const R = rng(7);
+    o.strokeStyle = 'rgba(225,235,250,.55)'; o.lineCap = 'round';
+    const fern = (x, y, a, len, depth) => {
+      if (depth > 3 || len < 3) return;
+      const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+      o.lineWidth = Math.max(0.6, 2.4 - depth * 0.6); o.beginPath(); o.moveTo(x, y); o.lineTo(x2, y2); o.stroke();
+      for (let s = 0.15; s < 0.95; s += 0.12) {
+        const px = x + (x2 - x) * s, py = y + (y2 - y) * s, l = len * (0.36 - s * 0.22);
+        fern(px, py, a - 1.047, l, depth + 1); fern(px, py, a + 1.047, l, depth + 1);
+      }
+    };
+    for (let k = 0; k < 26; k++) {
+      const side = k % 4, u = R();
+      const x = side === 0 ? g.x + u * g.w : side === 1 ? g.x + g.w : side === 2 ? g.x + u * g.w : g.x;
+      const y = side === 0 ? g.y + g.h : side === 1 ? g.y + u * g.h : side === 2 ? g.y : g.y + u * g.h;
+      const a = [-Math.PI / 2, Math.PI, Math.PI / 2, 0][side] + (R() - 0.5) * 1.2;
+      fern(x, y, a, 40 + R() * 90, 0);
+    }
+    o.restore();
+    o.font = BRAND_FONT(Math.min(g.w * 0.18, g.h * 0.32));
+    o.textAlign = 'center'; o.textBaseline = 'middle';
+    o.shadowColor = 'rgba(210,225,255,.6)'; o.shadowBlur = 18;
+    o.fillStyle = 'rgba(236,242,252,.92)';
+    o.fillText(brand, W / 2, g.y + g.h * 0.47);
+    o.shadowBlur = 0;
+    o.drawImage(frameCv, 0, 0, W, H);
+  }
+
+  // ---------- 启动：等字体（最多 2 秒），先画一帧再淡入，然后开场 ----------
+  const fontCss = $('#font-css');
+  const cssReady = new Promise(r => { if (fontCss.media === 'all') r(); else { fontCss.addEventListener('load', r); fontCss.addEventListener('error', r); } });
+  const fontsReady = () => cssReady.then(() => Promise.all([
+    document.fonts.load(BRAND_FONT(100), brand), document.fonts.load(`italic 600 22px "Playfair Display"`, brand),
+    document.fonts.load('600 12px "Noto Serif SC"', '结霜窗外零下十四度'),
+  ])).catch(() => {});
+  let glFailed = !glOK;
+  try { if (glOK) initGL(); } catch (err) { console.error(err); glFailed = true; }
+  let buildMs = 0, onAt = 0;
+  function build() {
+    const tb = performance.now();
+    layout();
+    buildAux(); buildBg(); buildFrame();
+    buildMs = performance.now() - tb;
+    if (glFailed) { fallback(); return; }
+    try { upload(); } catch (err) { console.error(err); glFailed = true; fallback(); }
+  }
+  // 减少动画：开场在画面出来之前分几帧算完（一次塞给显卡会超时被重置），之后只在手碰到玻璃时才动
+  function prewarmStep() {
+    simStep(Math.min(300, BUDGET - S.openSteps), 0, true);
+    gl.flush();
+    return S.openSteps >= BUDGET;
+  }
+  function beginPrewarm() { S.prewarming = true; S.opening = true; S.openT0 = -100; S.openSteps = 0; }
+  // 先画好第一帧并等显卡做完（着色器在第一次用时才真正编译），再开始淡入，免得淡入头一下卡住
+  function show() {
+    prep(); draw(0); gl.finish();
+    requestAnimationFrame(() => requestAnimationFrame(() => { glc.classList.add('on'); $('#win').classList.add('on'); onAt = performance.now(); }));
+  }
+  function start() {
+    build();
+    S.started = true;
+    S.t = 0;
+    if (glFailed) { glc.classList.add('on'); $('#win').classList.add('on'); hintEl.classList.add('off'); againBtn.disabled = true; return; }
+    simStep(1, 0, false);
+    if (REDUCED) { beginPrewarm(); return; }
+    show();
+    S.opening = true; S.openT0 = 1.0;
+    setTimeout(() => { againBtn.disabled = false; }, 6000);
+  }
+  Promise.race([fontsReady(), new Promise(r => setTimeout(r, 2000))]).then(() => {
+    start();
+    last = performance.now();
+    requestAnimationFrame(frame);
+  });
+  let tmr, lastSize = innerWidth + 'x' + innerHeight;
+  addEventListener('resize', () => {
+    clearTimeout(tmr);
+    tmr = setTimeout(() => {
+      const k = innerWidth + 'x' + innerHeight;
+      if (k === lastSize) return;
+      lastSize = k;
+      const wasStarted = S.started;
+      S.opening = false; S.openSteps = 0; S.car = null; S.thaw = -1;
+      build();
+      if (!wasStarted || glFailed) return;
+      if (REDUCED) beginPrewarm(); else { S.opening = true; S.openT0 = S.t + 0.2; }
+    }, 250);
+  });
+
+  // 测试钩子
+  window.__frost = { S, get grid() { return [GW, GH, cell]; }, get buildMs() { return buildMs; }, get onAt() { return onAt; }, get glass() { return glass; }, renderOffline, BUDGET,
+    readIce() {
+      if (glFailed) return null;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbS[cur]);
+      const px = new Float32Array(GW * GH * 4);
+      gl.readPixels(0, 0, GW, GH, gl.RGBA, gl.FLOAT, px);
+      let ice = 0, fog = 0, wet = 0, Tm = 0;
+      for (let i = 0; i < GW * GH; i++) { ice += px[i * 4] > 0.5; Tm = Math.max(Tm, px[i * 4 + 1]); fog += px[i * 4 + 2]; wet += px[i * 4 + 3]; }
+      const n = GW * GH;
+      return { ice: ice / n, fog: fog / n, wet: wet / n, Tmax: Tm, steps: S.steps, open: S.openSteps };
+    },
+    iceAt(x, y) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbS[cur]);
+      const gx = Math.round((x - glass.x) / cell), gy = Math.round((glass.y + glass.h - y) / cell);
+      const px = new Float32Array(4); gl.readPixels(clamp(gx, 0, GW - 1), clamp(gy, 0, GH - 1), 1, 1, gl.RGBA, gl.FLOAT, px);
+      return Array.from(px);
+    },
+  };
+})();
+</script>
+</body>
+</html>

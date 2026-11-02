@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>多米诺 · 一千零一页</title>
+<meta name="description" content="几千块黑色骨牌立在木地板上。推倒第一块，连锁反应沿着路线传开，最后一大片骨牌倒下，背面的颜色拼出品牌名。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="font-css" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;600&display=swap" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --bg: #14100c;
+    --ink: #f3ece2;
+    --muted: rgba(243, 236, 226, .62);
+    --line: rgba(243, 236, 226, .18);
+    --ui: "Archivo", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); }
+  body { font: 14px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  .stage { position: fixed; inset: 0; }
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .7s ease; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  #gl.on { opacity: 1; }
+  #gl:focus-visible { outline: none; }
+  /* 四角压暗一点，视线落在中间 */
+  .vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(130% 95% at 50% 42%, transparent 52%, rgba(12, 9, 6, .5) 100%); }
+
+  .hint {
+    position: absolute; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    padding: 7px 15px; border-radius: 999px; white-space: nowrap;
+    font: 500 13px/1.4 var(--ui); color: var(--ink); background: rgba(20, 15, 11, .5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--line); transition: opacity .6s; pointer-events: none;
+  }
+  .hint.off { opacity: 0; }
+
+  .bar {
+    position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+    padding: 18px 24px calc(18px + env(safe-area-inset-bottom)); pointer-events: none;
+  }
+  .bar > * { pointer-events: auto; }
+  .cap b { display: block; font: 400 22px/1 "Archivo Black", "Noto Sans SC", "Arial Black", sans-serif; letter-spacing: .01em; }
+  .cap span { display: block; margin-top: 7px; font: 500 12px/1.4 var(--ui); color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .ctl { display: flex; gap: 8px; }
+  .ctl button {
+    font: 500 13px/1 var(--ui); color: var(--ink); cursor: pointer;
+    padding: 10px 15px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(20, 15, 11, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: background .2s, opacity .3s;
+  }
+  .ctl button:hover:not(:disabled) { background: rgba(44, 34, 26, .75); }
+  .ctl button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .ctl button:disabled { opacity: .35; cursor: default; }
+  @media (prefers-reduced-motion: reduce) { #gl, .hint { transition: none; } }
+  @media (max-width: 640px) {
+    .bar { padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
+    .cap b { font-size: 18px; }
+    .ctl button { padding: 9px 13px; }
+    .hint { bottom: calc(70px + env(safe-area-inset-bottom)); font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 011</a>
+
+<main class="stage">
+  <canvas id="gl" tabindex="0" aria-label="木地板上立着几千块黑色骨牌，推倒以后，背面的颜色拼出品牌名。点一块骨牌从那里推倒，按回车从第一块推倒"></canvas>
+  <div class="vig"></div>
+  <div class="hint" id="hint">点任意一块骨牌，从那里推倒</div>
+  <div class="bar">
+    <div class="cap"><b id="f-name">Lumen</b><span id="meta">多米诺</span></div>
+    <div class="ctl">
+      <button type="button" id="reset" disabled>重新立起</button>
+      <button type="button" id="sound" aria-pressed="false">声音 · 关</button>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const mix = (a, b, t) => a + (b - a) * t;
+  const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const PI = Math.PI, HALF = PI / 2;
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mulberry = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+  const CJK = /[⺀-鿿豈-﫿　-〿＀-￯]/.test(brand);
+
+  // ---------- 字体：只为品牌名里的汉字取一个子集 ----------
+  const links = [$('#font-css')];
+  if (CJK) {
+    const l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@900&display=swap&text=' + encodeURIComponent(brand);
+    document.head.appendChild(l);
+    links.push(l);
+  }
+  const BRAND_FONT = px => CJK
+    ? `900 ${px}px "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif`
+    : `400 ${px}px "Archivo Black", "Arial Black", sans-serif`;
+  const sheetIn = l => new Promise(r => {
+    if (l.sheet && l.media !== 'print') return r();
+    l.addEventListener('load', () => r(), { once: true });
+    l.addEventListener('error', () => r(), { once: true });
+  });
+  const fontsReady = () => Promise.all(links.map(sheetIn))
+    .then(() => Promise.all([document.fonts.load(BRAND_FONT(80), brand), document.fonts.load('600 14px Archivo')]))
+    .catch(() => {});
+
+  // ---------- 尺寸（单位：骨牌高 = 1） ----------
+  const HH = 1, WD = 0.5, TK = 0.16;   // 高、宽、厚
+  const DS = 0.55;                     // 相邻两张的间距（转轴到转轴）
+  const WP = 0.6;                      // 场地里的列距
+  const V = 18;                        // 波前速度，单位/秒，相当于 9 厘米的骨牌每秒走 1.6 米
+
+  const lin = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }); };
+  const PAL = {
+    mat: lin('#1a1f33'), frame: lin('#eee3cb'), gold: lin('#f2c357'), hi: lin('#fbe39c'), coral: lin('#df5d3b'),
+    bg: ['#2c7479', '#24566f', '#283b5d', '#382c55'].map(lin),
+    body: lin('#29282c'), pip: lin('#efe7d9'),
+  };
+  const ramp = (stops, f) => { f = clamp(f, 0, 1) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(f)), t = f - i; return stops[i].map((v, k) => mix(v, stops[i + 1][k], t)); };
+  const LINE_RAMP = [PAL.coral, PAL.gold, PAL.frame, PAL.bg[0], PAL.bg[1]];
+
+  function textAspect() {
+    const o = document.createElement('canvas').getContext('2d');
+    o.font = BRAND_FONT(100);
+    const m = o.measureText(brand);
+    const w = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) || m.width;
+    const h = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || 72;
+    return clamp(w / h, 0.6, 9);
+  }
+
+  // ---------- 折线工具 ----------
+  const cum = pts => { const c = new Float64Array(pts.length); for (let i = 1; i < pts.length; i++) c[i] = c[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return c; };
+  const lower = (arr, v) => { let a = 0, b = arr.length; while (a < b) { const m = (a + b) >> 1; if (arr[m] < v) a = m + 1; else b = m; } return a; };
+  function sample(pts, c, s) {
+    const n = pts.length;
+    const i = clamp(lower(c, s), 1, n - 1);
+    const seg = c[i] - c[i - 1] || 1, t = clamp((s - c[i - 1]) / seg, 0, 1);
+    const a = pts[i - 1], b = pts[i];
+    const j0 = Math.max(0, i - 2), j1 = Math.min(n - 1, i + 1);
+    const dx = pts[j1][0] - pts[j0][0], dz = pts[j1][1] - pts[j0][1], l = Math.hypot(dx, dz) || 1;
+    return { x: mix(a[0], b[0], t), z: mix(a[1], b[1], t), dx: dx / l, dz: dz / l };
+  }
+  // 折线拐角倒成圆角
+  function fillet(wps, rads, step = 0.04) {
+    const out = [];
+    const line = (a, b) => { const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step)); for (let i = out.length ? 1 : 0; i <= n; i++) out.push([mix(a[0], b[0], i / n), mix(a[1], b[1], i / n)]); };
+    let cur = wps[0];
+    for (let i = 1; i < wps.length - 1; i++) {
+      const A = wps[i - 1], B = wps[i], C2 = wps[i + 1], r = rads[i - 1];
+      let ux = B[0] - A[0], uz = B[1] - A[1], l = Math.hypot(ux, uz); ux /= l; uz /= l;
+      let vx = C2[0] - B[0], vz = C2[1] - B[1]; l = Math.hypot(vx, vz); vx /= l; vz /= l;
+      const sg = Math.sign(ux * vz - uz * vx), ang = Math.acos(clamp(ux * vx + uz * vz, -1, 1)), tl = r * Math.tan(ang / 2);
+      const T1 = [B[0] - ux * tl, B[1] - uz * tl];
+      line(cur, T1);
+      const cx = T1[0] - uz * sg * r, cz = T1[1] + ux * sg * r;
+      const a0 = Math.atan2(T1[1] - cz, T1[0] - cx), n = Math.max(2, Math.ceil(ang * r / step));
+      for (let k = 1; k <= n; k++) { const a = a0 + sg * ang * k / n; out.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r]); }
+      cur = out[out.length - 1];
+    }
+    line(cur, wps[wps.length - 1]);
+    return out;
+  }
+
+  // ---------- 摆阵：场地、主线（分叉、汇合、摆动、螺旋）、梳子 ----------
+  let G = null;
+  function build(prev) {
+    const Wv = innerWidth, Hv = innerHeight;
+    const portrait = Wv / Hv < 0.95;
+    const C = portrait ? 44 : clamp(Math.round(Wv / 13.3), 64, 100);
+    const asp = prev ? prev.asp : textAspect();
+    const padC = portrait ? 4 : 6;
+    const R = clamp(Math.round((C - 2 * padC) * WP / DS / asp + 13), 20, portrait ? 30 : 46);
+    const rnd = mulberry(1001);
+
+    const nodes = [];
+    const add = (x, z, dx, dz, kind) => { const l = Math.hypot(dx, dz) || 1; nodes.push({ x, z, dx: dx / l, dz: dz / l, kind, kids: [], lean: -1, col: PAL.frame }); return nodes.length - 1; };
+    const link = (a, b, lean) => { nodes[a].kids.push(b); if (lean || nodes[a].lean < 0) nodes[a].lean = b; };
+
+    // 场地：错位排列，每张推倒前面一排的两张；从后排的若干入口往前扇形扩开
+    const x0 = -(C - 0.5) * WP / 2;
+    const cellX = (r, c) => x0 + (c + 0.5 * (r & 1)) * WP;
+    const nE = Math.ceil((C - 1) / 4);
+    const entries = Array.from({ length: nE }, (_, k) => Math.round(1 + k * (C - 3) / (nE - 1)));
+    const ahead = (r, c) => (r & 1) ? [c, c + 1] : [c - 1, c];
+    const reach = new Uint8Array(R * C);
+    for (const e of entries) reach[e] = 1;
+    for (let r = 0; r < R - 1; r++) for (let c = 0; c < C; c++) if (reach[r * C + c]) for (const cc of ahead(r, c)) if (cc >= 0 && cc < C) reach[(r + 1) * C + cc] = 1;
+    const cell = new Int32Array(R * C).fill(-1);
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (reach[r * C + c]) { cell[r * C + c] = add(cellX(r, c), r * DS, 0, 1, 1); nodes[cell[r * C + c]].rc = [r, c]; }
+    for (let r = 0; r < R - 1; r++) for (let c = 0; c < C; c++) {
+      const i = cell[r * C + c]; if (i < 0) continue;
+      for (const cc of ahead(r, c)) if (cc >= 0 && cc < C && cell[(r + 1) * C + cc] >= 0) link(i, cell[(r + 1) * C + cc]);
+    }
+    const NF = nodes.length;
+
+    // 主线的路点
+    const FW = (C - 0.5) * WP / 2 + 0.3;
+    const zF = (R - 1) * DS, zc = -2.3, zt0 = zF + 2.6;
+    let wps, rads, iLeft, iComb;
+    if (!portrait) {
+      const zm = zt0 + 2.4;
+      wps = [[FW + 0.6, zm], [-FW - 2.6, zm], [-FW - 2.6, zc], [FW + 0.9, zc]]; rads = [2.4, 1.6]; iLeft = 1; iComb = 2;
+    } else {
+      // 竖屏：五趟来回的蛇形，把竖着的空间铺满
+      const zA = zt0 + 2.0, zB = zA + 6.5, zC = zB + 9.0, zD = zC + 6.5, zE = zD + 6.5, xl = -FW + 1.6, xr = FW - 1.6;
+      wps = [[FW + 0.6, zE], [xl, zE], [xl, zD], [xr, zD], [xr, zC], [xl, zC], [xl, zB], [xr, zB], [xr, zA], [-FW - 2.6, zA], [-FW - 2.6, zc], [FW + 0.9, zc]];
+      rads = [2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.4, 1.6]; iLeft = 9; iComb = 10;
+    }
+    const base = fillet(wps, rads), cB = cum(base);
+    const sNear = p => { let best = Infinity, s = 0; for (let i = 0; i < base.length; i++) { const d = (base[i][0] - p[0]) ** 2 + (base[i][1] - p[1]) ** 2; if (d < best) { best = d; s = cB[i]; } } return s; };
+    const sW = wps.map(sNear);
+
+    const eyes = [], wigs = [], spirals = [];
+    if (!portrait) {
+      const Lb = sW[1] - 2.6;
+      eyes.push({ s0: 3, L: 7.5, H: 2.1 });
+      wigs.push({ s0: 0.24 * Lb, s1: 0.5 * Lb, A: 1.3, k: Math.max(1, Math.round(0.26 * Lb / 8.5)) });
+      spirals.push({ s: 0.68 * Lb, side: [0, 1], r0: 3.0, pitch: 1.0 });
+      if (Lb - (0.68 * Lb + 3) > 9.5) eyes.push({ s0: 0.68 * Lb + 3, L: 5.5, H: 1.4 });
+    } else {
+      eyes.push({ s0: 6, L: 6.5, H: 1.8 });                                   // 第一趟（往西）：分叉再汇合
+      eyes.push({ s0: (sW[2] + sW[3]) / 2 - 2.6, L: 5.2, H: 1.3 });           // 第二趟（往东）：小一点的
+      wigs.push({ s0: (sW[4] + sW[5]) / 2 - 1, s1: sW[5] - 2.8, A: 1.1, k: 1 }); // 第三趟（往西）：左半段摆一下
+      spirals.push({ s: sW[7] - 7, side: [0, 1], r0: 2.6, pitch: 0.95 });   // 第四趟（往东）：朝南卷一个螺旋
+      wigs.push({ s0: sW[8] + 2.8, s1: sW[9] - 3, A: 0.9, k: 2 });           // 最上面一趟（往西）
+    }
+
+    // 摆动：沿法线方向加一段正弦
+    const pts = base.map(p => [p[0], p[1]]);
+    for (const w of wigs) for (let i = 1; i < base.length - 1; i++) {
+      const s = cB[i]; if (s <= w.s0 || s >= w.s1) continue;
+      const u = (s - w.s0) / (w.s1 - w.s0);
+      const tx = base[i + 1][0] - base[i - 1][0], tz = base[i + 1][1] - base[i - 1][1], l = Math.hypot(tx, tz);
+      const off = w.A * Math.sin(2 * PI * w.k * u) * Math.sin(PI * u) ** 0.7;
+      pts[i][0] += -tz / l * off; pts[i][1] += tx / l * off;
+    }
+    const cP = cum(pts);
+    const sMap = s => cP[clamp(lower(cB, s), 0, cP.length - 1)];
+    const sTot = cP[cP.length - 1], sComb = sMap(sW[iComb]), sLeft = sMap(sW[iLeft]);
+
+    const main = [];
+    const colAt = s => s >= sComb - 1 ? PAL.frame : ramp(LINE_RAMP, s / sComb);
+    const mk = s => { const q = sample(pts, cP, s); const i = add(q.x, q.z, q.dx, q.dz, 0); nodes[i].s = s; nodes[i].col = colAt(s); main.push(i); return i; };
+    // 沿一条折线均匀摆牌（两端已经有牌时去掉）
+    const placeAlong = (pl, from, to, col, skipFirst) => {
+      const c = cum(pl), L = c[c.length - 1], n = Math.max(1, Math.round(L / DS));
+      let p = from;
+      for (let j = skipFirst ? 1 : 0; j < (to >= 0 ? n : n + 1); j++) {
+        const q = sample(pl, c, L * j / n), i = add(q.x, q.z, q.dx, q.dz, 0);
+        nodes[i].col = typeof col === 'function' ? col(j / n) : col;
+        if (p >= 0) link(p, i, p !== from); else nodes[i].first = true;
+        p = i;
+      }
+      if (to >= 0) link(p, to);
+      return p;
+    };
+    // 分叉再汇合的“眼睛”
+    const eye = (split, merge, e) => {
+      for (const side of [-1, 1]) {
+        const pl = [];
+        for (let s = e.s0; s <= e.s0 + e.L + 1e-6; s += 0.04) {
+          const q = sample(base, cB, s), u = (s - e.s0) / e.L, off = side * e.H * Math.sin(PI * u) ** 1.5;
+          pl.push([q.x - q.dz * off, q.z + q.dx * off]);
+        }
+        const s0 = sMap(e.s0), s1 = sMap(e.s0 + e.L);
+        const c = cum(pl), L = c[c.length - 1], n = Math.max(2, Math.round(L / DS));
+        let p = split;
+        for (let j = 1; j < n; j++) {
+          const q = sample(pl, c, L * j / n), i = add(q.x, q.z, q.dx, q.dz, 0);
+          nodes[i].col = colAt(mix(s0, s1, j / n));
+          link(p, i, p !== split ? true : side < 0);
+          p = i;
+        }
+        link(p, merge, true);
+      }
+    };
+    // 螺旋：先拐向一侧走一段，再一圈圈往里卷，最后一张是死头
+    const spiral = (from, sp) => {
+      const n0 = nodes[from], dx = n0.dx, dz = n0.dz, nx = sp.side[0], nz = sp.side[1], rc = 1.2;
+      const A0 = [n0.x + nx * 0.32 + dx * 0.15, n0.z + nz * 0.32 + dz * 0.15];
+      const Ca = [A0[0] + nx * rc, A0[1] + nz * rc];
+      const pl = [];
+      const a0 = Math.atan2(A0[1] - Ca[1], A0[0] - Ca[0]);
+      const sg = (-Math.sin(a0) * dx + Math.cos(a0) * dz) > 0 ? 1 : -1;
+      for (let k = 0; k <= 40; k++) { const a = a0 + sg * HALF * k / 40; pl.push([Ca[0] + Math.cos(a) * rc, Ca[1] + Math.sin(a) * rc]); }
+      const A1 = pl[pl.length - 1], ell = Math.max(0.6, sp.r0 + 0.68 - rc);
+      for (let k = 1; k <= 20; k++) pl.push([A1[0] + nx * ell * k / 20, A1[1] + nz * ell * k / 20]);
+      const E = pl[pl.length - 1], Cs = [E[0] - dx * sp.r0, E[1] - dz * sp.r0];
+      const th0 = Math.atan2(E[1] - Cs[1], E[0] - Cs[0]);
+      const sg2 = (-Math.sin(th0) * nx + Math.cos(th0) * nz) > 0 ? 1 : -1;
+      for (let phi = 0.03 / sp.r0; ; ) {
+        const r = sp.r0 - sp.pitch * phi / (2 * PI);
+        if (r < 1.05) break;
+        pl.push([Cs[0] + Math.cos(th0 + sg2 * phi) * r, Cs[1] + Math.sin(th0 + sg2 * phi) * r]);
+        phi += 0.04 / r;
+      }
+      placeAlong(pl, from, -1, f => ramp([PAL.gold, PAL.hi, PAL.coral], f), false);
+    };
+
+    // 按标记分段摆主线
+    const marks = [];
+    for (const e of eyes) marks.push({ s: sMap(e.s0), t: 'a', e }, { s: sMap(e.s0 + e.L), t: 'b', e });
+    for (const sp of spirals) marks.push({ s: sMap(sp.s), t: 'sp', sp });
+    marks.push({ s: sTot, t: 'end' });
+    marks.sort((a, b) => a.s - b.s);
+    let prevN = mk(0), sPrev = 0;
+    for (const m of marks) {
+      if (m.t === 'b') { const mg = mk(m.s); eye(prevN, mg, m.e); prevN = mg; sPrev = m.s; continue; }
+      const n = Math.max(1, Math.round((m.s - sPrev) / DS));
+      for (let j = 1; j <= n; j++) { const i = mk(sPrev + (m.s - sPrev) * j / n); link(prevN, i, true); prevN = i; }
+      sPrev = m.s;
+      if (m.t === 'sp') spiral(prevN, m.sp);
+    }
+
+    // 梳子：沿后排横着走的主线，每到一个入口分出一支，拐个弯朝南接进场地
+    const comb = main.filter(i => nodes[i].s >= sComb - 0.5 && Math.abs(nodes[i].z - zc) < 0.05);
+    for (const e of entries) {
+      const xe = cellX(0, e), xs = xe - 1.0, z1 = zc + 0.32;
+      let par = -1;
+      for (const i of comb) if (nodes[i].x < xs - 0.05 && (par < 0 || nodes[i].x > nodes[par].x)) par = i;
+      if (par < 0) continue;
+      const pl = [];
+      for (let k = 0; k <= 30; k++) { const a = -HALF + HALF * k / 30; pl.push([xs + Math.cos(a), z1 + 1 + Math.sin(a)]); }
+      pl.push([xe, 0]);
+      const c = cum(pl), L = c[c.length - 1], n = Math.max(2, Math.round(L / DS));
+      let p = par;
+      for (let j = 0; j < n; j++) { const q = sample(pl, c, L * j / n), i = add(q.x, q.z, q.dx, q.dz, 0); nodes[i].col = PAL.frame; link(p, i, p !== par); p = i; }
+      link(p, cell[e], true);
+    }
+
+    const N = nodes.length;
+    // 整个阵的范围
+    let bx0 = Infinity, bx1 = -Infinity, bz0 = Infinity, bz1 = -Infinity;
+    for (const n of nodes) { bx0 = Math.min(bx0, n.x); bx1 = Math.max(bx1, n.x); bz0 = Math.min(bz0, n.z); bz1 = Math.max(bz1, n.z); }
+    bx0 -= 0.8; bx1 += 0.8; bz0 -= 1.2; bz1 += 1.2;
+
+    // 每张牌：靠在谁身上、相隔多远、多久碰到它
+    const lean = new Int32Array(N), dd = new Float32Array(N), dl = new Float32Array(N), ph = new Float32Array(N), tLand = new Float32Array(N);
+    const kidStart = new Int32Array(N + 1), kidList = [], kidDel = [];
+    for (let i = 0; i < N; i++) {
+      const n = nodes[i];
+      kidStart[i] = kidList.length;
+      for (const k of n.kids) { kidList.push(k); kidDel.push(Math.max(0.25, Math.hypot(nodes[k].x - n.x, nodes[k].z - n.z)) / V); }
+      lean[i] = n.lean;
+      let d = DS;
+      if (n.lean >= 0) { const c = nodes[n.lean]; d = (c.x - n.x) * n.dx + (c.z - n.z) * n.dz; d = clamp(d, TK + 0.05, 0.92); dl[i] = Math.max(0.25, Math.hypot(c.x - n.x, c.z - n.z)) / V; }
+      else dl[i] = DS / V;
+      dd[i] = d; ph[i] = Math.asin((d - TK) / HH);
+      if (n.lean < 0) { const x = (-0.55 + Math.sqrt(0.3025 + 1.8 * HALF / ph[i])) / 0.9; tLand[i] = x * dl[i]; }
+    }
+    kidStart[N] = kidList.length;
+    // 先算被靠的那张：按“离死头还有几张”从小到大
+    const depth = new Int32Array(N).fill(-1);
+    for (let i = 0; i < N; i++) {
+      if (depth[i] >= 0) continue;
+      const chain = []; let j = i;
+      while (j >= 0 && depth[j] < 0) { chain.push(j); j = lean[j]; if (chain.length > N) break; }
+      let d = j >= 0 ? depth[j] : -1;
+      for (let k = chain.length - 1; k >= 0; k--) depth[chain[k]] = ++d;
+    }
+    const order = Int32Array.from({ length: N }, (_, i) => i).sort((a, b) => depth[a] - depth[b]);
+
+    const g = {
+      portrait, C, R, N, NF, asp, nodes, cell, main: Int32Array.from(main), entries, padC,
+      lean, dd, dl, ph, tLand, kidStart, kidList: Int32Array.from(kidList), kidDel: Float32Array.from(kidDel), order,
+      box: [bx0, bx1, bz0, bz1], sLeft, sComb, start: main[0], mpts: pts, mcum: cP,
+      T: new Float64Array(N).fill(Infinity), ang: new Float32Array(N),
+    };
+    g.mainS = Float32Array.from(main, i => nodes[i].s);
+    paint(g);
+    // 装进实例数组
+    g.A = new Float32Array(N * 4); g.B = new Float32Array(N * 4); g.P = new Float32Array(N * 4);
+    for (let i = 0; i < N; i++) {
+      const n = nodes[i];
+      g.A.set([n.x, n.z, Math.atan2(n.dx, n.dz), rnd()], i * 4);
+      g.B.set([...n.col, n.kind], i * 4);
+      g.P.set([(rnd() * 7) | 0, (rnd() * 7) | 0, 0, 0], i * 4);
+    }
+    // 画的顺序：离镜头近的（z 大的）先画，被挡住的片元靠深度测试提前丢掉，低角度看场地时省很多
+    g.perm = Int32Array.from({ length: N }, (_, i) => i).sort((a, b) => nodes[b].z - nodes[a].z || nodes[a].x - nodes[b].x);
+    g.inv = new Int32Array(N); g.perm.forEach((i, k) => { g.inv[i] = k; });
+    g.dA = new Float32Array(N * 4); g.dP = new Float32Array(N * 4); g.angDraw = new Float32Array(N);
+    g.perm.forEach((i, k) => { g.dA.set(g.A.subarray(i * 4, i * 4 + 4), k * 4); g.dP.set(g.P.subarray(i * 4, i * 4 + 4), k * 4); });
+    packColors(g);
+    const s0 = nodes[g.start];
+    g.ball = { x: s0.x, z: s0.z, dx: s0.dx, dz: s0.dz };
+    // 开场近景：对着第一张和它身后钢珠滚来的那段地板
+    g.camIdle = portrait
+      ? { tx: s0.x + s0.dx * 1.2, tz: s0.z + s0.dz * 1.2, dist: 8.4, el: 0.44, yaw: 1.32, fov: 34 * PI / 180 }   // 竖屏顺着线往里看，钢珠从画面下方滚进来
+      : { tx: s0.x - s0.dx * 0.9, tz: s0.z - s0.dz * 0.9, dist: 7.2, el: 0.38, yaw: 0.78, fov: 34 * PI / 180 };
+    g.followDist = portrait ? 17 : 13;
+    g.followYaw = portrait ? 0.9 : 0.3;
+    return g;
+  }
+
+  function packColors(g) { g.dB = g.dB || new Float32Array(g.N * 4); g.perm.forEach((i, k) => { g.dB.set(g.B.subarray(i * 4, i * 4 + 4), k * 4); }); }
+
+  // ---------- 场地背面的画：渐变底、象牙色边框、金色字带珊瑚色投影 ----------
+  function paint(g) {
+    const { C, R, nodes, cell, padC } = g;
+    const cw = 12, rh = cw * DS / WP;
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil((C + 1) * cw); cv.height = Math.ceil(R * rh);
+    const o = cv.getContext('2d', { willReadFrequently: true });
+    o.fillStyle = '#000'; o.fillRect(0, 0, cv.width, cv.height);
+    const rF = 6, tr0 = rF + 3, tr1 = R - 5, tc0 = padC, tc1 = C - padC;
+    const boxW = (tc1 - tc0) * cw, boxH = (tr1 - tr0 + 1) * rh;
+    o.font = BRAND_FONT(100);
+    let m = o.measureText(brand);
+    const w0 = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) || m.width, h0 = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || 72;
+    const px = 100 * Math.min(boxW / w0, boxH / h0);
+    o.font = BRAND_FONT(px);
+    m = o.measureText(brand);
+    const cx = (tc0 + tc1) / 2 * cw + cw / 2, cy = (tr0 + tr1 + 1) / 2 * rh;
+    o.fillStyle = '#fff';
+    o.fillText(brand, cx - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2, cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
+    const img = o.getImageData(0, 0, cv.width, cv.height).data, IW = cv.width, IH = cv.height;
+    const cov = (r, c, ox = 0, oy = 0) => {
+      const xa = Math.round((c + 0.5 * (r & 1)) * cw + ox), ya = Math.round(r * rh + oy);
+      let s = 0, n = 0;
+      for (let y = ya + 1; y < ya + rh - 1; y += 2) for (let x = xa + 1; x < xa + cw - 1; x += 2) { n++; if (x >= 0 && y >= 0 && x < IW && y < IH) s += img[(y * IW + x) * 4]; }
+      return s / (n * 255);
+    };
+    const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      const i = cell[r * C + c]; if (i < 0) continue;
+      let col;
+      const inside = r >= rF && r <= R - 2 && c >= 1 && c <= C - 2;
+      if (!inside) col = PAL.mat;
+      else if (r === rF || r === R - 2 || c === 1 || c === C - 2) col = PAL.frame;
+      else if (cov(r, c) > 0.45) col = cov(r, c, 0, -1.7 * rh) > 0.45 ? PAL.gold : PAL.hi;
+      else if (cov(r, c, -1.1 * cw, -1.2 * rh) > 0.45) col = PAL.coral;
+      else {
+        const f = clamp((r - rF - 1) / (R - rF - 4), 0, 1) * 3, k = Math.min(2, Math.floor(f));
+        col = (f - k) * 16 > BAYER[(r & 3) * 4 + (c & 3)] + 0.5 ? PAL.bg[k + 1] : PAL.bg[k];
+      }
+      nodes[i].col = col;
+    }
+  }
+
+  // ---------- 数学 ----------
+  const m4 = () => new Float32Array(16);
+  function persp(o, fy, asp, n, f) { const t = 1 / Math.tan(fy / 2), nf = 1 / (n - f); o.fill(0); o[0] = t / asp; o[5] = t; o[10] = (f + n) * nf; o[11] = -1; o[14] = 2 * f * n * nf; return o; }
+  function ortho(o, l, r, b, t, n, f) { o.fill(0); o[0] = 2 / (r - l); o[5] = 2 / (t - b); o[10] = -2 / (f - n); o[12] = -(r + l) / (r - l); o[13] = -(t + b) / (t - b); o[14] = -(f + n) / (f - n); o[15] = 1; return o; }
+  function lookAt(o, e, c, up) {
+    let zx = e[0] - c[0], zy = e[1] - c[1], zz = e[2] - c[2], l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+    let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx; l = Math.hypot(xx, xy, xz); xx /= l; xy /= l; xz /= l;
+    const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+    o[0] = xx; o[1] = yx; o[2] = zx; o[3] = 0; o[4] = xy; o[5] = yy; o[6] = zy; o[7] = 0; o[8] = xz; o[9] = yz; o[10] = zz; o[11] = 0;
+    o[12] = -(xx * e[0] + xy * e[1] + xz * e[2]); o[13] = -(yx * e[0] + yy * e[1] + yz * e[2]); o[14] = -(zx * e[0] + zy * e[1] + zz * e[2]); o[15] = 1;
+    return o;
+  }
+  const TMP = m4();
+  function mul(o, a, b) { for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; TMP[i * 4 + j] = s; } o.set(TMP); return o; }
+  function invert(o, a) {
+    const [a00, a01, a02, a03, a10, a11, a12, a13, a20, a21, a22, a23, a30, a31, a32, a33] = a;
+    const b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10, b03 = a01 * a12 - a02 * a11;
+    const b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12, b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30;
+    const b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+    const det = 1 / (b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06);
+    o[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det; o[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det; o[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det; o[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+    o[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det; o[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det; o[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det; o[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+    o[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det; o[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det; o[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det; o[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+    o[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det; o[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det; o[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det; o[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+    return o;
+  }
+  const xf = (m, x, y, z) => { const w = m[3] * x + m[7] * y + m[11] * z + m[15]; return [(m[0] * x + m[4] * y + m[8] * z + m[12]) / w, (m[1] * x + m[5] * y + m[9] * z + m[13]) / w, (m[2] * x + m[6] * y + m[10] * z + m[14]) / w, w]; };
+
+  // ---------- 状态 ----------
+  const st = { mode: 'idle', simT: 0, runStart: 0, scale: 1, sources: [], ball: false, touched: false, idleAt: 0, hover: -1, fallen: 0, tEnd: 0 };
+  let evT = new Float64Array(0), evI = new Int32Array(0), evK = new Uint8Array(0), fieldT = new Float64Array(0);
+
+  // 从若干起点算每张牌被碰到的时刻（最短路）
+  function solve() {
+    const g = G, T = g.T, N = g.N;
+    T.fill(Infinity);
+    const hT = [], hI = [];
+    const push = (t, i) => { hT.push(t); hI.push(i); let k = hT.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (hT[p] <= hT[k]) break; [hT[p], hT[k]] = [hT[k], hT[p]]; [hI[p], hI[k]] = [hI[k], hI[p]]; k = p; } };
+    const pop = () => { const t = hT[0], i = hI[0], lt = hT.pop(), li = hI.pop(); if (hT.length) { hT[0] = lt; hI[0] = li; let k = 0; for (;;) { const a = 2 * k + 1, b = a + 1; let m = k; if (a < hT.length && hT[a] < hT[m]) m = a; if (b < hT.length && hT[b] < hT[m]) m = b; if (m === k) break; [hT[m], hT[k]] = [hT[k], hT[m]]; [hI[m], hI[k]] = [hI[k], hI[m]]; k = m; } } return [t, i]; };
+    for (const s of st.sources) if (s.t < T[s.i]) { T[s.i] = s.t; push(s.t, s.i); }
+    while (hT.length) {
+      const [t, i] = pop();
+      if (t > T[i]) continue;
+      for (let k = g.kidStart[i]; k < g.kidStart[i + 1]; k++) { const j = g.kidList[k], nt = t + g.kidDel[k]; if (nt < T[j]) { T[j] = nt; push(nt, j); } }
+    }
+    // 声音事件：被碰到的那一下、死头落地的那一下
+    const ev = [];
+    let tEnd = 0;
+    for (let i = 0; i < N; i++) {
+      if (!isFinite(T[i])) continue;
+      ev.push([T[i], i, 0]);
+      if (g.lean[i] < 0) { ev.push([T[i] + g.tLand[i], i, 1]); tEnd = Math.max(tEnd, T[i] + g.tLand[i] + 0.25); }
+      tEnd = Math.max(tEnd, T[i] + 0.45);
+    }
+    ev.sort((a, b) => a[0] - b[0]);
+    evT = Float64Array.from(ev, e => e[0]); evI = Int32Array.from(ev, e => e[1]); evK = Uint8Array.from(ev, e => e[2]);
+    fieldT = Float64Array.from(T.subarray(0, g.NF)).sort();
+    st.tEnd = tEnd;
+  }
+
+  // 每张牌此刻的倾角：自己倒（越倒越快），碰到前面那张以后靠在它身上
+  function evalAngles(t) {
+    const g = G, T = g.T, ang = g.ang, { lean, dd, dl, ph, tLand, order } = g;
+    let fallen = 0;
+    for (let k = 0; k < order.length; k++) {
+      const i = order[k], Ti = T[i];
+      if (!(t > Ti)) { ang[i] = 0; continue; }
+      const x = (t - Ti) / dl[i];
+      let a = ph[i] * (0.55 * x + 0.45 * x * x);
+      const c = lean[i];
+      if (c >= 0) {
+        const p = ang[c];
+        const lim = p + Math.asin(clamp((dd[i] * Math.cos(p) - TK) / HH, -1, 1));
+        if (lim < a) a = lim;
+        if (a > HALF) a = HALF;
+      } else if (a >= HALF) {
+        const u = t - Ti - tLand[i];
+        a = HALF - 0.09 * Math.exp(-u * 24) * Math.abs(Math.sin(u * 46));
+      }
+      ang[i] = a;
+      if (a > 0.6) fallen++;
+    }
+    return fallen;
+  }
+
+  const fieldActive = t => { const a = lower(fieldT, t - 0.3), b = lower(fieldT, t + 0.12); return b > a; };
+
+  // ---------- WebGL ----------
+  const glc = $('#gl');
+  const gl = glc.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
+
+  const COMMON = `
+precision highp float;
+precision highp sampler2DShadow;
+uniform vec3 uCam, uSun, uSunCol;
+uniform mat4 uLVP;
+uniform sampler2DShadow uShadow;
+uniform float uShTexel;
+uniform sampler2D uAO;
+uniform vec4 uAOBox, uPool;
+uniform float uExpo;
+float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float sunVis(vec3 w, vec3 n) {
+  vec4 lp = uLVP * vec4(w + n * .03, 1.);
+  vec3 q = lp.xyz / lp.w * .5 + .5;
+  if (q.x < 0. || q.x > 1. || q.y < 0. || q.y > 1. || q.z > 1.) return 1.;
+  float s = 0.;
+  for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) s += texture(uShadow, vec3(q.xy + vec2(i, j) * uShTexel, q.z - .0012));
+  return s / 9.;
+}
+float pool(vec3 w) { float r = length((w.xz - uPool.xy) * uPool.zw); return mix(.14, 1., 1. - smoothstep(.72, 1.3, r)); }
+// 遮挡图是从正上方往下看画的（北边朝上），所以 v 要从南边往北数
+float aoAt(vec3 w) { vec2 uv = vec2(w.x - uAOBox.x, uAOBox.y - w.z) * uAOBox.zw; return texture(uAO, uv).r; }
+vec3 aces(vec3 x) { return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+vec4 finish(vec3 c) { c = aces(c * uExpo); c = pow(c, vec3(1. / 2.2)); c += (hash12(gl_FragCoord.xy) - .5) / 255.; return vec4(c, 1.); }
+vec3 shade(vec3 alb, vec3 N, vec3 V, vec3 W, float rough, float ao, float sh) {
+  vec3 L = uSun, H = normalize(L + V);
+  float nl = max(dot(N, L), 0.), nv = max(dot(N, V), 1e-3), nh = max(dot(N, H), 0.), vh = max(dot(V, H), 0.);
+  float a = rough * rough, a2 = a * a, d = nh * nh * (a2 - 1.) + 1.;
+  float D = a2 / (3.14159 * d * d), k = a * .5;
+  float Gv = nl / (nl * (1. - k) + k) * nv / (nv * (1. - k) + k);
+  float F = .04 + .96 * pow(1. - vh, 5.);
+  float spec = D * Gv * F / max(4. * nl * nv, 1e-3);
+  float pl = pool(W);
+  vec3 direct = (alb * (1. - F) / 3.14159 + spec) * uSunCol * nl * sh * pl;
+  vec3 sky = vec3(.30, .32, .38), gnd = vec3(.46, .29, .16);
+  vec3 amb = mix(gnd * .5, sky, N.y * .5 + .5) * (.28 + .72 * pl);
+  vec3 R = reflect(-V, N);
+  vec3 env = R.y < 0. ? gnd * .4 : mix(vec3(.14, .12, .10), vec3(.34, .33, .34), R.y);
+  float Fe = .04 + .96 * pow(1. - nv, 5.);
+  return direct + (alb * amb * (1. - Fe) + env * Fe * (1. - rough * .6)) * ao * (.3 + .7 * pl);
+}`;
+
+  const DOM_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+layout(location=2) in vec4 iA;
+layout(location=3) in vec4 iB;
+layout(location=4) in vec4 iC;
+layout(location=5) in float iAng;
+uniform mat4 uVP;
+uniform int uHover;
+out vec3 vW; out vec3 vN; out vec3 vL; out vec3 vLN; out vec4 vB; out vec2 vPip; out float vHi; out float vSeed;
+void main() {
+  float c = cos(iAng), s = sin(iAng);
+  vec3 p = vec3(aPos.x, aPos.y * c - aPos.z * s, aPos.y * s + aPos.z * c);
+  vec3 n = vec3(aNrm.x, aNrm.y * c - aNrm.z * s, aNrm.y * s + aNrm.z * c);
+  float cy = cos(iA.z), sy = sin(iA.z);
+  vW = vec3(p.x * cy + p.z * sy, p.y, -p.x * sy + p.z * cy) + vec3(iA.x, 0., iA.y);
+  vN = vec3(n.x * cy + n.z * sy, n.y, -n.x * sy + n.z * cy);
+  vL = aPos; vLN = aNrm; vB = iB; vPip = iC.xy; vSeed = iA.w;
+  vHi = gl_InstanceID == uHover ? 1. : 0.;
+  gl_Position = uVP * vec4(vW, 1.);
+}`;
+
+  const DOM_FS = `#version 300 es
+${COMMON}
+uniform vec3 uBody, uPipCol;
+in vec3 vW; in vec3 vN; in vec3 vL; in vec3 vLN; in vec4 vB; in vec2 vPip; in float vHi; in float vSeed;
+out vec4 o;
+float pipD(vec2 p, float n) {
+  const float g = .125;
+  float d = 9.;
+  if (n == 1. || n == 3. || n == 5.) d = min(d, length(p));
+  if (n >= 2.) { d = min(d, length(p - vec2(-g, g))); d = min(d, length(p - vec2(g, -g))); }
+  if (n >= 4.) { d = min(d, length(p - vec2(g, g))); d = min(d, length(p - vec2(-g, -g))); }
+  if (n == 6.) { d = min(d, length(p - vec2(-g, 0.))); d = min(d, length(p - vec2(g, 0.))); }
+  return d;
+}
+void main() {
+  vec3 N = normalize(vN), V = normalize(uCam - vW);
+  // 背面的颜色只上平面，圆角留牌身的黑色，免得没倒之前从侧边漏出画的颜色
+  float front = smoothstep(.55, .92, vLN.z), back = smoothstep(.9, .99, -vLN.z);
+  vec3 body = uBody * (.9 + .2 * fract(vSeed * 7.13));
+  vec3 alb = mix(body, vB.rgb * (.96 + .08 * fract(vSeed * 3.7)), back);
+  float rough = mix(.3, .44, back);
+  if (front > 0.) {
+    // 正面：中间一道刻线，上下两半各一组点
+    vec2 q = vL.xy;
+    float fw = max(fwidth(q.x), fwidth(q.y)) + 1e-5;
+    float vis = 1. - smoothstep(.022, .06, fw);   // 太远时点只有一两个像素，淡掉免得闪
+    float d = min(pipD(q - vec2(0., .75), vPip.x), pipD(q - vec2(0., .25), vPip.y));
+    float m = 1. - smoothstep(.04 - fw, .04 + fw, d);
+    float ln = (1. - smoothstep(.007 - fw, .007 + fw, abs(q.y - .5))) * (1. - smoothstep(.17, .17 + fw, abs(q.x)));
+    float k = max(m, ln * .85) * front * vis;
+    alb = mix(alb, uPipCol, k);
+    rough = mix(rough, .6, k);
+  }
+  float ao = mix(.72, 1., smoothstep(0., .3, vW.y));
+  ao *= 1. - .5 * aoAt(vW) * (1. - smoothstep(.03, .3, vW.y));
+  vec3 c = shade(alb, N, V, vW, rough, ao, sunVis(vW, N));
+  c += (alb * .45 + vec3(.04, .035, .03)) * vHi;
+  o = finish(c);
+}`;
+
+  const FLOOR_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uVP;
+out vec3 vW;
+void main() { vW = aPos; gl_Position = uVP * vec4(aPos, 1.); }`;
+
+  const FLOOR_FS = `#version 300 es
+${COMMON}
+in vec3 vW;
+out vec4 o;
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(hash12(i), hash12(i + vec2(1, 0)), f.x), mix(hash12(i + vec2(0, 1)), hash12(i + vec2(1, 1)), f.x), f.y); }
+float fbm(vec2 p) { float s = 0., a = .5; for (int i = 0; i < 4; i++) { s += a * vn(p); p = p * 2.03 + 17.1; a *= .5; } return s; }
+void main() {
+  vec2 p = vW.xz;
+  const float PW = 2.6;
+  float j = floor(p.y / PW), v = fract(p.y / PW);
+  float off = hash12(vec2(j, 3.1)) * 17.;
+  float LEN = 11. + hash12(vec2(j, 9.7)) * 7.;
+  float u = p.x + off, kk = floor(u / LEN), uu = fract(u / LEN);
+  vec2 id = vec2(j, kk);
+  float tone = hash12(id * 1.37 + .5) - .5;
+  float fw = fwidth(p.y) + 1e-5;
+  float g = fbm(vec2(u * .16, p.y * 2.6) + id * 7.31);
+  float rings = sin(p.y * 2.4 + g * 7.5 + hash12(id + 4.2) * 6.28) * .5 + .5;
+  float fine = (vn(vec2(u * 2.2, p.y * 46.)) - .5) * (1. - smoothstep(.01, .05, fw));
+  vec3 lt = vec3(.52, .30, .15), dk = vec3(.30, .155, .07);
+  vec3 alb = mix(lt, dk, smoothstep(.25, .95, rings * .75 + g * .55) * .62);
+  alb *= 1. + tone * .22 + fine * .12;
+  float sd = min(min(v, 1. - v) * PW, min(uu, 1. - uu) * LEN);
+  float seam = 1. - smoothstep(.014, .014 + fw * 1.5, sd);
+  alb *= 1. - .55 * seam * min(1., .02 / fw);
+  float occ = aoAt(vW);
+  vec3 N = vec3(0, 1, 0), V = normalize(uCam - vW);
+  vec3 c = shade(alb, N, V, vW, .36 + g * .18, 1. - .78 * occ, sunVis(vW, N));
+  o = finish(c);
+}`;
+
+  const BALL_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+uniform mat4 uVP, uModel;
+out vec3 vW; out vec3 vN;
+void main() { vW = (uModel * vec4(aPos, 1.)).xyz; vN = aNrm; gl_Position = uVP * vec4(vW, 1.); }`;
+
+  const BALL_FS = `#version 300 es
+${COMMON}
+in vec3 vW; in vec3 vN;
+out vec4 o;
+void main() {
+  vec3 N = normalize(vN), V = normalize(uCam - vW), R = reflect(-V, N);
+  float sh = sunVis(vW, N);
+  vec3 env = R.y < 0. ? vec3(.46, .28, .15) * .55 * pool(vW + R * 3.) : mix(vec3(.10, .09, .08), vec3(.42, .42, .45), smoothstep(0., .9, R.y));
+  float sp = pow(max(dot(R, uSun), 0.), 320.) * 40. * sh;
+  vec3 c = env * vec3(.66, .67, .70) + uSunCol * sp * .12 + uSunCol * max(dot(N, uSun), 0.) * sh * .05;
+  c *= mix(.45, 1., smoothstep(-.9, -.2, N.y));
+  o = finish(c);
+}`;
+
+  const DEPTH_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=2) in vec4 iA;
+layout(location=5) in float iAng;
+uniform mat4 uVP;
+void main() {
+  float c = cos(iAng), s = sin(iAng);
+  vec3 p = vec3(aPos.x, aPos.y * c - aPos.z * s, aPos.y * s + aPos.z * c);
+  float cy = cos(iA.z), sy = sin(iA.z);
+  vec3 w = vec3(p.x * cy + p.z * sy, p.y, -p.x * sy + p.z * cy) + vec3(iA.x, 0., iA.y);
+  gl_Position = uVP * vec4(w, 1.);
+}`;
+  const MESHDEPTH_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uVP, uModel;
+void main() { gl_Position = uVP * uModel * vec4(aPos, 1.); }`;
+  const NULL_FS = `#version 300 es
+precision mediump float;
+out vec4 o;
+void main() { o = vec4(1.); }`;
+  const QUAD_VS = `#version 300 es
+out vec2 vUV;
+void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); vUV = p; gl_Position = vec4(p * 2. - 1., 0., 1.); }`;
+  const BLUR_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uTex;
+uniform vec2 uDir;
+in vec2 vUV;
+out vec4 o;
+void main() {
+  float w[5] = float[](.2270, .1945, .1216, .0541, .0162);
+  float s = texture(uTex, vUV).r * w[0];
+  for (int i = 1; i < 5; i++) { s += texture(uTex, vUV + uDir * float(i)).r * w[i]; s += texture(uTex, vUV - uDir * float(i)).r * w[i]; }
+  o = vec4(s);
+}`;
+
+  let R3 = null;   // 所有 GL 资源
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  function program(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) { const a = gl.getActiveUniform(p, i); u[a.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, a.name); }
+    return { p, u };
+  }
+  // 圆角长方体：每个面 4×4 个格点，边上的格点推到圆角上
+  function roundedBox(hs, r, cy, cz) {
+    const P = [], Nn = [], I = [];
+    const grid = h => [-1, -(1 - r / h), 1 - r / h, 1];
+    for (let a = 0; a < 3; a++) for (const s of [-1, 1]) {
+      const u = (a + 1) % 3, v = (a + 2) % 3, gu = grid(hs[u]), gv = grid(hs[v]), b0 = P.length / 3;
+      for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) {
+        const q = [0, 0, 0]; q[a] = s * hs[a]; q[u] = gu[i] * hs[u]; q[v] = gv[j] * hs[v];
+        const c = q.map((x, k) => clamp(x, -(hs[k] - r), hs[k] - r));
+        let n = q.map((x, k) => x - c[k]); const l = Math.hypot(...n); n = n.map(x => x / l);
+        P.push(c[0] + n[0] * r, c[1] + n[1] * r + cy, c[2] + n[2] * r + cz); Nn.push(...n);
+      }
+      for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) { const k = b0 + j * 4 + i; I.push(k, k + 1, k + 5, k, k + 5, k + 4); }
+    }
+    return { P: new Float32Array(P), N: new Float32Array(Nn), I: new Uint16Array(I) };
+  }
+  function sphere(seg, ring) {
+    const P = [], I = [];
+    for (let j = 0; j <= ring; j++) for (let i = 0; i <= seg; i++) { const t = j / ring * PI, p = i / seg * 2 * PI; P.push(Math.sin(t) * Math.cos(p), Math.cos(t), Math.sin(t) * Math.sin(p)); }
+    for (let j = 0; j < ring; j++) for (let i = 0; i < seg; i++) { const a = j * (seg + 1) + i, b = a + seg + 1; I.push(a, b, a + 1, a + 1, b, b + 1); }
+    return { P: new Float32Array(P), I: new Uint16Array(I) };
+  }
+
+  function initGL() {
+    const r = {};
+    r.pDom = program(DOM_VS, DOM_FS);
+    r.pFloor = program(FLOOR_VS, FLOOR_FS);
+    r.pBall = program(BALL_VS, BALL_FS);
+    r.pDepth = program(DEPTH_VS, NULL_FS);
+    r.pMeshDepth = program(MESHDEPTH_VS, NULL_FS);
+    r.pBlur = program(QUAD_VS, BLUR_FS);
+    const buf = (target, data) => { const b = gl.createBuffer(); gl.bindBuffer(target, b); gl.bufferData(target, data, gl.STATIC_DRAW); return b; };
+    // 骨牌：局部坐标 x 横向，y 向上，z 朝倒下的方向；转轴是正面底边（z = 0, y = 0）
+    const rb = roundedBox([WD / 2, HH / 2, TK / 2], 0.028, HH / 2, -TK / 2);
+    r.domPos = buf(gl.ARRAY_BUFFER, rb.P); r.domNrm = buf(gl.ARRAY_BUFFER, rb.N); r.domIdx = buf(gl.ELEMENT_ARRAY_BUFFER, rb.I); r.domCount = rb.I.length;
+    const bx = [], w = WD / 2;
+    for (const z of [-TK, 0]) for (const y of [0, HH]) for (const x of [-w, w]) bx.push(x, y, z);
+    r.boxPos = buf(gl.ARRAY_BUFFER, new Float32Array(bx));
+    r.boxIdx = buf(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 3, 0, 3, 2, 4, 6, 7, 4, 7, 5, 0, 4, 5, 0, 5, 1, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3]));
+    const sp = sphere(32, 18);
+    r.ballPos = buf(gl.ARRAY_BUFFER, sp.P); r.ballIdx = buf(gl.ELEMENT_ARRAY_BUFFER, sp.I); r.ballCount = sp.I.length;
+    r.floorPos = gl.createBuffer();
+    r.vaoFloor = gl.createVertexArray(); gl.bindVertexArray(r.vaoFloor);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.floorPos); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    r.vaoBall = gl.createVertexArray(); gl.bindVertexArray(r.vaoBall);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.ballPos); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ballIdx);
+    gl.bindVertexArray(null);
+    r.vaoQuad = gl.createVertexArray();
+    // 阴影贴图
+    const mobile = Math.min(innerWidth, innerHeight) < 700;
+    r.shRes = mobile ? 1536 : 2048;
+    r.shTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, r.shTex);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, r.shRes, r.shRes);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+    r.shFB = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, r.shFB);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.shTex, 0);
+    gl.drawBuffers([gl.NONE]); gl.readBuffer(gl.NONE);
+    // 俯视的遮挡图：地板上被骨牌盖住、挨着骨牌的地方暗一点
+    r.aoRes = mobile ? 512 : 1024;
+    const rt = () => {
+      const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texStorage2D(gl.TEXTURE_2D, 1, gl.R8, r.aoRes, r.aoRes);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      return { t, fb };
+    };
+    r.ao = [rt(), rt()];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return r;
+  }
+  // 换了一套阵以后重建实例缓冲
+  function uploadScene() {
+    const r = R3, g = G;
+    for (const k of ['iA', 'iB', 'iP', 'iAng']) if (r[k]) gl.deleteBuffer(r[k]);
+    const mk = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage); return b; };
+    r.iA = mk(g.dA, gl.STATIC_DRAW); r.iB = mk(g.dB, gl.STATIC_DRAW); r.iP = mk(g.dP, gl.STATIC_DRAW); r.iAng = mk(g.angDraw, gl.DYNAMIC_DRAW);
+    const inst = (loc, b, size) => { gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0); gl.vertexAttribDivisor(loc, 1); };
+    for (const k of ['vaoDom', 'vaoBox']) if (r[k]) gl.deleteVertexArray(r[k]);
+    r.vaoDom = gl.createVertexArray(); gl.bindVertexArray(r.vaoDom);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.domPos); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.domNrm); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    inst(2, r.iA, 4); inst(3, r.iB, 4); inst(4, r.iP, 4); inst(5, r.iAng, 1);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.domIdx);
+    r.vaoBox = gl.createVertexArray(); gl.bindVertexArray(r.vaoBox);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.boxPos); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    inst(2, r.iA, 4); inst(5, r.iAng, 1);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.boxIdx);
+    gl.bindVertexArray(null);
+    const [x0, x1, z0, z1] = g.box, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, S = 260;
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.floorPos);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([cx - S, 0, cz - S, cx + S, 0, cz - S, cx - S, 0, cz + S, cx + S, 0, cz - S, cx + S, 0, cz + S, cx - S, 0, cz + S]), gl.STATIC_DRAW);
+    // 遮挡图覆盖整个阵外加一圈
+    const m = 4, size = Math.max(x1 - x0, z1 - z0) + 2 * m;
+    r.aoBox = [cx - size / 2, cz + size / 2, 1 / size, 1 / size];
+    ortho(r.aoVP = m4(), -size / 2, size / 2, -size / 2, size / 2, -10, 10);
+    // 俯视：x 向右，z 向下（贴图的 v）
+    const look = lookAt(m4(), [cx, 5, cz], [cx, 0, cz], [0, 0, -1]);
+    mul(r.aoVP, r.aoVP, look);
+    r.aoTexel = 1 / r.aoRes;
+    r.aoBlurStep = (0.11 / size);   // 每一步约 0.11 个单位，九步半径约 0.45
+    r.pool = [cx, cz, 1 / ((x1 - x0) / 2 + 6), 1 / ((z1 - z0) / 2 + 6)];
+    r.aoDirty = true;
+  }
+  function uploadColors() { packColors(G); gl.bindBuffer(gl.ARRAY_BUFFER, R3.iB); gl.bufferSubData(gl.ARRAY_BUFFER, 0, G.dB); }
+
+  // ---------- 镜头 ----------
+  const FOV = 34 * PI / 180;
+  const view = m4(), proj = m4(), vp = m4(), ivp = m4(), lview = m4(), lproj = m4(), lvp = m4();
+  const cam = { p: null, v: [0, 0, 0, 0, 0, 0] };
+  const KEYS = ['tx', 'tz', 'dist', 'el', 'yaw', 'fov'];
+  function camEye(p) { const ce = Math.cos(p.el); return [p.tx + p.dist * ce * Math.sin(p.yaw), p.dist * Math.sin(p.el), p.tz + p.dist * ce * Math.cos(p.yaw)]; }
+  function camMats(p, aspect, o = vp) {
+    const e = camEye(p);
+    lookAt(view, e, [p.tx, 0.25, p.tz], [0, 1, 0]);
+    persp(proj, p.fov || FOV, aspect, 0.1, 500);
+    mul(o, proj, view);
+    return e;
+  }
+  // 最后的全景：把整个阵框进画面，上下留出页码和按钮的位置
+  function fitFinal(aspect) {
+    const g = G, [x0, x1, z0, z1] = g.box;
+    const el = g.portrait ? 1.28 : 1.02;
+    const mt = g.portrait ? 0.16 : 0.12, mb = g.portrait ? 0.3 : 0.24, ml = 0.05, mr = 0.05;
+    // 全景用长焦，远处的画不会被透视压小
+    const p = { tx: (x0 + x1) / 2, tz: (z0 + z1) / 2, dist: 40, el, yaw: 0, fov: (g.portrait ? 21 : 24) * PI / 180 };
+    const M = m4();
+    const ext = () => {
+      camMats(p, aspect, M);
+      let a = Infinity, b = -Infinity, c = Infinity, d = -Infinity;
+      for (const x of [x0, x1]) for (const z of [z0, z1]) for (const y of [0, 1]) { const q = xf(M, x, y, z); a = Math.min(a, q[0]); b = Math.max(b, q[0]); c = Math.min(c, q[1]); d = Math.max(d, q[1]); }
+      return [a, b, c, d];
+    };
+    for (let it = 0; it < 4; it++) {
+      let lo = 5, hi = 600;
+      for (let k = 0; k < 40; k++) { p.dist = (lo + hi) / 2; const [a, b, c, d] = ext(); if (a < -1 + ml || b > 1 - mr || c < -1 + mb || d > 1 - mt) lo = p.dist; else hi = p.dist; }
+      p.dist = hi;
+      const [a, b, c, d] = ext();
+      const ex = (a + b) / 2 - (ml - mr) / 2, ey = (c + d) / 2 - (mb - mt) / 2;
+      // 用数值导数把内容挪到预留区域的正中
+      const t0 = p.tz; p.tz += 1; const e2 = ext(); p.tz = t0;
+      const jy = (e2[2] + e2[3]) / 2 - (c + d) / 2;
+      if (Math.abs(jy) > 1e-6) p.tz -= ey / jy;
+      const x0p = p.tx; p.tx += 1; const e3 = ext(); p.tx = x0p;
+      const jx = (e3[0] + e3[1]) / 2 - (a + b) / 2;
+      if (Math.abs(jx) > 1e-6) p.tx -= ex / jx;
+    }
+    return p;
+  }
+  function camGoal() {
+    const g = G;
+    if (REDUCED) return g.camFinal;
+    // 波前：主线上已经被碰到、走得最远的那张，再按时间插到下一张（往前看 0.25 秒），走过分叉时不会一下跳过去
+    const tq = st.simT + 0.25, T = g.T;
+    let k = -1;
+    for (let j = 0; j < g.main.length; j++) if (T[g.main[j]] <= tq) k = j;
+    if (k < 0) return g.camIdle;
+    let sF = g.mainS[k];
+    if (k + 1 < g.main.length) { const ta = T[g.main[k]], tb = T[g.main[k + 1]]; if (isFinite(tb) && tb > ta) sF = mix(sF, g.mainS[k + 1], clamp((tq - ta) / (tb - ta), 0, 1)); }
+    const n = sample(g.mpts, g.mcum, sF);
+    const fol = { tx: n.x + n.dx * 2.6, tz: n.z + n.dz * 2.6, dist: g.followDist, el: 0.62, yaw: g.followYaw, fov: FOV };
+    const a = sstep(0.3, 7, sF), b = sstep(g.sLeft - 10, g.sComb + 5, sF);
+    const o = {};
+    for (const k of KEYS) o[k] = mix(mix(g.camIdle[k], fol[k], a), g.camFinal[k], b);
+    // 远近按对数插，拉远的速度看起来是匀的
+    o.dist = Math.exp(mix(Math.log(mix(g.camIdle.dist, fol.dist, a)), Math.log(g.camFinal.dist), b));
+    return o;
+  }
+  // 弹簧追镜头：位置追得快一些，远近和角度慢一些
+  function camStep(dt, now) {
+    const goal = camGoal();
+    if (!cam.p) { cam.p = { ...goal }; cam.v.fill(0); return true; }
+    let moving = false;
+    KEYS.forEach((k, j) => {
+      const w = j < 2 ? 4.2 : 2.0;   // 位置追得快，远近、角度、焦距慢一些
+      let target = goal[k];
+      if (k === 'yaw' && !REDUCED) target += 0.012 * Math.sin(now * 0.00021);
+      const x = cam.p[k], v = cam.v[j];
+      const a = w * w * (target - x) - 2 * w * v;
+      cam.v[j] = v + a * dt; cam.p[k] = x + cam.v[j] * dt;
+      if (Math.abs(target - x) > 1e-4 || Math.abs(cam.v[j]) > 1e-4) moving = true;
+    });
+    return moving;
+  }
+
+  // 阴影：按当前镜头看得到的地面范围取光源的正交框
+  function fitShadow(eye) {
+    const g = G, [x0, x1, z0, z1] = g.box;
+    invert(ivp, vp);
+    const pts = [];
+    for (const nx of [-1, 0, 1]) for (const ny of [-1, 0, 1]) {
+      const a = xf(ivp, nx, ny, -1), b = xf(ivp, nx, ny, 1);
+      let dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+      const l = Math.hypot(dx, dy, dz); dx /= l; dy /= l; dz /= l;
+      let t = dy < -1e-4 ? -a[1] / dy : 1e9;
+      t = Math.min(t, 120);
+      pts.push([clamp(a[0] + dx * t, x0 - 6, x1 + 6), clamp(a[2] + dz * t, z0 - 6, z1 + 6)]);
+    }
+    const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+    lookAt(lview, [cx + SUN[0] * 80, SUN[1] * 80, cz + SUN[2] * 80], [cx, 0, cz], [0, 1, 0]);
+    let a = Infinity, b = -Infinity, c = Infinity, d = -Infinity, n = Infinity, f = -Infinity;
+    for (const [x, z] of pts) for (const y of [0, 1.2]) {
+      const vx = lview[0] * x + lview[4] * y + lview[8] * z + lview[12], vy = lview[1] * x + lview[5] * y + lview[9] * z + lview[13], vz = lview[2] * x + lview[6] * y + lview[10] * z + lview[14];
+      a = Math.min(a, vx); b = Math.max(b, vx); c = Math.min(c, vy); d = Math.max(d, vy); n = Math.min(n, vz); f = Math.max(f, vz);
+    }
+    const size = Math.max(b - a, d - c) + 2, ts = size / R3.shRes;
+    a = Math.floor((a - 1) / ts) * ts; c = Math.floor((c - 1) / ts) * ts;
+    ortho(lproj, a, a + size, c, c + size, -f - 6, -n + 6);
+    mul(lvp, lproj, lview);
+  }
+
+  // ---------- 画 ----------
+  const SUN = (() => { const v = [-0.42, 0.72, -0.52], l = Math.hypot(...v); return v.map(x => x / l); })();
+  const SUN_COL = [1.0, 0.84, 0.64].map(x => x * 3.3);
+  const MODEL = m4();
+  function setCommon(P, eye) {
+    gl.useProgram(P.p);
+    const u = P.u;
+    if (u.uVP) gl.uniformMatrix4fv(u.uVP, false, vp);
+    if (u.uCam) gl.uniform3fv(u.uCam, eye);
+    if (u.uSun) gl.uniform3fv(u.uSun, SUN);
+    if (u.uSunCol) gl.uniform3fv(u.uSunCol, SUN_COL);
+    if (u.uLVP) gl.uniformMatrix4fv(u.uLVP, false, lvp);
+    if (u.uShadow) gl.uniform1i(u.uShadow, 0);
+    if (u.uShTexel) gl.uniform1f(u.uShTexel, 1 / R3.shRes);
+    if (u.uAO) gl.uniform1i(u.uAO, 1);
+    if (u.uAOBox) gl.uniform4fv(u.uAOBox, R3.aoBox);
+    if (u.uPool) gl.uniform4fv(u.uPool, R3.pool);
+    if (u.uExpo) gl.uniform1f(u.uExpo, 1.0);
+  }
+  function ballModel() {
+    const b = G.ball, rr = 0.28, t = st.simT;
+    const hx = b.x - b.dx * (TK + rr + 0.01), hz = b.z - b.dz * (TK + rr + 0.01);
+    let d;
+    if (t < 0) d = t * 3.6; else d = 0.36 * (1 - Math.exp(-t * 3.2));
+    MODEL.fill(0); MODEL[0] = MODEL[5] = MODEL[10] = rr; MODEL[15] = 1;
+    MODEL[12] = hx + b.dx * d; MODEL[13] = rr; MODEL[14] = hz + b.dz * d;
+    return MODEL;
+  }
+  const ballOn = () => st.ball && st.simT > st.runStart - 0.01;
+
+  function render(anglesChanged) {
+    const r = R3, g = G, W = glc.width, H = glc.height;
+    const eye = camMats(cam.p, W / H);
+    fitShadow(eye);
+    gl.enable(gl.DEPTH_TEST);
+    // 1. 阴影
+    gl.bindFramebuffer(gl.FRAMEBUFFER, r.shFB);
+    gl.viewport(0, 0, r.shRes, r.shRes);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.6, 2.5);
+    gl.useProgram(r.pDepth.p); gl.uniformMatrix4fv(r.pDepth.u.uVP, false, lvp);
+    gl.bindVertexArray(r.vaoBox); gl.drawElementsInstanced(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0, g.N);
+    if (ballOn()) {
+      gl.useProgram(r.pMeshDepth.p); gl.uniformMatrix4fv(r.pMeshDepth.u.uVP, false, lvp); gl.uniformMatrix4fv(r.pMeshDepth.u.uModel, false, ballModel());
+      gl.bindVertexArray(r.vaoBall); gl.drawElements(gl.TRIANGLES, r.ballCount, gl.UNSIGNED_SHORT, 0);
+    }
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    // 2. 俯视遮挡图（牌动了才重画）
+    if (anglesChanged || r.aoDirty) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, r.ao[0].fb);
+      gl.viewport(0, 0, r.aoRes, r.aoRes);
+      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.disable(gl.DEPTH_TEST);
+      gl.useProgram(r.pDepth.p); gl.uniformMatrix4fv(r.pDepth.u.uVP, false, r.aoVP);
+      gl.bindVertexArray(r.vaoBox); gl.drawElementsInstanced(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0, g.N);
+      gl.useProgram(r.pBlur.p); gl.uniform1i(r.pBlur.u.uTex, 0); gl.activeTexture(gl.TEXTURE0);
+      gl.bindVertexArray(r.vaoQuad);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, r.ao[1].fb); gl.bindTexture(gl.TEXTURE_2D, r.ao[0].t); gl.uniform2f(r.pBlur.u.uDir, r.aoBlurStep, 0); gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, r.ao[0].fb); gl.bindTexture(gl.TEXTURE_2D, r.ao[1].t); gl.uniform2f(r.pBlur.u.uDir, 0, r.aoBlurStep); gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.enable(gl.DEPTH_TEST);
+      r.aoDirty = false;
+    }
+    // 3. 正式画面
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.clearColor(0.078, 0.063, 0.047, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, r.shTex);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, r.ao[0].t);
+    setCommon(r.pFloor, eye);
+    gl.bindVertexArray(r.vaoFloor); gl.drawArrays(gl.TRIANGLES, 0, 6);
+    setCommon(r.pDom, eye);
+    gl.uniform3fv(r.pDom.u.uBody, PAL.body); gl.uniform3fv(r.pDom.u.uPipCol, PAL.pip); gl.uniform1i(r.pDom.u.uHover, st.hover >= 0 ? g.inv[st.hover] : -1);
+    gl.bindVertexArray(r.vaoDom); gl.drawElementsInstanced(gl.TRIANGLES, r.domCount, gl.UNSIGNED_SHORT, 0, g.N);
+    if (ballOn()) {
+      setCommon(r.pBall, eye); gl.uniformMatrix4fv(r.pBall.u.uModel, false, ballModel());
+      gl.bindVertexArray(r.vaoBall); gl.drawElements(gl.TRIANGLES, r.ballCount, gl.UNSIGNED_SHORT, 0);
+    }
+    gl.bindVertexArray(null);
+  }
+
+  // ---------- 声音 ----------
+  const PANS = [-0.8, -0.5, -0.22, 0, 0.22, 0.5, 0.8];
+  function buildAudio(ac) {
+    const rnd = mulberry(77), sr = ac.sampleRate;
+    const make = (len, fill, peak = 0.85) => {
+      const b = ac.createBuffer(1, Math.ceil(len * sr), sr), d = b.getChannelData(0);
+      fill(d);
+      let pk = 0; for (let i = 0; i < d.length; i++) pk = Math.max(pk, Math.abs(d[i]));
+      if (pk > 0) for (let i = 0; i < d.length; i++) d[i] *= peak / pk;
+      return b;
+    };
+    // 一组衰减很快的共振，加一下极短的噪声起头
+    const hit = (modes, noiseT, noiseA, thump) => d => {
+      const ms = modes.map(([f, t, a]) => [f * (0.9 + rnd() * 0.2), t * (0.85 + rnd() * 0.3), a * (0.7 + rnd() * 0.6), rnd() * 6.28]);
+      let lp = 0;
+      for (let i = 0; i < d.length; i++) {
+        const t = i / sr;
+        let v = 0;
+        for (const [f, tau, a, p] of ms) v += a * Math.exp(-t / tau) * Math.sin(2 * PI * f * t + p);
+        v += (rnd() * 2 - 1) * Math.exp(-t / noiseT) * noiseA;
+        if (thump) v += thump[1] * Math.exp(-t / thump[2]) * Math.sin(2 * PI * thump[0] * t);
+        lp += (v - lp) * 0.55;
+        d[i] = lp * Math.min(1, i / 10) * Math.min(1, (d.length - i) / 40);
+      }
+    };
+    const clicks = Array.from({ length: 10 }, () => make(0.07, hit([[1750, 0.010, 1], [2950, 0.007, 0.75], [4300, 0.005, 0.55], [6500, 0.0035, 0.35], [9000, 0.002, 0.18]], 0.0009, 0.9)));
+    const lands = Array.from({ length: 4 }, () => make(0.16, hit([[330, 0.03, 1], [790, 0.018, 0.7], [1650, 0.01, 0.55], [2900, 0.006, 0.4]], 0.0018, 0.7, [125, 1.2, 0.02])));
+    const tink = make(0.3, hit([[2450, 0.05, 1], [4950, 0.03, 0.55], [7400, 0.018, 0.3]], 0.0007, 0.6));
+    const rev = clicks.map(b => { const r = ac.createBuffer(1, b.length, sr), s = b.getChannelData(0), d = r.getChannelData(0); for (let i = 0; i < s.length; i++) d[i] = s[s.length - 1 - i]; return r; });
+    // 密集时铺一层“哗啦啦”：两秒里撒满随机的咔嗒
+    const bed = make(2, d => { for (let k = 0; k < 760; k++) { const src = clicks[(rnd() * 10) | 0].getChannelData(0), at = (rnd() * (d.length - src.length)) | 0, gk = 0.15 + rnd() * 0.5; for (let j = 0; j < src.length; j++) d[at + j] += src[j] * gk; } }, 0.7);
+    const roll = make(2, d => { let a = 0, b = 0; for (let i = 0; i < d.length; i++) { a += ((rnd() * 2 - 1) - a) * 0.05; b += (a - b) * 0.1; d[i] = b * (0.75 + 0.25 * Math.sin(i / sr * 2 * PI * 9)); } const f = 2000; for (let i = 0; i < f; i++) { const w = i / f; d[i] = d[i] * w + d[d.length - f + i] * (1 - w); } }, 0.6);
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 8; comp.attack.value = 0.002; comp.release.value = 0.15;
+    const master = ac.createGain(); master.gain.value = 0.8;
+    master.connect(comp); comp.connect(ac.destination);
+    const buses = PANS.map(p => { const n = ac.createStereoPanner(); n.pan.value = p; n.connect(master); return n; });
+    const loop = (buf, rate = 1) => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; s.playbackRate.value = rate; const gn = ac.createGain(); gn.gain.value = 0; s.connect(gn); gn.connect(master); s.start(); return gn; };
+    return { ac, master, buses, clicks, lands, tink, rev, bedGain: loop(bed), rollGain: loop(roll) };
+  }
+  function voice(A, buf, when, gain, bus, rate = 1) {
+    const s = A.ac.createBufferSource(); s.buffer = buf; s.playbackRate.value = rate;
+    const g = A.ac.createGain(); g.gain.value = gain;
+    s.connect(g); g.connect(A.buses[bus]);
+    s.start(Math.max(when, A.ac.currentTime));
+  }
+  // 模拟时间从 t0 走到 t1（倒放时 t1 < t0），这段时间里该响的事件排进去
+  function audioSpan(A, t0, t1, dtReal, base, panOf) {
+    const rev = t1 < t0, lo = Math.min(t0, t1), hi = Math.max(t0, t1);
+    const a = lower(evT, lo), b = lower(evT, hi), n = b - a;
+    const rate = n / Math.max(dtReal, 1e-3);
+    A.bedGain.gain.setTargetAtTime(clamp((rate - 90) / 600, 0, 1) * 0.5 * (rev ? 0.5 : 1), base, 0.06);
+    if (!n || hi === lo) return;
+    const MAX = 6, step = n > MAX ? n / MAX : 1, boost = Math.min(2.2, n > MAX ? Math.sqrt(n / MAX) : 1);
+    for (let k = 0; k < Math.min(n, MAX); k++) {
+      const e = rev ? b - 1 - Math.floor(k * step) : a + Math.floor(k * step);
+      const f = clamp((evT[e] - t0) / (t1 - t0), 0, 1);
+      const when = base + 0.045 + f * dtReal;
+      const land = evK[e] === 1, i = evI[e];
+      const gain = (land ? 0.5 : 0.3) * (0.75 + Math.random() * 0.25) * boost * (rev ? 0.5 : 1);
+      const bank = land ? A.lands : rev ? A.rev : A.clicks;
+      voice(A, bank[(Math.random() * bank.length) | 0], when, gain, panOf(i), 0.92 + Math.random() * 0.2);
+    }
+  }
+  const SND = { on: false, A: null };
+  function panOf(i) {
+    const x = G.A[i * 4], z = G.A[i * 4 + 1];
+    const w = vp[3] * x + vp[7] * 0.3 + vp[11] * z + vp[15];
+    const nx = w > 0 ? (vp[0] * x + vp[4] * 0.3 + vp[8] * z + vp[12]) / w : 0;
+    return clamp(Math.round((clamp(nx, -1, 1) * 0.5 + 0.5) * (PANS.length - 1)), 0, PANS.length - 1);
+  }
+  function audioFrame(t0, t1, dt) {
+    const A = SND.A;
+    if (!A || !SND.on) return;
+    const now = A.ac.currentTime;
+    audioSpan(A, t0, t1, dt, now, panOf);
+    // 钢珠：滚的时候低低的隆隆声，撞上第一张时叮一声
+    const rolling = ballOn() && st.mode === 'run' && st.simT < 0;
+    A.rollGain.gain.setTargetAtTime(rolling ? 0.18 : 0, now, 0.05);
+    if (st.ball && st.mode === 'run' && t0 < 0 && t1 >= 0) voice(A, A.tink, now + 0.045, 0.45, panOf(G.start));
+  }
+  async function setSound(on) {
+    SND.on = on;
+    const btn = $('#sound');
+    btn.textContent = on ? '声音 · 开' : '声音 · 关';
+    btn.setAttribute('aria-pressed', String(on));
+    if (on) {
+      if (!SND.A) SND.A = buildAudio(new (window.AudioContext || window.webkitAudioContext)());
+      await SND.A.ac.resume();
+      SND.A.master.gain.setTargetAtTime(0.8, SND.A.ac.currentTime, 0.05);
+    } else if (SND.A) {
+      SND.A.master.gain.setTargetAtTime(0, SND.A.ac.currentTime, 0.05);
+      SND.A.bedGain.gain.setTargetAtTime(0, SND.A.ac.currentTime, 0.05);
+    }
+  }
+  // 测试用：把一整轮离线渲染出来，看峰值和有没有削波
+  async function renderOffline(scale = 1, wav = false) {
+    const sr = 44100, start = Math.min(st.runStart, 0), dur = Math.min((st.tEnd - start) / scale + 1.2, 40);
+    const ac = new OfflineAudioContext(2, Math.ceil(sr * dur), sr);
+    const A = buildAudio(ac);
+    const fr = 1 / 60;
+    for (let f = 0; (f + 1) * fr < dur - 0.6; f++) audioSpan(A, start + f * fr * scale, start + (f + 1) * fr * scale, fr, f * fr, () => 3);
+    const buf = await ac.startRendering();
+    let peak = 0, clip = 0, bad = 0, sum = 0, n = 0;
+    for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) { const v = d[i]; if (!isFinite(v)) { bad++; continue; } const a = Math.abs(v); peak = Math.max(peak, a); if (a >= 0.999) clip++; sum += v * v; n++; } }
+    // 每 50 毫秒一段的电平，看密集段和稀疏段
+    const d0 = buf.getChannelData(0), win = Math.round(sr * 0.05), env = [];
+    for (let i = 0; i + win < d0.length; i += win) { let s = 0; for (let j = 0; j < win; j++) s += d0[i + j] ** 2; env.push(Math.round(10 * Math.log10(s / win + 1e-12))); }
+    const out = { dur, peak, peakDb: 20 * Math.log10(peak), clip, bad, rmsDb: 10 * Math.log10(sum / n), env };
+    if (wav) {   // 16 位双声道 WAV，base64
+      const L = buf.getChannelData(0), Rr = buf.getChannelData(1), len = L.length, ab = new ArrayBuffer(44 + len * 4), v = new DataView(ab);
+      const w = (o, s2) => { for (let i = 0; i < s2.length; i++) v.setUint8(o + i, s2.charCodeAt(i)); };
+      w(0, 'RIFF'); v.setUint32(4, 36 + len * 4, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 2, true);
+      v.setUint32(24, sr, true); v.setUint32(28, sr * 4, true); v.setUint16(32, 4, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, len * 4, true);
+      for (let i = 0; i < len; i++) { v.setInt16(44 + i * 4, clamp(L[i], -1, 1) * 32767, true); v.setInt16(46 + i * 4, clamp(Rr[i], -1, 1) * 32767, true); }
+      let bin = ''; const u8 = new Uint8Array(ab); for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+      out.wav = btoa(bin);
+    }
+    return out;
+  }
+
+  // ---------- 交互 ----------
+  const hint = $('#hint'), meta = $('#meta'), resetBtn = $('#reset');
+  const fmt = n => n.toLocaleString('en-US');
+  let hintText = '';
+  function setHint(t) {
+    if (t === hintText) return;
+    hintText = t;
+    if (t) { hint.textContent = t; hint.classList.remove('off'); } else hint.classList.add('off');
+  }
+  function trigger(i) {
+    if (!G || st.mode === 'rewind' || !(i >= 0)) return;
+    st.touched = true;
+    if (st.mode === 'idle') { st.sources = [{ i, t: 0.02 }]; st.simT = 0; st.runStart = 0; st.ball = false; st.scale = 1; }
+    else st.sources.push({ i, t: st.simT + 0.02 });
+    solve();
+    st.mode = 'run';
+  }
+  function startBall() {
+    st.sources = [{ i: G.start, t: 0 }];
+    solve();
+    st.simT = -1.0; st.runStart = -1.0; st.ball = true; st.scale = 1; st.mode = 'run';
+  }
+  function resetAll() {
+    st.sources = []; G.T.fill(Infinity); solve();
+    st.simT = 0; st.mode = 'idle'; st.ball = false; st.idleAt = performance.now(); st.scale = 1;
+  }
+  function rewind() {
+    if (!G || (st.mode !== 'run' && st.mode !== 'done')) return;
+    st.touched = true;
+    if (REDUCED) { resetAll(); return; }
+    st.mode = 'rewind';
+  }
+  // 屏幕上离指针最近、还立着的那张
+  function pick(px, py) {
+    const g = G, W = innerWidth, H = innerHeight, A = g.A;
+    let best = -1, bd = Infinity, bw = 1;
+    for (let i = 0; i < g.N; i++) {
+      if (g.T[i] <= st.simT + 0.05 || g.ang[i] > 0.02) continue;
+      const x = A[i * 4], z = A[i * 4 + 1];
+      const w = vp[3] * x + vp[7] * 0.55 + vp[11] * z + vp[15];
+      if (w <= 0.1) continue;
+      const sx = ((vp[0] * x + vp[4] * 0.55 + vp[8] * z + vp[12]) / w * 0.5 + 0.5) * W;
+      const sy = (0.5 - (vp[1] * x + vp[5] * 0.55 + vp[9] * z + vp[13]) / w * 0.5) * H;
+      const d = (sx - px) ** 2 + (sy - py) ** 2;
+      if (d < bd) { bd = d; best = i; bw = w; }
+    }
+    const ppu = H * 0.5 * proj[5] / bw;   // 那个位置一个单位有多少像素
+    return best >= 0 && Math.sqrt(bd) < Math.max(10, ppu * 0.45) ? best : -1;
+  }
+  let ptr = null, down = null;
+  glc.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') ptr = [e.clientX, e.clientY]; });
+  glc.addEventListener('pointerleave', () => { ptr = null; });
+  glc.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+  glc.addEventListener('pointerup', e => {
+    if (!down || !G) return;
+    const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+    down = null;
+    if (moved > 10 || st.mode === 'rewind') return;
+    trigger(pick(e.clientX, e.clientY));
+  });
+  glc.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && G) { e.preventDefault(); if (st.mode === 'idle') trigger(G.start); }
+  });
+  resetBtn.addEventListener('click', rewind);
+  $('#sound').addEventListener('click', () => setSound(!SND.on));
+
+  // ---------- 主循环 ----------
+  let last = 0, needDraw = true, lastAngT = NaN, lastHover = -2;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!G || !glOK) return;
+    const dt = clamp((now - (last || now)) / 1000, 0, 0.05);
+    last = now;
+    const t0 = st.simT;
+    if (st.mode === 'idle' && !st.touched && !REDUCED && now - st.idleAt > 4200) startBall();   // 没人碰就让钢珠滚过来
+    if (st.mode === 'run') {
+      const target = !REDUCED && fieldActive(st.simT) ? 0.55 : 1;   // 整片场地倒下时放慢一点
+      st.scale += (target - st.scale) * (1 - Math.exp(-dt * 3));
+      st.simT += dt * st.scale;
+      if (st.simT > st.tEnd + 0.6) st.mode = 'done';
+    } else if (st.mode === 'rewind') {
+      st.simT -= dt * 2.6;
+      if (st.simT <= st.runStart - 0.02) { st.simT = st.runStart - 0.02; resetAll(); }
+    }
+    let changed = false;
+    if (st.simT !== lastAngT) {
+      st.fallen = evalAngles(st.simT); lastAngT = st.simT; changed = true;
+      const { perm, ang, angDraw } = G;
+      for (let k = 0; k < perm.length; k++) angDraw[k] = ang[perm[k]];
+      gl.bindBuffer(gl.ARRAY_BUFFER, R3.iAng); gl.bufferSubData(gl.ARRAY_BUFFER, 0, angDraw);
+    }
+    const moving = camStep(dt, now);
+    camMats(cam.p, glc.width / glc.height);
+    if (SND.on) audioFrame(t0, st.simT, dt);
+    // 悬停
+    const hv = ptr && st.mode !== 'rewind' ? pick(ptr[0], ptr[1]) : -1;
+    if (hv !== st.hover) { st.hover = hv; glc.style.cursor = hv >= 0 ? 'pointer' : ''; }
+    if (changed || moving || needDraw || hv !== lastHover) { render(changed); needDraw = false; lastHover = hv; if (!glc.classList.contains('on')) glc.classList.add('on'); }
+    // 文字
+    const N = G.N;
+    const mt = st.mode === 'idle' ? `多米诺 · ${fmt(N)} 块骨牌` : `已倒 ${fmt(st.fallen)} / ${fmt(N)}`;
+    if (meta.textContent !== mt) meta.textContent = mt;
+    resetBtn.disabled = !(st.mode === 'run' || st.mode === 'done');
+    setHint(st.mode === 'idle' ? (G.portrait ? '点一块骨牌，从那里推倒' : '点任意一块骨牌，从那里推倒') : st.mode === 'done' ? '点“重新立起”，看它倒放回去' : '');
+  }
+
+  // ---------- 降级：没有 WebGL2 时画一张倒好的俯视图 ----------
+  function fallback() {
+    const o = glc.getContext('2d');
+    if (!o) return;
+    const g = G, dpr = Math.min(devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight;
+    glc.width = W * dpr; glc.height = H * dpr; o.setTransform(dpr, 0, 0, dpr, 0, 0);
+    o.fillStyle = '#7a5434'; o.fillRect(0, 0, W, H);
+    const [x0, x1, z0, z1] = g.box, s = Math.min(W * 0.9 / (x1 - x0), H * 0.7 / (z1 - z0));
+    const ox = W / 2 - (x0 + x1) / 2 * s, oz = H * 0.44 - (z0 + z1) / 2 * s;
+    const toCss = c => `rgb(${c.map(v => Math.round(255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055))).join(',')})`;
+    for (const n of g.nodes) {
+      o.save(); o.translate(ox + n.x * s, oz + n.z * s); o.rotate(-Math.atan2(n.dx, n.dz));
+      o.fillStyle = toCss(n.col); o.fillRect(-WD / 2 * s, 0, WD * s * 0.92, DS * s * 0.92);
+      o.restore();
+    }
+    glc.classList.add('on');
+    setHint('这个浏览器不支持 WebGL2，只能看倒好的样子');
+  }
+
+  // ---------- 开场 ----------
+  let glOK = !!gl;
+  function sizeCanvas() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    glc.width = Math.round(innerWidth * dpr); glc.height = Math.round(innerHeight * dpr);
+  }
+  function setup(keep) {
+    const was = st.mode, prev = G;
+    G = build(prev && keep ? prev : null);
+    sizeCanvas();
+    if (glOK) { uploadScene(); G.camFinal = fitFinal(glc.width / glc.height); }
+    cam.p = null;
+    if (REDUCED || (keep && was !== 'idle')) {
+      st.sources = [{ i: G.start, t: 0 }]; solve(); st.simT = st.tEnd + 1; st.runStart = 0; st.mode = 'done'; st.ball = false;
+    } else { solve(); st.mode = 'idle'; st.simT = 0; st.idleAt = performance.now(); }
+    lastAngT = NaN; needDraw = true;
+    if (!glOK) fallback();
+  }
+
+  let fontsIn = false;
+  const fontsP = fontsReady().then(() => { fontsIn = true; });
+  Promise.race([fontsP, new Promise(r => setTimeout(r, 1000))]).then(() => {
+    if (glOK) { try { R3 = initGL(); } catch (err) { console.error(err); glOK = false; } }
+    setup(false);
+    requestAnimationFrame(frame);
+    // 字体晚到：牌还没倒、画藏在背面时悄悄换上
+    if (!fontsIn) fontsP.then(() => {
+      if (!G || st.mode !== 'idle' || st.touched) return;
+      paint(G);
+      for (let i = 0; i < G.N; i++) G.B.set(G.nodes[i].col, i * 4);
+      if (glOK) uploadColors();
+    });
+  });
+  let rt = 0, lastW = innerWidth, lastH = innerHeight;
+  addEventListener('resize', () => {
+    if (innerWidth === lastW && Math.abs(innerHeight - lastH) < 80) { sizeCanvas(); if (G && glOK) G.camFinal = fitFinal(glc.width / glc.height); needDraw = true; return; }
+    lastW = innerWidth; lastH = innerHeight;
+    clearTimeout(rt);
+    rt = setTimeout(() => setup(true), 250);
+  });
+
+  // 测试用：牌在屏幕上的位置（CSS 像素）
+  const screenOf = i => { const x = G.A[i * 4], z = G.A[i * 4 + 1], w = vp[3] * x + vp[7] * 0.55 + vp[11] * z + vp[15]; return [((vp[0] * x + vp[4] * 0.55 + vp[8] * z + vp[12]) / w * 0.5 + 0.5) * innerWidth, (0.5 - (vp[1] * x + vp[5] * 0.55 + vp[9] * z + vp[13]) / w * 0.5) * innerHeight]; };
+  window.__domino = { st, get G() { return G; }, get snd() { return SND; }, trigger, rewind, startBall, renderOffline, pick, screenOf, cam, setSound, get ev() { return { evT, evI, evK }; } };
+})();
+</script>
+</body>
+</html>

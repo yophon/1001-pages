@@ -18,6 +18,9 @@
 | 006 | [枯山水](https://yophon.github.io/1001-pages/zen.html) | 一方枯山水，品牌名是白砂里的苔岛，鼠标是一把五齿耙 |
 | 007 | [浇铸](https://yophon.github.io/1001-pages/foundry.html) | 铁水灌满字形砂型，按黑体辐射冷却下来，开箱落砂后打磨出光 |
 | 008 | [音乐盒](https://yophon.github.io/1001-pages/musicbox.html) | 品牌名打成纸带上的孔，摇动摇柄就奏出一段曲子 |
+| 009 | [结霜](https://yophon.github.io/1001-pages/frost.html) | 冬夜的窗上，冰花从品牌名里长出来，按住哈气能化开 |
+| 010 | [风洞](https://yophon.github.io/1001-pages/tunnel.html) | 品牌名放进实时计算的烟风洞，字后卷出卡门涡街 |
+| 011 | [多米诺](https://yophon.github.io/1001-pages/domino.html) | 三千多块骨牌连锁倒下，背面拼出品牌名 |
 
 [速写本](https://yophon.github.io/1001-pages/sketchbook/overview.html)里是一开始的十一批练习：官网底部那行占满整宽的品牌大字，一共 86 种做法。上面有几页就是从这里挑出来重做的。
 
