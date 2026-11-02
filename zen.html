@@ -1,0 +1,1168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>枯山水 · 一千零一页</title>
+<meta name="description" content="一方枯山水庭院：品牌名是白砂里的几座苔岛，砂纹绕着它们一圈圈荡开。鼠标是一把五齿耙，按住拖动就能耙出新的沙纹。">
+<meta name="theme-color" content="#21170f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="font-css" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600&family=Zen+Maru+Gothic:wght@900&display=swap" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --sand: #cdc6b7;
+    --ink: #efe5d3;
+    --muted: #b9aa92;
+    --wood: #2f2218;
+    --eng: 64px;
+    --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #1f160f; }
+  body { color: var(--ink); font: 14px/1.5 var(--sans); }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  /* 庭院占满一屏，底下一条檐廊放名字和按钮 */
+  .garden { position: relative; height: calc(100svh - var(--eng)); min-height: 380px; background: var(--sand); overflow: hidden; }
+  .garden canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #gl { opacity: 0; transition: opacity 1.1s ease; touch-action: none; }
+  #gl.on { opacity: 1; }
+  #fx { pointer-events: none; }
+  @media (pointer: fine) { #gl { cursor: none; } }
+
+  .tip {
+    display: none; position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); margin: 0; z-index: 5;
+    padding: 7px 14px; border-radius: 999px; background: rgb(36 26 18 / .55); color: #f3eadb; font-size: 12.5px; letter-spacing: .06em;
+    white-space: nowrap; pointer-events: none; transition: opacity .8s;
+  }
+  @media (pointer: coarse) { .tip { display: block; } }
+  .tip.gone, .hint.gone { opacity: 0; }
+
+  /* 檐廊：横着的木板，前沿被太阳照亮一道 */
+  .engawa {
+    position: relative; height: var(--eng); display: flex; align-items: center; gap: 24px; padding: 0 24px;
+    background:
+      linear-gradient(180deg, rgb(255 228 186 / .24), rgb(255 228 186 / 0) 2px),
+      linear-gradient(180deg, transparent calc(50% - 1px), rgb(0 0 0 / .45) calc(50% - 1px), rgb(0 0 0 / .45) 50%, rgb(255 220 170 / .05) 50%, transparent calc(50% + 2px)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='90'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0024 0.38' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.44 0 0 0 0 0.27 0.7 0 0 0 -0.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+      linear-gradient(180deg, #35261b, #22180f);
+  }
+  .cap { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; min-width: 0; }
+  .cap b { font: 600 19px/1 var(--serif); letter-spacing: .04em; color: var(--ink); }
+  .cap span { font-size: 12.5px; color: var(--muted); letter-spacing: .14em; }
+  .hint { margin: 0 auto; font-size: 13px; color: var(--muted); letter-spacing: .08em; transition: opacity .8s; white-space: nowrap; }
+  .ctl { display: flex; gap: 10px; margin-left: auto; }
+  .ctl button {
+    font: 13px/1 var(--sans); color: var(--ink); background: rgb(255 236 205 / .06); border: 1px solid rgb(255 236 205 / .18);
+    border-radius: 999px; padding: 9px 16px; cursor: pointer; white-space: nowrap; transition: background .2s, border-color .2s, opacity .3s;
+  }
+  .ctl button:hover { background: rgb(255 236 205 / .12); border-color: rgb(255 236 205 / .32); }
+  .ctl button:disabled { opacity: .4; cursor: default; }
+  .ctl button:focus-visible { outline: 2px solid #e8c48d; outline-offset: 2px; }
+  @media (pointer: coarse) { .hint { display: none; } }
+  @media (max-width: 640px) {
+    :root { --eng: 72px; }
+    .engawa { gap: 12px; padding: 0 16px; }
+    .hint { display: none; }
+    .cap { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .cap span { font-size: 11px; letter-spacing: .1em; }
+    .ctl { gap: 8px; }
+    .ctl button { padding: 9px 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #gl { transition: none; } }
+</style>
+</head>
+<body>
+
+<main class="garden" id="garden">
+  <canvas id="gl" role="img" aria-label="一方枯山水庭院：白砂上几座长着青苔的岛拼出品牌名，旁边立着三块石头；按住拖动可以耙出沙纹"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <p class="tip" id="tip">手指按住拖动，耙出沙纹</p>
+  <a class="folio" href="index.html" title="回到目录">一千零一页 · 006</a>
+</main>
+<footer class="engawa">
+  <div class="cap"><b id="f-name">Lumen</b><span>枯山水 · 白砂、苔与三石</span></div>
+  <p class="hint" id="hint">按住拖动，耙出沙纹</p>
+  <div class="ctl">
+    <button type="button" id="again" disabled>抹平重耙</button>
+    <button type="button" id="snd" aria-pressed="false">声音 · 关</button>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+
+  const garden = $('#garden'), glc = $('#gl'), fxc = $('#fx'), fx = fxc.getContext('2d');
+  const BLUR = 'filter' in fx;
+  const FONT = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "PingFang SC", "Microsoft YaHei", sans-serif';
+
+  // ---------- 小工具：噪声、随机数、模糊、距离变换 ----------
+  const hash2 = (x, y) => { let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  function noise2(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  const fbm2 = (x, y) => (noise2(x, y) * 0.5 + noise2(x * 2.03 + 17, y * 2.03 + 9) * 0.25 + noise2(x * 4.1 + 3, y * 4.1 + 41) * 0.125) / 0.875;
+  const strHash = s => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.codePointAt(0), 16777619); return h >>> 0; };
+  const rng = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  function boxBlur(a, w, h, r) {
+    const tmp = new Float32Array(Math.max(w, h)), inv = 1 / (2 * r + 1);
+    for (let y = 0; y < h; y++) {
+      const o = y * w;
+      let s = 0;
+      for (let x = -r; x <= r; x++) s += a[o + clamp(x, 0, w - 1)];
+      for (let x = 0; x < w; x++) { tmp[x] = s * inv; s += a[o + Math.min(x + r + 1, w - 1)] - a[o + Math.max(x - r, 0)]; }
+      for (let x = 0; x < w; x++) a[o + x] = tmp[x];
+    }
+    for (let x = 0; x < w; x++) {
+      let s = 0;
+      for (let y = -r; y <= r; y++) s += a[clamp(y, 0, h - 1) * w + x];
+      for (let y = 0; y < h; y++) { tmp[y] = s * inv; s += a[Math.min(y + r + 1, h - 1) * w + x] - a[Math.max(y - r, 0) * w + x]; }
+      for (let y = 0; y < h; y++) a[y * w + x] = tmp[y];
+    }
+  }
+
+  // 精确的欧氏距离变换（Felzenszwalb）：每一格到最近的 feat 格有多远
+  function edt(feat, w, h) {
+    const n = Math.max(w, h), f = new Float64Array(n), d = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 1);
+    const g = new Float64Array(w * h);
+    for (let i = 0; i < w * h; i++) g[i] = feat[i] ? 0 : 1e20;
+    const pass = len => {
+      let k = 0;
+      v[0] = 0; z[0] = -Infinity; z[1] = Infinity;
+      for (let q = 1; q < len; q++) {
+        let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+        while (s <= z[k]) { k--; s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+        k++; v[k] = q; z[k] = s; z[k + 1] = Infinity;
+      }
+      k = 0;
+      for (let q = 0; q < len; q++) { while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; }
+    };
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) f[y] = g[y * w + x];
+      pass(h);
+      for (let y = 0; y < h; y++) g[y * w + x] = d[y];
+    }
+    const out = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) f[x] = g[y * w + x];
+      pass(w);
+      for (let x = 0; x < w; x++) out[y * w + x] = Math.sqrt(d[x]);
+    }
+    return out;
+  }
+
+  // ---------- 庭院的尺寸 ----------
+  // 全部按 CSS 像素算：P 是耙齿间距，A 是砂垄高度，C 是高度场一格多大
+  let W, H, dpr, P, A, C, gw, gh, ringR, bandH, yCurb;
+  let info, mat, rocks = [], word = null;
+  function layout() {
+    const r = garden.getBoundingClientRect();
+    W = Math.max(1, Math.round(r.width));
+    H = Math.max(1, Math.round(r.height));
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    P = clamp(Math.min(W, H * 1.6) / 100, 8, 13);
+    A = 0.1 * P;
+    C = P / 7;
+    while ((W / C) * (H / C) > 520000) C *= 1.08;
+    gw = Math.ceil(W / C);
+    gh = Math.ceil(H / C);
+    ringR = 4.5 * P;
+    bandH = clamp(1.8 * P, 15, 24);
+    yCurb = H - bandH;
+  }
+
+  // 石头：一个不规则的穹顶，再用几块斜面削出棱角，表面带凿痕
+  function makeRock(x, y, R, h, rnd) {
+    const planes = [];
+    for (let i = 0; i < 9; i++) {
+      const a = rnd() * Math.PI * 2, tilt = 0.6 + rnd() * 1.1;
+      planes.push([Math.cos(a) * tilt, Math.sin(a) * tilt, 0.62 + rnd() * 0.4]);
+    }
+    return { x, y, R, H: h, rot: rnd() * Math.PI, sx: 1 + rnd() * 0.32, sy: 0.84 + rnd() * 0.2, planes, s: rnd() * 100, tone: rnd() };
+  }
+  function rockAt(r, px, py) {
+    const dx = px - r.x, dy = py - r.y, c = Math.cos(r.rot), s = Math.sin(r.rot);
+    const u = (dx * c + dy * s) / (r.R * r.sx), v = (-dx * s + dy * c) / (r.R * r.sy);
+    const a = Math.atan2(v, u), q = Math.hypot(u, v) / (1 + 0.24 * (fbm2(Math.cos(a) * 1.1 + r.s, Math.sin(a) * 1.1) - 0.5) * 2);
+    if (q >= 1) return 0;
+    let h = Math.pow(1 - Math.pow(q, 2.6), 0.5);
+    for (const [nx, ny, k] of r.planes) h = Math.min(h, k - (u * nx + v * ny) * 0.7);
+    if (h <= 0) return 0;
+    h += (0.05 * (fbm2(px / 7 + r.s, py / 7) - 0.5) + 0.025 * (noise2(px / 2.6, py / 2.6 + r.s) - 0.5)) * smooth(h * 6);   // 凿痕和颗粒
+    return Math.max(h, 0) * r.H;
+  }
+
+  // 卵石带：贴着檐廊的一排黑卵石（那智黑），用 Voronoi 格子做成一颗颗圆顶
+  function cobbleAt(px, py) {
+    const sp = bandH * 0.92, gx = px / sp, gy = (py - yCurb) / sp + 0.15;
+    const ix = Math.floor(gx), iy = Math.floor(gy);
+    let d1 = 9, d2 = 9;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+      const cx = ix + i + 0.15 + 0.7 * hash2(ix + i, iy + j + 300), cy = iy + j + 0.15 + 0.7 * hash2(ix + i + 77, iy + j);
+      const d = Math.hypot((gx - cx) * 1.0, (gy - cy) * 1.15);
+      if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+    }
+    return 0.42 * bandH * Math.pow(smooth((d2 - d1) / 0.55), 0.55);
+  }
+
+  // ---------- 建庭院：字 → 苔岛，摆石组，算砂纹 ----------
+  function build() {
+    layout();
+    const N = gw * gh, W2 = gw * 2, H2 = gh * 2, N2 = W2 * H2, k2 = 2 / C;   // k2：CSS 像素 → 二倍格
+    const rnd = rng(strHash(brand) ^ 0x5bd1e995), sd0 = rnd() * 100;
+    const mobile = W < 640;
+
+    // 1. 字：排版后模糊再取阈值，拐角就是圆的，像修剪过的苔岛
+    const cv = document.createElement('canvas');
+    cv.width = W2; cv.height = H2;
+    const o = cv.getContext('2d', { willReadFrequently: true });
+    const chars = [...brand];
+    o.font = `900 100px ${FONT}`;
+    const ws = chars.map(ch => o.measureText(ch).width), m = o.measureText(brand);
+    const asc = m.actualBoundingBoxAscent || 72, desc = m.actualBoundingBoxDescent || 2;
+    const cjk = /[぀-ヿ㐀-鿿豈-﫿]/.test(brand);
+    const spEm = cjk ? 0.16 : 0.1;
+    const tw = ws.reduce((a, b) => a + b, 0) + spEm * 100 * (chars.length - 1);
+    const boxW = (mobile ? 0.84 : 0.62) * W, boxH = (mobile ? 0.24 : 0.34) * H;
+    const size = Math.min(boxW / tw * 100, boxH / (asc + desc) * 100), ks = size / 100;
+    const cx = (mobile ? 0.5 : 0.44) * W, cy = (mobile ? 0.52 : 0.53) * H;
+    let x0 = cx - tw * ks / 2;
+    const baseY = cy + (asc - desc) * ks / 2;
+    word = { x: x0, y: baseY - asc * ks, w: tw * ks, h: (asc + desc) * ks, size };
+    o.setTransform(k2, 0, 0, k2, 0, 0);
+    o.font = `900 ${size}px ${FONT}`;
+    o.fillStyle = '#000';
+    chars.forEach((ch, i) => { o.fillText(ch, x0, baseY); x0 += ws[i] * ks + spEm * size; });
+    const id = o.getImageData(0, 0, W2, H2).data;
+    const cov = new Float32Array(N2);
+    for (let i = 0; i < N2; i++) cov[i] = id[i * 4 + 3] / 255;
+    const rb = Math.max(1, Math.round(size * 0.03 * k2));
+    boxBlur(cov, W2, H2, rb);
+    boxBlur(cov, W2, H2, rb);
+    const L2 = new Uint8Array(N2);
+    for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++) {
+      const i = y * W2 + x, px = x / k2, py = y / k2;
+      L2[i] = cov[i] + (fbm2(px / (1.6 * P) + sd0, py / (1.6 * P)) - 0.5) * 0.14 > 0.5 ? 1 : 0;   // 边缘稍微不齐，像真的苔
+    }
+    const dLout = edt(L2, W2, H2);
+    const inv = new Uint8Array(N2);
+    for (let i = 0; i < N2; i++) inv[i] = 1 - L2[i];
+    const dLin = edt(inv, W2, H2);
+
+    // 2. 石组：找一块离字最远、离边也够远的地方，摆一主两从三块石头
+    const R0 = clamp(Math.min(W, H) * 0.085, 24, 74), groupR = R0 * 2.1, need = groupR + 3.4 * P;
+    let best = null;
+    for (let j = 0; j <= 14; j++) for (let i = 0; i <= 18; i++) {
+      const x = W * (0.07 + 0.86 * i / 18), y = H * (0.08 + 0.78 * j / 14);
+      const ix = Math.min(Math.round(x * k2), W2 - 1), iy = Math.min(Math.round(y * k2), H2 - 1);
+      const clr = dLout[iy * W2 + ix] / k2;
+      const edge = Math.min(x - groupR * 1.1, W - x - groupR * 1.1, y - groupR * 0.8, yCurb - y - groupR * 1.3);
+      const score = Math.min(clr - need, edge * 1.4) + 0.05 * x - 0.03 * Math.abs(y - 0.4 * H);
+      if (!best || score > best.score) best = { x, y, score, clr, edge };
+    }
+    const kg = clamp(Math.min((best.clr - 2.6 * P) / groupR, (best.edge + groupR * 1.1) / (groupR * 1.15)), 0.45, 1);
+    const ga = (rnd() - 0.5) * 0.9, gc = Math.cos(ga), gs = Math.sin(ga);
+    const place = (ox, oy) => [best.x + (ox * gc - oy * gs) * R0 * kg, best.y + (ox * gs + oy * gc) * R0 * kg];
+    rocks = [
+      makeRock(...place(0, 0), R0 * kg, 5.0 * P * Math.sqrt(kg), rnd),
+      makeRock(...place(-1.35, 0.72), 0.62 * R0 * kg, 3.1 * P * Math.sqrt(kg), rnd),
+      makeRock(...place(1.05, 1.02), 0.44 * R0 * kg, 2.2 * P * Math.sqrt(kg), rnd),
+    ];
+    const R2 = new Uint8Array(N2);
+    for (const r of rocks) {
+      const ext = r.R * 1.5;
+      for (let y = Math.max(0, Math.floor((r.y - ext) * k2)); y < Math.min(H2, Math.ceil((r.y + ext) * k2)); y++)
+        for (let x = Math.max(0, Math.floor((r.x - ext) * k2)); x < Math.min(W2, Math.ceil((r.x + ext) * k2)); x++)
+          if (rockAt(r, (x + 0.5) / k2, (y + 0.5) / k2) > 0) R2[y * W2 + x] = 1;
+    }
+    const dR = edt(R2, W2, H2);
+    const cw0 = Math.max(1.0 * P, rocks[0].R * 0.2);   // 石头脚下一圈苔，宽窄不一
+    const cwAt = (px, py) => cw0 * (0.55 + 0.9 * fbm2(px / (2.2 * P) + 50, py / (2.2 * P)));
+
+    // 3. 一倍格：材质、固体高度、砂纹的目标形状
+    info = new Float32Array(N * 4);
+    mat = new Uint8Array(N * 4);
+    const ddA = new Float32Array(N);
+    const Hm = 0.85 * P;
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+      const i = y * gw + x, px = (x + 0.5) * C, py = (y + 0.5) * C;
+      let cL = 0, cR = 0, cCol = 0, dOut = 0, dIn = 0, dRk = 0;
+      const cw = cwAt(px, py);
+      for (let q = 0; q < 4; q++) {
+        const j = (2 * y + (q >> 1)) * W2 + 2 * x + (q & 1);
+        const l = L2[j], r = R2[j], dr = dR[j] / k2;
+        cL += l; cR += r; cCol += !l && !r && dr < cw ? 1 : 0;
+        dOut += Math.min(dLout[j] / k2, Math.max(dr - cw, 0));
+        dIn += l ? dLin[j] / k2 : 0;
+        dRk += dr;
+      }
+      cL /= 4; cR /= 4; cCol /= 4; dOut /= 4; dIn /= 4; dRk /= 4;
+      const cb = smooth((py - yCurb) / C + 0.5);
+      let sh = 0;
+      if (cL > 0) {   // 苔岛：边上是圆坡，顶上一团团鼓起来
+        const t = smooth(dIn / (1.25 * P));
+        sh = Math.max(sh, Hm * Math.pow(t, 0.6) * (1 + 0.24 * (fbm2(px / (0.85 * P) + sd0, py / (0.85 * P)) - 0.5) * 2 * smooth(dIn / (0.5 * P))));
+      }
+      if (dRk < cw) sh = Math.max(sh, 0.3 * P * Math.pow(smooth(1 - dRk / cw), 0.5) * (0.8 + 0.4 * fbm2(px / (0.8 * P), py / (0.8 * P) + sd0)));
+      if (cR > 0) for (const r of rocks) sh = Math.max(sh, rockAt(r, px, py));
+      if (cb > 0) sh = Math.max(sh, cobbleAt(px, py) * cb);
+      const solid = Math.min(1, cL + cR + cCol);
+      const sandW = clamp(1 - solid, 0, 1) * (1 - cb);
+      ddA[i] = dOut;
+      info[i * 4 + 2] = sh;
+      info[i * 4 + 3] = sandW;
+      let tone = fbm2(px / 60 + 7, py / 60);
+      if (cR > 0) { let bestD = 1e9; for (const r of rocks) { const d = Math.hypot(px - r.x, py - r.y); if (d < bestD) { bestD = d; tone = r.tone; } } }
+      mat[i * 4] = Math.round(clamp(cL + cCol, 0, 1) * 255);
+      mat[i * 4 + 1] = Math.round(cR * 255);
+      mat[i * 4 + 2] = Math.round(cb * (1 - solid) * 255);
+      mat[i * 4 + 3] = Math.round(tone * 255);
+    }
+    // 砂纹：离苔岛和石头 ringR 以内绕着它们一圈圈走，再远就是平行的直纹；最外一圈是一道垄，直纹顶到它为止。
+    // 距离场在两个字中间会折出一道尖棱，两组纹在那里硬碰硬；先整体模糊两遍，交汇处就是圆过渡
+    const rbd = Math.max(1, Math.round(0.4 * P / C));
+    boxBlur(ddA, gw, gh, rbd);
+    boxBlur(ddA, gw, gh, rbd);
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+      const i = y * gw + x, py = (y + 0.5) * C, dd = ddA[i];
+      const rings = -A * Math.cos(2 * Math.PI * dd / P), lines = A * Math.cos(2 * Math.PI * py / P);
+      const wR = 1 - smooth((dd - ringR) / (0.32 * P));
+      let b = lines + (rings - lines) * wR;
+      b -= 0.55 * A * (1 - smooth(dd / (0.7 * P)));             // 紧贴苔岛和石头的一圈略低
+      b -= 0.45 * A * (1 - smooth((yCurb - py) / (0.8 * P)));   // 挨着卵石带也低一点
+      info[i * 4] = b;
+      info[i * 4 + 1] = dd;
+    }
+    placeLeaves(rnd);
+  }
+
+  // 一格是不是干净的砂地（落叶只落在砂上）
+  function sandAt(px, py, margin) {
+    const x = clamp(Math.floor(px / C), 0, gw - 1), y = clamp(Math.floor(py / C), 0, gh - 1), i = (y * gw + x) * 4;
+    return info[i + 3] > 0.99 && info[i + 1] > margin;
+  }
+
+  // ---------- 落叶 ----------
+  // 枫叶：极坐标下五个裂片，顶上一片最长；每片的半径随偏角衰减，叶尖就是尖的，最后加一圈细锯齿
+  const LEAF = new Path2D(), VEINS = new Path2D();
+  {
+    const LOBES = [[0, 1], [1, 0.9], [-1, 0.9], [2.05, 0.55], [-2.05, 0.55]];
+    for (let k = 0; k <= 360; k++) {
+      const t = k / 360 * Math.PI * 2 - Math.PI;
+      let r = 0.26;
+      for (const [c, len] of LOBES) { const d = Math.abs(t - c); r = Math.max(r, len / (1 + 1.8 * d) - 0.12 * d); }
+      r *= 1 - 0.07 * Math.abs(Math.sin(22 * t));
+      const a = t - Math.PI / 2;
+      k ? LEAF.lineTo(Math.cos(a) * r, Math.sin(a) * r) : LEAF.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    LEAF.closePath();
+    for (const [c, len] of LOBES) { const a = c - Math.PI / 2; VEINS.moveTo(0, 0.05); VEINS.lineTo(Math.cos(a) * len * 0.82, Math.sin(a) * len * 0.82); }
+    VEINS.moveTo(0, 0.05); VEINS.lineTo(0.04, 0.42);
+  }
+  const LEAF_COLS = ['#b8321f', '#c9461f', '#d9672a', '#a62a1c', '#df8a2f', '#e3a536', '#8f3b1e', '#b85a24'];
+  const leafSize = r => (10 + 13 * Math.pow(r, 1.6)) * clamp(W / 1100, 0.75, 1.1);   // 多数小，偶尔一片大的
+  let leaves = [];
+  function placeLeaves(rnd) {
+    leaves = [];
+    const n = clamp(Math.round(W / 450), 1, 3);
+    for (let t = 0; t < 400 && leaves.length < n; t++) {
+      const x = W * (0.04 + 0.92 * rnd()), y = H * (0.05 + 0.85 * rnd());
+      if (!sandAt(x, y, 1.6 * P) || leaves.some(l => Math.hypot(l.x - x, l.y - y) < W * 0.2)) continue;
+      leaves.push({ x, y, z: 0, rot: rnd() * 6.28, s: leafSize(rnd()), col: LEAF_COLS[Math.floor(rnd() * LEAF_COLS.length)], fall: null, a: 1 });
+    }
+  }
+
+  // ---------- WebGL ----------
+  // ?nogl 强制走降级（测试用）
+  const gl = /[?&]nogl(?:&|$)/.test(location.search) ? null : glc.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
+  const glOK = !!gl && !!gl.getExtension('EXT_color_buffer_float');
+  const VS = `#version 300 es
+in vec2 aP;
+void main() { gl_Position = vec4(aP, 0.0, 1.0); }`;
+
+  const NOISE = `
+float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+vec2 hash22(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1, 0)), u.x), mix(hash12(i + vec2(0, 1)), hash12(i + vec2(1, 1)), u.x), u.y);
+}
+float fbm(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 4; i++) { s += a * vnoise(p); p = p * 2.03 + vec2(17.1, 9.2); a *= 0.5; } return s / 0.9375; }`;
+
+  // 更新砂面：开场和重耙的显现、抹平，再按顺序叠上这一帧耙过的每一段
+  const FS_UPDATE = `#version 300 es
+precision highp float;
+uniform sampler2D uH, uInfo;
+uniform float uC, uP, uA, uW, uRingR, uT;
+uniform int uMode, uN;
+uniform vec4 uS0[24], uS1[24];
+out vec4 o;
+void main() {
+  ivec2 ip = ivec2(gl_FragCoord.xy);
+  vec2 hv = texelFetch(uH, ip, 0).rg;
+  vec4 inf = texelFetch(uInfo, ip, 0);
+  vec2 p = (vec2(ip) + 0.5) * uC;
+  float h = hv.x, touched = hv.y;
+  if (inf.a <= 0.0) { o = vec4(0.0, 0.0, 0.0, 1.0); return; }
+  if (uMode == 1 && touched < 0.5) {
+    // 一根长耙从左往右走过去留下直纹，接着砂纹从苔岛和石头边上一圈圈荡开
+    float tl = 0.2 + 2.4 * p.x / uW;
+    float kl = smoothstep(tl, tl + 0.05, uT);
+    float tr = 2.9 + 1.6 * clamp(inf.g / uRingR, 0.0, 1.2);
+    float kr = smoothstep(tr, tr + 0.45, uT);
+    float lines = uA * cos(6.2831853 * p.y / uP);
+    h = mix(lines, inf.r, kr) * kl;
+  } else if (uMode == 2) {
+    float k = smoothstep(0.0, 0.6 * uP, uT - p.x);
+    h *= 1.0 - k;
+    touched *= 1.0 - k;
+  }
+  for (int i = 0; i < 24; i++) {
+    if (i >= uN) break;
+    vec2 c0 = uS0[i].xy, d0 = uS0[i].zw, c1 = uS1[i].xy, d1 = uS1[i].zw;
+    vec2 dc = c1 - c0, ddv = d1 - d0, q = p - c0;
+    // 耙头从 (c0, d0) 挪到 (c1, d1)：解出耙头哪一刻正好扫过这一格
+    float a = dot(q, d0), b = dot(q, ddv) - dot(dc, d0), c = -dot(dc, ddv), t = -1.0;
+    // 转得很少时 c 几乎为 0，普通求根公式会大幅相消，相邻两段之间漏出缝来；改用不相消的写法
+    float disc = b * b - 4.0 * c * a;
+    if (disc >= 0.0) {
+      float qq = -0.5 * (b + (b < 0.0 ? -1.0 : 1.0) * sqrt(disc));
+      if (abs(qq) > 1e-9) { float t2 = a / qq; if (t2 >= -0.02 && t2 <= 1.02) t = max(t, t2); }
+      if (abs(c) > 1e-9) { float t1 = qq / c; if (t1 >= -0.02 && t1 <= 1.02) t = max(t, t1); }
+    }
+    if (t < -0.02 || t > 1.02) continue;
+    t = clamp(t, 0.0, 1.0);
+    vec2 ct = c0 + t * dc, dt = normalize(d0 + t * ddv), nt = vec2(-dt.y, dt.x);
+    float u = dot(p - ct, nt), hw = 2.5 * uP;
+    float w = (1.0 - smoothstep(hw - 0.1 * uP, hw + 0.35 * uP, abs(u))) * smoothstep(0.15, 0.85, inf.a);
+    if (w <= 0.0) continue;
+    // 五个齿在 u = 0, ±P, ±2P 处压出沟，两边各推起一道垄
+    h = mix(h, -uA * cos(6.2831853 * u / uP), w);
+    touched = max(touched, w);
+  }
+  o = vec4(h, touched, 0.0, 1.0);
+}`;
+
+  const FS_COMBINE = `#version 300 es
+precision highp float;
+uniform sampler2D uH, uInfo;
+out vec4 o;
+void main() {
+  ivec2 ip = ivec2(gl_FragCoord.xy);
+  vec4 inf = texelFetch(uInfo, ip, 0);
+  o = vec4(mix(inf.b, texelFetch(uH, ip, 0).r, inf.a), 0.0, 0.0, 1.0);
+}`;
+
+  // 法线、太阳的影子（沿光线往回走，看有没有更高的地方挡着）、凹处的暗
+  const FS_NORMAL = `#version 300 es
+precision highp float;
+uniform sampler2D uHc;
+uniform vec3 uL;
+uniform float uC;
+uniform vec2 uSize;
+out vec4 o;
+float Hf(ivec2 q) { q = clamp(q, ivec2(0), ivec2(uSize) - 1); return texelFetch(uHc, q, 0).r; }
+void main() {
+  ivec2 ip = ivec2(gl_FragCoord.xy);
+  float h0 = Hf(ip);
+  float hx = (Hf(ip + ivec2(1, 0)) - Hf(ip - ivec2(1, 0))) / (2.0 * uC);
+  float hy = (Hf(ip + ivec2(0, 1)) - Hf(ip - ivec2(0, 1))) / (2.0 * uC);
+  vec2 dir = normalize(uL.xy);
+  float tanE = uL.z / length(uL.xy), vis = 1.0, k = 0.0, s = 0.7;
+  for (int i = 0; i < 30; i++) {
+    k += s;
+    s = min(s * 1.16, 16.0);
+    vec2 q = (vec2(ip) + 0.5 + dir * k) / uSize;
+    if (q.x < 0.0 || q.y < 0.0 || q.x > 1.0 || q.y > 1.0) break;
+    float dpx = k * uC, ray = h0 + dpx * tanE, pen = 0.12 + 0.025 * dpx;
+    vis = min(vis, smoothstep(-pen, pen, ray - textureLod(uHc, q, 0.0).r));
+    if (vis <= 0.0) break;
+  }
+  float a1 = 0.0, a2 = 0.0;
+  for (int i = 0; i < 8; i++) {
+    float an = float(i) * 0.7853982;
+    vec2 d = vec2(cos(an), sin(an));
+    a1 += Hf(ip + ivec2(round(d * 3.0)));
+    a2 += Hf(ip + ivec2(round(d * 11.0)));
+  }
+  // 局部起伏：垄顶略亮、沟底略暗，和太阳从哪边来无关；再叠上石头和苔岛脚下的接触暗
+  float rel = clamp(h0 - a1 / 8.0, -2.0, 2.0);
+  float cav = clamp(1.0 + rel * 0.17 - max(a2 / 8.0 - h0, 0.0) * 0.011, 0.35, 1.3);
+  o = vec4(hx, hy, vis, cav);
+}`;
+
+  // 上色：砂、苔、石、卵石，太阳加天光，左上角园外一棵枫树的树影
+  const FS_SHADE = `#version 300 es
+precision highp float;
+uniform sampler2D uN, uMat;
+uniform vec2 uGrid, uView, uSway;
+uniform float uDpr;
+uniform vec3 uL;
+out vec4 o;
+${NOISE}
+vec3 aces(vec3 x) { return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
+float canopy(vec2 p) {
+  // 园外左上角一棵枫树：只在角上落一点叶影，树高，影子边缘是虚的；
+  // 叶缝里漏下来的光在地上是一个个小太阳的像，太阳低，所以是顺着光拉长的椭圆
+  vec2 c = (p - vec2(-0.03, -0.08) * uView) / (0.5 * min(uView.x, uView.y) + 0.1 * max(uView.x, uView.y));
+  float reg = 1.0 - smoothstep(0.15, 1.0, length(c));
+  if (reg <= 0.0) return 0.0;
+  vec2 q = p / 52.0 + uSway;
+  float m = fbm(q) * 0.75 + 0.25 * vnoise(q * 3.1 + uSway * 2.4 + 7.0) + 0.5 * (reg - 0.62);
+  float shade = smoothstep(0.47, 0.56, m) * smoothstep(0.0, 0.3, reg);
+  if (shade <= 0.0) return 0.0;
+  vec2 cp = p / 26.0 + uSway * 3.4, ci = floor(cp), d = fract(cp) - (0.3 + 0.4 * hash22(ci));
+  vec2 ld = normalize(uL.xy);
+  float e = length(vec2(dot(d, ld) / 2.1, dot(d, vec2(-ld.y, ld.x)))), r = 0.1 + 0.09 * hash12(ci + 3.0);
+  float fleck = step(hash12(ci + 9.0), 0.3) * (1.0 - smoothstep(r * 0.35, r, e));
+  return shade * (1.0 - fleck * 0.75);
+}
+void main() {
+  vec2 px = vec2(gl_FragCoord.x, uView.y * uDpr - gl_FragCoord.y) / uDpr;
+  vec2 uv = px / uGrid;
+  vec4 N = texture(uN, uv), M = texture(uMat, uv);
+  vec3 n = normalize(vec3(-N.x, -N.y, 1.0));
+  float moss = M.r, rock = M.g, cob = M.b, tone = M.a;
+  float wS = clamp(1.0 - moss - rock - cob, 0.0, 1.0);
+  vec3 alb = vec3(0.0), nn = vec3(0.0, 0.0, 1e-4);
+
+  // 砂：白川砂那样的粗颗粒，颜色一粒粒略有不同，偶尔一粒黑的角闪石、一粒带粉的长石
+  vec2 gp = floor(px * 1.15);
+  float g1 = hash12(gp), g2 = hash12(gp + 37.1), g3 = hash12(gp + 91.7);
+  if (wS > 0.0) {
+    vec3 sandA = vec3(0.76, 0.735, 0.69) * (0.93 + 0.11 * g1) * (0.97 + 0.06 * fbm(px / 260.0));
+    if (g2 < 0.02) sandA *= 0.55 + 0.2 * g3;
+    else if (g2 > 0.985) sandA *= vec3(1.05, 0.92, 0.86);
+    alb += sandA * wS;
+    nn += normalize(n + vec3(g1 - 0.5, g3 - 0.5, 0.0) * 0.18) * wS;
+  }
+  // 苔：深绿成片，夹着偏黄的一块块，表面是很细的绒
+  if (moss > 0.0) {
+    float mp = fbm(px / 40.0 + tone * 7.0);
+    vec3 mossA = mix(vec3(0.03, 0.06, 0.022), vec3(0.075, 0.125, 0.036), smoothstep(0.25, 0.8, mp));
+    mossA = mix(mossA, vec3(0.15, 0.165, 0.055), smoothstep(0.66, 0.86, fbm(px / 110.0 + 3.1)) * 0.45);
+    float fz = vnoise(px * 1.7) * 0.5 + vnoise(px * 3.6 + 5.0) * 0.3 + vnoise(px / 5.0 + 9.0) * 0.2;
+    mossA *= 0.78 + 0.44 * fz;
+    alb += mossA * moss;
+    nn += normalize(n + vec3(vnoise(px * 1.3 + 11.0) - 0.5, vnoise(px * 1.3 + 29.0) - 0.5, 0.0) * 0.22) * moss;
+  }
+  // 石：深灰带青的片岩，一层层的纹理斜着走，几片灰白的地衣
+  if (rock > 0.0) {
+    float ang = tone * 6.2832, band = dot(px, vec2(cos(ang), sin(ang)));
+    float layer = sin(band / 2.6 + 5.0 * fbm(px / 26.0 + tone * 9.0)) * 0.5 + 0.5;
+    vec3 rockA = mix(vec3(0.17, 0.19, 0.19), vec3(0.29, 0.3, 0.29), layer) * (0.85 + 0.3 * fbm(px / 7.0 + tone * 13.0));
+    rockA = mix(rockA, vec3(0.46, 0.48, 0.42), smoothstep(0.68, 0.78, fbm(px / 12.0 + tone * 5.0)) * 0.45);
+    alb += rockA * rock;
+    nn += normalize(n + vec3(vnoise(px * 0.7) - 0.5, vnoise(px * 0.7 + 40.0) - 0.5, 0.0) * 0.25) * rock;
+  }
+  if (cob > 0.0) {
+    alb += vec3(0.075, 0.075, 0.08) * (0.8 + 0.4 * vnoise(px / 5.0)) * cob;
+    nn += n * cob;
+  }
+  nn = normalize(nn);
+
+  float sunV = N.z * (1.0 - 0.62 * canopy(px));
+  float diff = max(dot(nn, uL), 0.0);
+  vec3 sunC = vec3(1.0, 0.89, 0.74) * 2.55, skyC = vec3(0.5, 0.58, 0.74) * 0.5;
+  vec2 skyDir = normalize(vec2(-uL.y, uL.x)) * sign(-uL.y + 1e-4);
+  float skyV = 0.55 + 0.45 * nn.z + 0.6 * dot(nn.xy, skyDir);
+  vec3 col = alb * (sunC * diff * sunV * (0.62 + 0.38 * N.w) + skyC * skyV * N.w);
+  col += moss * alb * sunC * sunV * 0.22 * pow(clamp(1.0 - nn.z, 0.0, 1.0), 1.5);   // 苔的绒光
+  vec3 Hh = normalize(uL + vec3(0.0, 0.0, 1.0));
+  col += cob * sunC * sunV * 0.3 * pow(max(dot(nn, Hh), 0.0), 60.0);                // 卵石的高光
+  if (g1 > 0.985 && wS > 0.5) {                                                    // 砂粒偶尔一闪
+    vec3 nf = normalize(vec3(hash22(gp + 7.0) * 2.0 - 1.0, 1.4));
+    col += wS * sunC * sunV * 2.0 * pow(max(dot(nf, Hh), 0.0), 160.0);
+  }
+  col = aces(col * 0.74);
+  col = pow(col, vec3(1.0 / 2.2));
+  vec2 vq = (px / uView - 0.5) * vec2(1.0, 1.15);
+  col *= 1.0 - 0.22 * smoothstep(0.45, 1.05, length(vq));
+  col += (hash12(gl_FragCoord.xy + 0.5) - 0.5) / 255.0;
+  o = vec4(col, 1.0);
+}`;
+
+  let PR = null, texInfo, texMat, texH = [], fbH = [], texHc, fbHc, texN, fbN, cur = 0;
+  function program(fs) {
+    const p = gl.createProgram();
+    for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, fs]]) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+      gl.attachShader(p, s);
+    }
+    gl.bindAttribLocation(p, 0, 'aP');
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const u = {};
+    for (let i = 0, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); i < n; i++) {
+      const a = gl.getActiveUniform(p, i);
+      u[a.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, a.name);
+    }
+    return { p, u };
+  }
+  function initGL() {
+    PR = { upd: program(FS_UPDATE), comb: program(FS_COMBINE), nrm: program(FS_NORMAL), shade: program(FS_SHADE) };
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  }
+  function tex(ifmt, fmt, type, data, filter) {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, ifmt, gw, gh, 0, fmt, type, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  }
+  function fbo(t) {
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('浮点帧缓冲不可用');
+    return f;
+  }
+  // 砂面从 h0 开始：开场是刚抹平的（全 0），减少动画或者改尺寸后直接是耙好的样子
+  function upload(raked) {
+    for (const t of [texInfo, texMat, texHc, texN, ...texH]) if (t) gl.deleteTexture(t);
+    for (const f of [fbHc, fbN, ...fbH]) if (f) gl.deleteFramebuffer(f);
+    texInfo = tex(gl.RGBA16F, gl.RGBA, gl.FLOAT, info, gl.LINEAR);
+    texMat = tex(gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, mat, gl.LINEAR);
+    const h0 = new Float32Array(gw * gh * 2);
+    if (raked) for (let i = 0; i < gw * gh; i++) h0[i * 2] = info[i * 4];
+    texH = [tex(gl.RG16F, gl.RG, gl.FLOAT, h0, gl.NEAREST), tex(gl.RG16F, gl.RG, gl.FLOAT, h0, gl.NEAREST)];
+    fbH = texH.map(fbo);
+    texHc = tex(gl.R16F, gl.RED, gl.FLOAT, null, gl.LINEAR);
+    fbHc = fbo(texHc);
+    texN = tex(gl.RGBA16F, gl.RGBA, gl.FLOAT, null, gl.LINEAR);
+    fbN = fbo(texN);
+    cur = 0;
+    glc.width = Math.round(W * dpr);
+    glc.height = Math.round(H * dpr);
+  }
+  function bind(unit, t, loc) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); gl.uniform1i(loc, unit); }
+
+  const S0 = new Float32Array(96), S1 = new Float32Array(96);
+  function passUpdate(mode, mt, segs) {
+    const { p, u } = PR.upd;
+    gl.useProgram(p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbH[1 - cur]);
+    gl.viewport(0, 0, gw, gh);
+    bind(0, texH[cur], u.uH);
+    bind(1, texInfo, u.uInfo);
+    gl.uniform1f(u.uC, C); gl.uniform1f(u.uP, P); gl.uniform1f(u.uA, A); gl.uniform1f(u.uW, W); gl.uniform1f(u.uRingR, ringR); gl.uniform1f(u.uT, mt);
+    gl.uniform1i(u.uMode, mode);
+    gl.uniform1i(u.uN, segs.length);
+    segs.forEach((s, i) => { S0.set(s.slice(0, 4), i * 4); S1.set(s.slice(4, 8), i * 4); });
+    gl.uniform4fv(u.uS0, S0);
+    gl.uniform4fv(u.uS1, S1);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    cur = 1 - cur;
+  }
+  function passCombine() {
+    const { p, u } = PR.comb;
+    gl.useProgram(p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbHc);
+    gl.viewport(0, 0, gw, gh);
+    bind(0, texH[cur], u.uH);
+    bind(1, texInfo, u.uInfo);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function passNormal(L) {
+    const { p, u } = PR.nrm;
+    gl.useProgram(p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbN);
+    gl.viewport(0, 0, gw, gh);
+    bind(0, texHc, u.uHc);
+    gl.uniform3f(u.uL, L[0], L[1], L[2]);
+    gl.uniform1f(u.uC, C);
+    gl.uniform2f(u.uSize, gw, gh);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function passShade(L, sway) {
+    const { p, u } = PR.shade;
+    gl.useProgram(p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, glc.width, glc.height);
+    bind(0, texN, u.uN);
+    bind(1, texMat, u.uMat);
+    gl.uniform2f(u.uGrid, gw * C, gh * C);
+    gl.uniform2f(u.uView, W, H);
+    gl.uniform2f(u.uSway, sway[0], sway[1]);
+    gl.uniform1f(u.uDpr, glc.width / W);
+    gl.uniform3f(u.uL, L[0], L[1], L[2]);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  // 没有 WebGL2 或者不能往浮点纹理里画：在上层画布上画一张静止的庭院，不能耙
+  function fallback() {
+    const c = document.createElement('canvas');
+    c.width = gw; c.height = gh;
+    const o = c.getContext('2d'), im = o.createImageData(gw, gh), d = im.data, L = sunAt(0);
+    const hAt = (x, y) => { x = clamp(x, 0, gw - 1); y = clamp(y, 0, gh - 1); const i = (y * gw + x) * 4; return info[i + 2] + (info[i] - info[i + 2]) * info[i + 3]; };
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+      const i = y * gw + x, nx = -(hAt(x + 1, y) - hAt(x - 1, y)) / (2 * C), ny = -(hAt(x, y + 1) - hAt(x, y - 1)) / (2 * C), nl = Math.hypot(nx, ny, 1);
+      const lit = 0.55 + 0.85 * Math.max(0, (nx * L[0] + ny * L[1] + L[2]) / nl);
+      const moss = mat[i * 4] / 255, rock = mat[i * 4 + 1] / 255, cob = mat[i * 4 + 2] / 255, s = Math.max(0, 1 - moss - rock - cob);
+      d[i * 4] = (205 * s + 48 * moss + 112 * rock + 30 * cob) * lit;
+      d[i * 4 + 1] = (198 * s + 70 * moss + 110 * rock + 30 * cob) * lit;
+      d[i * 4 + 2] = (184 * s + 22 * moss + 104 * rock + 32 * cob) * lit;
+      d[i * 4 + 3] = 255;
+    }
+    o.putImageData(im, 0, 0);
+    fxc.width = Math.round(W * dpr);
+    fxc.height = Math.round(H * dpr);
+    fx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fx.imageSmoothingQuality = 'high';
+    fx.drawImage(c, 0, 0, gw * C, gh * C);
+    for (const l of leaves) drawLeaf(l, 1);
+  }
+
+  // ---------- 太阳、风 ----------
+  const AZ0 = Math.atan2(-0.62, -0.78);   // 光从左上方来
+  function sunAt(t) {
+    const az = AZ0 + (REDUCED ? 0 : 0.1 * Math.sin(t * Math.PI * 2 / 300));
+    const el = 0.41 + (REDUCED ? 0 : 0.025 * Math.sin(t * Math.PI * 2 / 300 + 1));
+    return [Math.cos(el) * Math.cos(az), Math.cos(el) * Math.sin(az), Math.sin(el)];
+  }
+  let gust = 0, gustTarget = 0, nextGust = 9, nextLeaf = 22;
+
+  // ---------- 耙 ----------
+  // ax, ay：耙头前进的方向（不分正反，只管沟往哪边走）；hx, hy：手柄朝向，跟着真实的移动方向
+  const rk = { x: -999, y: -999, ax: 0, ay: 1, hx: 0, hy: 1, on: false, over: false, id: null, speed: 0, t: 0 };
+  let segQ = [], raked = false;
+  function seg(x0, y0, ax0, ay0, x1, y1, ax1, ay1) { segQ.push([x0, y0, ax0, ay0, x1, y1, ax1, ay1]); }
+  function rakeTo(x, y, now) {
+    const mx = x - rk.x, my = y - rk.y, d = Math.hypot(mx, my);
+    if (d < 0.6) return;
+    let ux = mx / d, uy = my / d;
+    const hl = Math.hypot(rk.hx * 0.65 + ux * 0.35, rk.hy * 0.65 + uy * 0.35) || 1;
+    rk.hx = (rk.hx * 0.65 + ux * 0.35) / hl; rk.hy = (rk.hy * 0.65 + uy * 0.35) / hl;
+    if (ux * rk.ax + uy * rk.ay < 0) { ux = -ux; uy = -uy; }   // 往回拉也不用掉头，沟的方向是一样的
+    const k = Math.min(1, d / (1.5 * P));
+    let nx = rk.ax + (ux - rk.ax) * k, ny = rk.ay + (uy - rk.ay) * k;
+    const nl = Math.hypot(nx, ny) || 1;
+    nx /= nl; ny /= nl;
+    // 拐得急就拆成几小段，每段最多转 0.3 弧度，耙头外侧扫过的扇形才连续
+    const a0 = Math.atan2(rk.ay, rk.ax);
+    let da = Math.atan2(ny, nx) - a0;
+    if (da > Math.PI) da -= Math.PI * 2;
+    if (da < -Math.PI) da += Math.PI * 2;
+    const n = Math.max(1, Math.ceil(Math.abs(da) / 0.3));
+    let px = rk.x, py = rk.y, pax = rk.ax, pay = rk.ay;
+    for (let s = 1; s <= n; s++) {
+      const f = s / n, qx = rk.x + mx * f, qy = rk.y + my * f, a = a0 + da * f, qax = Math.cos(a), qay = Math.sin(a);
+      seg(px, py, pax, pay, qx, qy, qax, qay);
+      px = qx; py = qy; pax = qax; pay = qay;
+    }
+    // 耙到落叶就把它往前推
+    const nrx = -ny, nry = nx;
+    for (const l of leaves) {
+      if (l.fall) continue;
+      const ox = l.x - x, oy = l.y - y;
+      if (Math.abs(ox * nrx + oy * nry) < 2.7 * P && Math.abs(ox * nx + oy * ny) < 0.9 * P + d * 0.5) { l.x += mx * 1.05; l.y += my * 1.05; l.rot += 0.03 * Math.sign(ox * nrx + oy * nry || 1); }
+    }
+    const dt = Math.max(0.004, (now - rk.t) / 1000);
+    rk.speed = rk.speed * 0.6 + (d / dt) * 0.4;
+    rk.t = now;
+    rk.x = x; rk.y = y; rk.ax = nx; rk.ay = ny;
+    if (!raked) { raked = true; $('#hint').classList.add('gone'); $('#tip').classList.add('gone'); }
+  }
+  const local = e => { const r = glc.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  glc.addEventListener('pointerdown', e => {
+    if (!ready || glFailed || rk.id !== null) return;
+    const [x, y] = local(e);
+    rk.on = true; rk.over = true; rk.id = e.pointerId; rk.x = x; rk.y = y; rk.t = performance.now(); rk.speed = 0;
+    glc.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  glc.addEventListener('pointermove', e => {
+    if (!ready || glFailed) return;
+    if (rk.on && e.pointerId === rk.id) {
+      for (const ce of (e.getCoalescedEvents?.() || [e])) { const [x, y] = local(ce); rakeTo(x, y, ce.timeStamp || performance.now()); }
+    } else if (!rk.on && e.pointerType === 'mouse') {
+      const [x, y] = local(e);
+      rk.x = x; rk.y = y; rk.over = true;
+    }
+  });
+  const release = e => {
+    if (e.pointerId !== rk.id) return;
+    rk.on = false; rk.id = null;
+    if (e.pointerType !== 'mouse') rk.over = false;
+  };
+  glc.addEventListener('pointerup', release);
+  glc.addEventListener('pointercancel', release);
+  glc.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !rk.on) rk.over = false; });
+
+  // ---------- 上层画布：落叶、耙子、长耙和抹板 ----------
+  function drawLeaf(l, pass) {
+    const s = l.s * (1 + l.z * 0.0016), flip = l.fall ? 0.35 + 0.65 * Math.abs(Math.cos(l.fall.ph)) : 1;
+    fx.save();
+    if (pass === 0) {   // 影子：离地越高越远、越淡、越糊
+      const off = (l.z + 0.7) / tanE;
+      fx.translate(l.x - Ld[0] * off, l.y - Ld[1] * off);
+      fx.rotate(l.rot);
+      fx.scale(s, s * flip);
+      fx.globalAlpha = l.a * 0.32 / (1 + l.z * 0.012);
+      fx.fill(LEAF);
+    } else {
+      fx.translate(l.x, l.y);
+      fx.rotate(l.rot);
+      fx.scale(s, s * flip);
+      fx.globalAlpha = l.a;
+      fx.fillStyle = l.col;
+      fx.fill(LEAF);
+      fx.globalAlpha = l.a * 0.35;
+      fx.strokeStyle = '#4a120b';
+      fx.lineWidth = 0.045;
+      fx.stroke(VEINS);
+      fx.globalAlpha = l.a * 0.18;
+      fx.strokeStyle = '#fff3d6';
+      fx.lineWidth = 0.05;
+      fx.stroke(LEAF);
+    }
+    fx.restore();
+  }
+  // 五齿耙（俯视）：一根横梁、五个齿钉的钉头；手柄顺着拉的方向伸出去，往手那边抬高，越远越淡
+  function drawRake(pass) {
+    const lift = rk.on ? 0.3 * P : 1.8 * P, hx = rk.hx, hy = rk.hy, nx = -rk.ay, ny = rk.ax;
+    const hw = 2.85 * P, th = 0.62 * P, len = clamp(0.3 * Math.max(W, H), 170, 340);
+    const fade = (x0, y0, x1, y1, col, a) => {
+      const g = fx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, col.replace('A', a));
+      g.addColorStop(0.55, col.replace('A', a * 0.75));
+      g.addColorStop(1, col.replace('A', 0));
+      return g;
+    };
+    fx.save();
+    fx.lineCap = 'round';
+    if (pass === 0) {
+      const ox = -Ld[0], oy = -Ld[1], o0 = lift / tanE, o1 = (lift + len * 0.25) / tanE;
+      const al = rk.on ? 0.3 : 0.2;
+      fx.globalAlpha = al;
+      fx.beginPath();
+      fx.moveTo(rk.x + nx * hw + ox * o0, rk.y + ny * hw + oy * o0);
+      fx.lineTo(rk.x - nx * hw + ox * o0, rk.y - ny * hw + oy * o0);
+      fx.lineTo(rk.x - nx * hw + ox * o0 - rk.ax * th, rk.y - ny * hw + oy * o0 - rk.ay * th);
+      fx.lineTo(rk.x + nx * hw + ox * o0 - rk.ax * th, rk.y + ny * hw + oy * o0 - rk.ay * th);
+      fx.closePath();
+      fx.fill();
+      fx.globalAlpha = 1;
+      const x0 = rk.x + ox * o0, y0 = rk.y + oy * o0, x1 = rk.x + hx * len + ox * o1, y1 = rk.y + hy * len + oy * o1;
+      fx.strokeStyle = fade(x0, y0, x1, y1, 'rgb(40 30 20 / A)', al);
+      fx.lineWidth = 0.42 * P;
+      fx.beginPath();
+      fx.moveTo(x0, y0);
+      fx.lineTo(x1, y1);
+      fx.stroke();
+    } else {
+      const a = rk.on ? 1 : 0.92, x1 = rk.x + hx * len, y1 = rk.y + hy * len;
+      fx.strokeStyle = fade(rk.x, rk.y, x1, y1, 'rgb(169 143 98 / A)', a);
+      fx.lineWidth = 0.42 * P;
+      fx.beginPath();
+      fx.moveTo(rk.x, rk.y);
+      fx.lineTo(x1, y1);
+      fx.stroke();
+      fx.strokeStyle = fade(rk.x, rk.y, x1, y1, 'rgb(255 244 220 / A)', 0.35 * a);
+      fx.lineWidth = 0.1 * P;
+      fx.beginPath();
+      fx.moveTo(rk.x - Ld[0] * 0.1 * P, rk.y - Ld[1] * 0.1 * P);
+      fx.lineTo(x1 - Ld[0] * 0.1 * P, y1 - Ld[1] * 0.1 * P);
+      fx.stroke();
+      fx.globalAlpha = a;
+      fx.translate(rk.x, rk.y);
+      fx.rotate(Math.atan2(ny, nx));
+      const g = fx.createLinearGradient(0, -th / 2, 0, th / 2);
+      g.addColorStop(0, '#9c7a52');
+      g.addColorStop(0.5, '#86663f');
+      g.addColorStop(1, '#5e4528');
+      fx.fillStyle = g;
+      fx.beginPath();
+      fx.roundRect(-hw, -th / 2, hw * 2, th, th * 0.35);
+      fx.fill();
+      fx.fillStyle = '#3d2b18';
+      for (let i = -2; i <= 2; i++) { fx.beginPath(); fx.arc(i * P, 0, 0.13 * P, 0, Math.PI * 2); fx.fill(); }
+    }
+    fx.restore();
+  }
+  // 开场的长耙（带齿）和重耙前的抹板（不带齿）：竖着一整根，从左往右走
+  function drawBar(x, teeth, pass, alpha) {
+    const th = teeth ? 0.55 * P : 0.95 * P, lift = 0.4 * P, off = lift / tanE;
+    fx.save();
+    fx.globalAlpha = alpha * (pass === 0 ? 0.28 : 1);
+    if (pass === 0) {
+      fx.fillRect(x - th / 2 - Ld[0] * off, -10 - Ld[1] * off, th, H + 20);
+    } else {
+      const g = fx.createLinearGradient(x - th / 2, 0, x + th / 2, 0);
+      g.addColorStop(0, teeth ? '#c2a978' : '#a3825a');
+      g.addColorStop(1, teeth ? '#8e7449' : '#6c4f30');
+      fx.fillStyle = g;
+      fx.fillRect(x - th / 2, -10, th, H + 20);
+      if (teeth) {
+        fx.fillStyle = '#4a3720';
+        for (let y = (P / 2) % P; y < H; y += P) { fx.beginPath(); fx.arc(x, y + P / 2, 0.11 * P, 0, Math.PI * 2); fx.fill(); }
+      }
+    }
+    fx.restore();
+  }
+  function drawFx(now) {
+    fx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fx.clearRect(0, 0, W, H);
+    const bar = barState(now);
+    for (const pass of [0, 1]) {
+      if (pass === 0) { fx.save(); fx.fillStyle = 'rgb(40 30 20)'; fx.strokeStyle = 'rgb(40 30 20)'; if (BLUR) fx.filter = 'blur(1.6px)'; }
+      for (const l of leaves) if (!l.fall) drawLeaf(l, pass);
+      if (bar) drawBar(bar.x, bar.teeth, pass, bar.a);
+      for (const l of leaves) if (l.fall) drawLeaf(l, pass);
+      if (rk.over) drawRake(pass);
+      if (pass === 0) fx.restore();
+    }
+  }
+
+  // ---------- 开场、抹平重耙 ----------
+  const REVEAL_END = 2.9 + 1.6 * 1.2 + 0.5, FLAT_DUR = 1.7;
+  let phase = 'wait', pt0 = 0;
+  function barState(now) {
+    const t = (now - pt0) / 1000;
+    if (phase === 'reveal' && t > 0.1 && t < 2.75) return { x: (t - 0.2) / 2.4 * W, teeth: true, a: smooth((t - 0.1) / 0.2) * smooth((2.75 - t) / 0.25) };
+    if (phase === 'flatten') return { x: t / FLAT_DUR * (W + 2 * P) - 0.4 * P, teeth: false, a: smooth(t / 0.15) * smooth((FLAT_DUR + 0.05 - t) / 0.2) };
+    return null;
+  }
+  $('#again').addEventListener('click', () => {
+    if (!ready || glFailed || phase !== 'idle') return;
+    if (REDUCED) { passUpdate(2, W * 4, []); passUpdate(1, 99, []); dirty = true; return; }
+    phase = 'flatten'; pt0 = performance.now();
+    $('#again').disabled = true;
+  });
+
+  // ---------- 声音 ----------
+  // 一整套声音写成一个函数，实时播放和离线渲染（用来验证）共用
+  function makeSound(ac, dest) {
+    const master = ac.createGain();
+    master.connect(dest);
+    const nb = ac.createBuffer(1, ac.sampleRate * 3, ac.sampleRate), nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const ir = ac.createBuffer(2, ac.sampleRate * 2.4, ac.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3.2); }
+    const rev = ac.createConvolver(), revG = ac.createGain();
+    rev.buffer = ir;
+    revG.gain.value = 0.32;
+    rev.connect(revG).connect(master);
+    const src = () => { const s = ac.createBufferSource(); s.buffer = nb; s.loop = true; s.start(0, Math.random() * 2.5); return s; };
+    const filt = (type, f, q) => { const b = ac.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
+    const gain = v => { const g = ac.createGain(); g.gain.value = v; return g; };
+    // 风：低低的呼呼声；树叶沙沙：高一点的一段，跟着阵风起落
+    const windG = gain(0.07), rusG = gain(0.006);
+    src().connect(filt('lowpass', 380, 0.4)).connect(windG).connect(master);
+    src().connect(filt('bandpass', 3400, 0.6)).connect(rusG).connect(master);
+    // 耙砂：一路中高频的“沙——”，一路被低频噪声调制的颗粒“嚓嚓”，越快越亮越响
+    const rkBp = filt('bandpass', 1800, 0.7), rkG = gain(0);
+    src().connect(filt('highpass', 650, 0.5)).connect(rkBp).connect(rkG).connect(master);
+    const grAM = gain(0.5), grG = gain(0), amG = gain(9);
+    src().connect(filt('lowpass', 45, 0.5)).connect(amG).connect(grAM.gain);
+    src().connect(filt('bandpass', 5200, 2.2)).connect(grAM).connect(grG).connect(master);
+    rkG.connect(rev);
+    // 鹿威：竹筒敲在石头上，“咔”一声短的，接着空心的“咚”，再倒出一点水；离得远，过一道低通和混响
+    const far = filt('lowpass', 2600, 0.5), farG = gain(0.55);
+    far.connect(farG).connect(master);
+    farG.connect(rev);
+    function knock(t) {
+      const tone = (f, f2, peak, dec) => {
+        const os = ac.createOscillator(), g = ac.createGain();
+        os.frequency.setValueAtTime(f, t);
+        os.frequency.exponentialRampToValueAtTime(f2, t + dec);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(peak, t + 0.003);
+        g.gain.exponentialRampToValueAtTime(0.0005, t + dec);
+        os.connect(g).connect(far);
+        os.start(t); os.stop(t + dec + 0.05);
+      };
+      tone(540, 480, 0.34, 0.38);
+      tone(1310, 1240, 0.12, 0.1);
+      tone(250, 240, 0.1, 0.22);
+      const click = ac.createBufferSource(), cg = ac.createGain();
+      click.buffer = nb;
+      cg.gain.setValueAtTime(0.4, t);
+      cg.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+      click.connect(filt('bandpass', 2600, 1.2)).connect(cg).connect(far);
+      click.start(t, Math.random() * 2, 0.03);
+      const pour = ac.createBufferSource(), pg = ac.createGain();
+      pour.buffer = nb;
+      pg.gain.setValueAtTime(0, t + 0.06);
+      pg.gain.linearRampToValueAtTime(0.05, t + 0.12);
+      pg.gain.exponentialRampToValueAtTime(0.0008, t + 0.75);
+      pour.connect(filt('bandpass', 900, 0.8)).connect(pg).connect(far);
+      pour.start(t + 0.06, Math.random() * 2, 0.8);
+    }
+    return {
+      master,
+      rake(v, t) { t = t ?? ac.currentTime; rkG.gain.setTargetAtTime(0.2 * v, t, 0.05); grG.gain.setTargetAtTime(0.06 * v, t, 0.05); rkBp.frequency.setTargetAtTime(1300 + 2400 * v, t, 0.08); },
+      gust(v, t) { t = t ?? ac.currentTime; windG.gain.setTargetAtTime(0.07 + 0.08 * v, t, 0.6); rusG.gain.setTargetAtTime(0.006 + 0.024 * v, t, 0.5); },
+      knock,
+    };
+  }
+  let AC = null, SND = null, sndOn = false, nextKnock = 0;
+  $('#snd').addEventListener('click', () => {
+    sndOn = !sndOn;
+    $('#snd').setAttribute('aria-pressed', sndOn);
+    $('#snd').textContent = sndOn ? '声音 · 开' : '声音 · 关';
+    if (sndOn) {
+      if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); SND = makeSound(AC, AC.destination); SND.master.gain.value = 0; }
+      AC.resume();
+      SND.master.gain.setTargetAtTime(1, AC.currentTime, 0.4);
+      nextKnock = (performance.now() - t0) / 1000 + 6;
+    } else if (AC) {
+      SND.master.gain.setTargetAtTime(0, AC.currentTime, 0.15);
+      setTimeout(() => { if (!sndOn) AC.suspend(); }, 700);
+    }
+  });
+
+  // ---------- 主循环 ----------
+  let ready = false, dirty = true, frame = 0, lastL = null, t0 = performance.now(), last = t0, Ld = [0, 0], tanE = 1;
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (!ready || document.hidden) { last = now; return; }
+    const dt = Math.min((now - last) / 1000, 0.05), t = (now - t0) / 1000;
+    last = now;
+    frame++;
+    // 风：时不时来一阵，树影晃得厉害一点，偶尔吹下一片叶子
+    if (!REDUCED) {
+      if (t > nextGust) { gustTarget = 1; nextGust = t + 8 + Math.random() * 9; if (Math.random() < 0.25) nextLeaf = Math.min(nextLeaf, t + 1.2); }
+      gust += (gustTarget - gust) * (1 - Math.exp(-dt / 0.9));
+      if (gust > 0.95) gustTarget = 0;
+      if (t > nextLeaf) { dropLeaf(); nextLeaf = t + 28 + Math.random() * 20; }
+    }
+    const sway = REDUCED ? [0, 0] : [0.04 * Math.sin(t * 0.55) + 0.05 * gust * Math.sin(t * 2.3), 0.03 * Math.cos(t * 0.43) + 0.04 * gust * Math.cos(t * 1.9)];
+    const L = sunAt(t);
+    const ll = Math.hypot(L[0], L[1]);
+    Ld = [L[0] / ll, L[1] / ll];
+    tanE = L[2] / ll;
+    if (!glFailed) {
+      let mode = 0, mt = 0;
+      const pt = (now - pt0) / 1000;
+      if (phase === 'reveal') {
+        mode = 1; mt = pt;
+        if (pt > REVEAL_END) { mt = 99; phase = 'idle'; $('#again').disabled = false; }
+      } else if (phase === 'flatten') {
+        mode = 2; mt = pt / FLAT_DUR * (W + 2 * P);
+        if (pt > FLAT_DUR) { phase = 'reveal'; pt0 = now; }
+      }
+      if (mode || segQ.length) {
+        do { passUpdate(mode, mt, segQ.splice(0, 24)); mode = 0; } while (segQ.length);
+        dirty = true;
+      }
+      if (dirty) passCombine();
+      const moved = !lastL || Math.abs(L[0] - lastL[0]) + Math.abs(L[1] - lastL[1]) + Math.abs(L[2] - lastL[2]) > 0.0015;
+      if (dirty || moved) { passNormal(L); lastL = L; }
+      passShade(L, sway);
+      dirty = false;
+    }
+    // 落叶往下飘
+    for (const l of leaves) {
+      if (!l.fall) continue;
+      const f = l.fall;
+      f.ph += dt * f.w;
+      l.z = Math.max(0, l.z - dt * f.v);
+      l.x += (Math.sin(f.ph) * 26 + f.drift) * dt;
+      l.y += (Math.cos(f.ph * 0.7) * 10 + 6) * dt;
+      l.rot += Math.sin(f.ph * 0.9) * 1.4 * dt;
+      if (l.z <= 0) l.fall = null;
+    }
+    leaves = leaves.filter(l => (l.a -= l.dying ? dt / 1.5 : 0) > 0);
+    if (!rk.on) rk.speed *= Math.exp(-dt / 0.12);
+    if (sndOn && SND) {
+      SND.rake(rk.on ? Math.pow(clamp(rk.speed / 900, 0, 1), 0.7) : 0);
+      SND.gust(gust);
+      if (t > nextKnock) { SND.knock(AC.currentTime + 0.02); nextKnock = t + 24 + Math.random() * 14; }
+    }
+    if (!glFailed) drawFx(now);
+  }
+  function dropLeaf() {
+    const alive = leaves.filter(l => !l.dying);
+    if (alive.length >= 6) alive[0].dying = true;
+    const rnd = Math.random;
+    leaves.push({ x: W * (0.04 + 0.4 * rnd()), y: H * (0.04 + 0.36 * rnd()), z: 150 + 40 * rnd(), rot: rnd() * 6.28, s: leafSize(rnd()), col: LEAF_COLS[Math.floor(rnd() * LEAF_COLS.length)], a: 1, fall: { ph: rnd() * 6, w: 2.2 + rnd(), v: 24 + 8 * rnd(), drift: 6 + 10 * rnd() } });
+  }
+
+  // ---------- 启动：等字体（最多 2.5 秒），建庭院，先画一帧再淡入，然后开场 ----------
+  const fontCss = $('#font-css');
+  const cssReady = new Promise(r => { if (fontCss.media === 'all') r(); else { fontCss.addEventListener('load', r); fontCss.addEventListener('error', r); } });
+  const fontsReady = () => cssReady.then(() => Promise.all([
+    document.fonts.load(`900 100px "Zen Maru Gothic"`, brand), document.fonts.load('600 19px "Noto Serif SC"', brand + '枯山水白砂苔与三石'),
+  ])).catch(() => {});
+  let glFailed = !glOK;
+  try { if (glOK) initGL(); } catch (err) { console.error(err); glFailed = true; }
+  function start(rakedAlready) {
+    build();
+    fxc.width = Math.round(W * dpr);
+    fxc.height = Math.round(H * dpr);
+    segQ = [];
+    if (!glFailed) try { upload(rakedAlready); } catch (err) { console.error(err); glFailed = true; }
+    if (glFailed) { fallback(); ready = true; $('#hint').hidden = $('#tip').hidden = true; return; }
+    dirty = true;
+    ready = true;
+    lastL = null;
+    if (rakedAlready) { phase = 'idle'; $('#again').disabled = false; }
+    else { phase = 'reveal-wait'; $('#again').disabled = true; }
+    requestAnimationFrame(() => {
+      glc.classList.add('on');
+      if (!rakedAlready) setTimeout(() => { phase = 'reveal'; pt0 = performance.now(); }, 650);
+    });
+  }
+  Promise.race([fontsReady(), new Promise(r => setTimeout(r, 2500))]).then(() => {
+    start(REDUCED);
+    requestAnimationFrame(loop);
+  });
+  let tmr, lastSize = '';
+  addEventListener('resize', () => {
+    clearTimeout(tmr);
+    tmr = setTimeout(() => {
+      const r = garden.getBoundingClientRect(), key = `${Math.round(r.width)}x${Math.round(r.height / 60)}`;
+      if (key === lastSize || !ready) return;
+      lastSize = key;
+      start(true);
+    }, 250);
+  });
+  { const r = garden.getBoundingClientRect(); lastSize = `${Math.round(r.width)}x${Math.round(r.height / 60)}`; }
+
+  // 测试用：读状态、离线渲染声音
+  window.__zen = {
+    get phase() { return phase; }, get bar() { return barState(performance.now()); }, get rk() { return rk; }, get leaves() { return leaves; }, get rocks() { return rocks; }, get word() { return word; },
+    get dims() { return { W, H, P, A, C, gw, gh, dpr }; }, glOK: !glFailed,
+    async renderSound(sec = 12, script = []) {
+      const ac = new OfflineAudioContext(2, Math.round(44100 * sec), 44100), s = makeSound(ac, ac.destination);
+      s.master.gain.value = 1;
+      for (const [at, kind, v] of script) { if (kind === 'rake') s.rake(v, at); else if (kind === 'gust') s.gust(v, at); else if (kind === 'knock') s.knock(at); }
+      const buf = await ac.startRendering();
+      return Array.from({ length: buf.numberOfChannels }, (_, c) => buf.getChannelData(c));
+    },
+  };
+})();
+</script>
+</body>
+</html>

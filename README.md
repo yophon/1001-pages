@@ -15,6 +15,9 @@
 | 003 | [地铁图](https://yophon.github.io/1001-pages/metro.html) | 品牌名自动画成一张地铁线路图，有列车、站卡和换乘路线规划 |
 | 004 | [暗房](https://yophon.github.io/1001-pages/darkroom.html) | 红灯下，品牌名作为一张黑白照片在显影液里慢慢浮出来，最后拉灯绳开灯 |
 | 005 | [星球](https://yophon.github.io/1001-pages/planet.html) | 从轨道上看一颗行星，品牌名是大陆，开场是一次轨道日出 |
+| 006 | [枯山水](https://yophon.github.io/1001-pages/zen.html) | 一方枯山水，品牌名是白砂里的苔岛，鼠标是一把五齿耙 |
+| 007 | [浇铸](https://yophon.github.io/1001-pages/foundry.html) | 铁水灌满字形砂型，按黑体辐射冷却下来，开箱落砂后打磨出光 |
+| 008 | [音乐盒](https://yophon.github.io/1001-pages/musicbox.html) | 品牌名打成纸带上的孔，摇动摇柄就奏出一段曲子 |
 
 [速写本](https://yophon.github.io/1001-pages/sketchbook/overview.html)里是一开始的十一批练习：官网底部那行占满整宽的品牌大字，一共 86 种做法。上面有几页就是从这里挑出来重做的。
 

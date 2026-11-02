@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>音乐盒 · 一千零一页</title>
+<meta name="description" content="品牌名打成纸带上的孔，摇动摇柄，纸带走过钢制音梳，字的形状就成了一段旋律。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 字体表异步加载，不挡后面的脚本；脚本最多等它 2 秒 -->
+<link id="font-css" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..700&family=Outfit:wght@700&family=Noto+Sans+SC:wght@400&family=Noto+Serif+SC:wght@700&display=swap" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --table: #1a110b;
+    --ink: #efe3c8;
+    --muted: #b49b77;
+    --faint: #7d6a52;
+    --brass: #d9b46c;
+    --ui: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--table); color: var(--ink); font: 14px/1.5 var(--ui); overflow: hidden; -webkit-tap-highlight-color: transparent; }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  #stage { position: fixed; inset: 0; }
+  /* 灯是慢慢亮起来的：画布从桌面的颜色里浮出来 */
+  #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 1.1s ease; outline: none; }
+  .ready #cv { opacity: 1; }
+  #cv:focus-visible { box-shadow: inset 0 0 0 2px rgb(217 180 108 / .55); }
+
+  /* 提示 */
+  .hint {
+    position: absolute; z-index: 5; pointer-events: none; color: var(--ink);
+    font: 500 13px/1.4 var(--ui); letter-spacing: .04em; text-shadow: 0 1px 3px rgb(0 0 0 / .8);
+    opacity: 0; transition: opacity .6s;
+  }
+  .hint.on { opacity: .92; }
+  /* 摇柄外面一道顺时针的弧，轻轻往前推 */
+  #h-crank { transform: translate(-50%, -50%); }
+  #h-crank svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; animation: nudge 1.4s ease-in-out infinite alternate; }
+  #h-crank path { fill: none; stroke: var(--brass); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 2px rgb(0 0 0 / .8)); }
+  #h-crank path.arc { stroke-dasharray: 2 6; }
+  #h-crank span { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; }
+  @keyframes nudge { from { transform: rotate(-8deg); } to { transform: rotate(16deg); } }
+  #h-punch { transform: translate(-50%, 0); white-space: nowrap; font-size: 12.5px; }
+
+  /* 底下几个按钮 */
+  .ctl { position: absolute; z-index: 6; left: 16px; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 8px; }
+  .port .ctl { left: auto; right: 12px; bottom: auto; top: 40px; flex-direction: column; align-items: flex-end; }
+  /* 横着拿手机时机器几乎占满高度，按钮挪到左上角的桌面上 */
+  @media (max-height: 520px) { body:not(.port) .ctl { top: 10px; bottom: auto; flex-direction: column; align-items: flex-start; } }
+  .ctl button {
+    display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px 7px 11px; border-radius: 999px;
+    font: 500 12.5px/1 var(--ui); color: var(--muted); letter-spacing: .03em;
+    background: rgb(22 15 10 / .72); border: 1px solid rgb(217 180 108 / .22); cursor: pointer;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: color .2s, border-color .2s;
+  }
+  .ctl button:hover, .ctl button:focus-visible { color: var(--ink); border-color: rgb(217 180 108 / .5); outline: none; }
+  .ctl button[aria-pressed="true"] { color: var(--ink); border-color: rgb(217 180 108 / .55); }
+  .ctl svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .ctl [hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    #cv, .hint { transition: none; }
+    #h-crank svg { animation: none; }
+  }
+</style>
+</head>
+<body>
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 008</a>
+
+<main id="stage">
+  <canvas id="cv" tabindex="0" aria-label="一台手摇纸带音乐盒，纸带上打着品牌名的孔。按住摇柄转动，或者用左右方向键摇；空格键让它自己转。"></canvas>
+  <div class="hint" id="h-crank" aria-hidden="true"><svg><path class="arc"/><path class="head"/></svg><span>摇一下</span></div>
+  <div class="hint" id="h-punch" aria-hidden="true">点纸带上的空格打孔，点孔贴胶带补上</div>
+</main>
+
+<div class="ctl">
+  <button type="button" id="auto" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6"/><path d="M11.8 1.8l-.3 2.7 2.7.3"/></svg><span>自己转</span></button>
+  <button type="button" id="snd" aria-pressed="true"><svg viewBox="0 0 16 16"><path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z"/><path class="w" d="M10.6 5.6a3.4 3.4 0 0 1 0 4.8M12.4 3.9a5.8 5.8 0 0 1 0 8.2"/></svg><span>声音</span></button>
+  <button type="button" id="reset" hidden><svg viewBox="0 0 16 16"><path d="M3 8a5 5 0 1 0 1.5-3.6"/><path d="M4.2 1.8l.3 2.7-2.7.3"/></svg><span>还原纸带</span></button>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const TAU = Math.PI * 2;
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  const CJK = /[⺀-鿿豈-﫿＀-￯]/.test(brand);
+
+  // ---------- 音阶：20 个齿，上面 16 个是 C 大调五声音阶，下面 4 个是低音 ----------
+  const MIDI = [96, 93, 91, 88, 86, 84, 81, 79, 76, 74, 72, 69, 67, 64, 62, 60, 57, 55, 53, 48];
+  const NAMES = ['C7', 'A6', 'G6', 'E6', 'D6', 'C6', 'A5', 'G5', 'E5', 'D5', 'C5', 'A4', 'G4', 'E4', 'D4', 'C4', 'A3', 'G3', 'F3', 'C3'];
+  const ROWS = 20, MEL = 16;
+  // 每小节一个和弦，C – Am – F – G 轮着来；低音按 3+3+2 拨三下
+  const BASS = [[19, 19, 17], [16, 16, 16], [18, 18, 19], [17, 17, 17]];
+  const BEATS = [0, 3, 6];
+  const COLS_PER_REV = 8;               // 摇一圈走一小节
+  const freq = m => 440 * 2 ** ((m - 69) / 12);
+
+  // 可复现的伪随机
+  const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  const mulberry = s => () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; };
+
+  // ---------- 把品牌名排成孔 ----------
+  // 先用粗体按“一格一个孔”的分辨率栅格化，再细化成一笔宽：竖笔因为斜体变成一串往上走的琶音，横笔是同一个音的连拨，弯笔是起伏的旋律
+  function thin(g, w, h) {
+    const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? 0 : g[y * w + x];
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let step = 0; step < 2; step++) {
+        const del = [];
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          if (!g[y * w + x]) continue;
+          const P2 = at(x, y - 1), P3 = at(x + 1, y - 1), P4 = at(x + 1, y), P5 = at(x + 1, y + 1);
+          const P6 = at(x, y + 1), P7 = at(x - 1, y + 1), P8 = at(x - 1, y), P9 = at(x - 1, y - 1);
+          const B = P2 + P3 + P4 + P5 + P6 + P7 + P8 + P9;
+          if (B < 2 || B > 6) continue;
+          const q = [P2, P3, P4, P5, P6, P7, P8, P9, P2];
+          let A = 0;
+          for (let i = 0; i < 8; i++) if (!q[i] && q[i + 1]) A++;
+          if (A !== 1) continue;
+          if (step === 0 ? (P2 * P4 * P6 || P4 * P6 * P8) : (P2 * P4 * P8 || P2 * P6 * P8)) continue;
+          del.push(y * w + x);
+        }
+        for (const i of del) g[i] = 0;
+        if (del.length) changed = true;
+      }
+    }
+  }
+  function components(g, w, h) {
+    const lab = new Int32Array(w * h).fill(-1), list = [];
+    for (let i = 0; i < w * h; i++) {
+      if (!g[i] || lab[i] >= 0) continue;
+      const id = list.length, cells = [], st = [i];
+      lab[i] = id;
+      while (st.length) {
+        const j = st.pop(), x = j % w, y = (j / w) | 0;
+        cells.push(j);
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy, k = yy * w + xx;
+          if (xx >= 0 && yy >= 0 && xx < w && yy < h && g[k] && lab[k] < 0) { lab[k] = id; st.push(k); }
+        }
+      }
+      list.push(cells);
+    }
+    return list;
+  }
+  function rasterBrand() {
+    const S = 12;
+    const fam = CJK ? '"Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif' : 'Outfit, "Segoe UI", Arial, sans-serif';
+    const wt = CJK ? 400 : 700;
+    const m = canvas(8, 8).getContext('2d');
+    m.font = `${wt} 100px ${fam}`;
+    let px, base;
+    if (CJK) {
+      const mm = m.measureText(brand), hh = (mm.actualBoundingBoxAscent + mm.actualBoundingBoxDescent) || 88;
+      px = 100 * 15 * S / hh;
+      base = 0.5 * S + (mm.actualBoundingBoxAscent || 76) * px / 100;
+    } else {
+      const mm = m.measureText('H');
+      px = 100 * 10.5 * S / (mm.actualBoundingBoxAscent || 70);
+      base = 12.5 * S;
+    }
+    const k = CJK ? 0 : 0.3;                          // 斜体的倾斜量：每往上一行往后挪 0.3 列
+    const ls = (CJK ? 1.8 : 1.15) * S;
+    m.font = `${wt} ${px}px ${fam}`;
+    const chars = [...brand];
+    const adv = chars.map(ch => m.measureText(ch).width + ls);
+    const tw = adv.reduce((a, b) => a + b, 0);
+    const cw = Math.ceil((tw + k * 16 * S + 4 * S) / S) * S, ch = 16 * S;
+    let c, o;
+    if (VERT) {
+      // 竖屏的中文：纸带竖着走，把每个字转 90° 打上去，屏幕上看是正着的一列竖排；第一个字在最上面
+      const step = 16 * S + ls, n = chars.length;
+      c = canvas(n * step + 4 * S, ch); o = c.getContext('2d', { willReadFrequently: true });
+      o.font = m.font; o.textAlign = 'center'; o.textBaseline = 'middle';
+      chars.forEach((chr, i) => {
+        o.setTransform(0, 1, -1, 0, 2 * S + (n - 1 - i) * step + 8 * S, 8 * S);
+        o.fillText(chr, 0, 0);
+      });
+    } else {
+      c = canvas(cw, ch); o = c.getContext('2d', { willReadFrequently: true });
+      o.font = m.font;
+      o.setTransform(1, 0, -k, 1, k * base, 0);
+      let x = 2 * S;
+      chars.forEach((chr, i) => { o.fillText(chr, x, base); x += adv[i]; });
+    }
+    const cols = Math.round(c.width / S), iw = c.width;
+    const d = o.getImageData(0, 0, iw, ch).data;
+    const g = new Uint8Array(cols * 16);
+    const thr = (CJK ? 0.36 : 0.46) * 255;
+    for (let r = 0; r < 16; r++) for (let cc = 0; cc < cols; cc++) {
+      let a = 0, n = 0;
+      for (let y = r * S + 2; y < r * S + S - 2; y++) for (let xx = cc * S + 2; xx < cc * S + S - 2; xx++) { a += d[(y * iw + xx) * 4 + 3]; n++; }
+      g[r * cols + cc] = a / n > thr ? 1 : 0;
+    }
+    const comps = components(g, cols, 16);
+    thin(g, cols, 16);
+    // i、j 上的点这类小团块会被整个细化掉，补回一个孔
+    for (const cells of comps) {
+      if (cells.some(j => g[j])) continue;
+      let sx = 0, sy = 0;
+      for (const j of cells) { sx += j % cols; sy += (j / cols) | 0; }
+      g[Math.round(sy / cells.length) * cols + Math.round(sx / cells.length)] = 1;
+    }
+    let c0 = cols, c1 = -1;
+    for (let cc = 0; cc < cols; cc++) for (let r = 0; r < 16; r++) if (g[r * cols + cc]) { c0 = Math.min(c0, cc); c1 = Math.max(c1, cc); }
+    if (c1 < 0) return { g: new Uint8Array(16), cols: 1 };
+    const w = c1 - c0 + 1, out = new Uint8Array(w * 16);
+    for (let r = 0; r < 16; r++) for (let cc = 0; cc < w; cc++) out[r * w + cc] = g[r * cols + cc + c0];
+    return { g: out, cols: w };
+  }
+  let PAT, VERT = false;
+  function buildPattern() {
+    VERT = CJK && PORT;
+    const R = rasterBrand();
+    const LEAD = 4, TAIL = 4;
+    const cols = Math.max(32, Math.ceil((LEAD + R.cols + TAIL) / 8) * 8);
+    const holes = new Map();
+    const add = (c, r, lean = 0) => holes.set(c * ROWS + r, { c, r, dx: (hash(c, r) - 0.5) * 0.12 + lean, patch: false, user: false });
+    // 中文字没有斜体：同一列的孔从低到高往后错一点，一竖就成了一下扫弦，不是十几个音同时砸下去
+    for (let r = 0; r < MEL; r++) for (let c = 0; c < R.cols; c++) if (R.g[r * R.cols + c]) add(LEAD + c, r, CJK ? (MEL - 1 - r) * 0.045 - 0.3 : 0);
+    const bars = cols / 8;
+    for (let b = 0; b < bars; b++) BEATS.forEach((o, i) => add(b * 8 + o, BASS[b % 4][i]));
+    PAT = { cols, bars, holes, lead: LEAD, nameCols: R.cols, edited: false };
+    PAT.orig = new Map([...holes].map(([k, h]) => [k, { ...h }]));
+  }
+  let SH = [], COLN = new Map();       // 没被贴住的孔，按在纸带上的位置排好（单位：列）；每列有几个孔
+  function rebuildHoles() {
+    SH = [...PAT.holes.values()].filter(h => !h.patch).map(h => ({ u: h.c + 0.5 + h.dx, r: h.r, c: h.c })).sort((a, b) => a.u - b.u);
+    COLN = new Map();
+    for (const h of SH) COLN.set(h.c, (COLN.get(h.c) || 0) + 1);
+  }
+  // 读音线上的纸带坐标从 u0 走到 u0+du，期间经过的孔；倒着走也算，f 是这一段里的先后
+  function crossings(u0, du, out) {
+    if (!du) return out;
+    const P = PAT.cols, a = Math.min(u0, u0 + du), b = Math.max(u0, u0 + du);
+    for (let k = Math.floor(a / P); k * P <= b; k++) {
+      for (const h of SH) {
+        const x = h.u + k * P;
+        if (du > 0 ? (x > a && x <= b) : (x >= a && x < b)) out.push({ h, f: (x - u0) / du });
+      }
+    }
+    return out.sort((m, n) => m.f - n.f);
+  }
+
+  // ---------- 声音 ----------
+  function makeIR(ac, secs) {
+    const sr = ac.sampleRate, n = Math.floor(sr * secs), b = ac.createBuffer(2, n, sr), rnd = mulberry(7);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch);
+      let lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        lp += ((rnd() * 2 - 1) - lp) * (0.18 + 0.6 * Math.exp(-t / 0.12));     // 越往后越闷
+        d[i] = lp * Math.exp(-t / 0.3) * (1 - Math.exp(-t / 0.0025)) * 0.55;
+      }
+      // 木盒子里的几次早反射
+      [0.0029, 0.0047, 0.0071, 0.0113, 0.0164].forEach((s, i) => { d[Math.floor(s * sr) + ch * 7] += (i % 2 ? -0.32 : 0.38) * (1 - i * 0.12); });
+    }
+    return b;
+  }
+  function makeSynth(ac, live) {
+    const sr = ac.sampleRate;
+    const noise = ac.createBuffer(1, sr, sr), nd = noise.getChannelData(0), rnd = mulberry(3);
+    for (let i = 0; i < nd.length; i++) nd[i] = rnd() * 2 - 1;
+    const master = ac.createGain(); master.gain.value = live ? 0 : 0.9;
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -9; comp.knee.value = 8; comp.ratio.value = 5; comp.attack.value = 0.002; comp.release.value = 0.18;
+    master.connect(comp).connect(ac.destination);
+    // 木盒子的共鸣：两个峰，再把最高的地方压一点
+    const b1 = ac.createBiquadFilter(); b1.type = 'peaking'; b1.frequency.value = 240; b1.Q.value = 1.1; b1.gain.value = 4;
+    const b2 = ac.createBiquadFilter(); b2.type = 'peaking'; b2.frequency.value = 1180; b2.Q.value = 1.6; b2.gain.value = 2.5;
+    const hs = ac.createBiquadFilter(); hs.type = 'highshelf'; hs.frequency.value = 7500; hs.gain.value = -4;
+    const dry = ac.createGain();
+    dry.connect(b1).connect(b2).connect(hs).connect(master);
+    const conv = ac.createConvolver();
+    // 混响的冲激响应要算十几毫秒；第一次按下去时已经在建音频了，往后挪一下，别让那一帧更卡
+    if (live) setTimeout(() => { conv.buffer = makeIR(ac, 1.5); }, 40); else conv.buffer = makeIR(ac, 1.5);
+    const send = ac.createGain(); send.gain.value = 0.3;
+    dry.connect(send).connect(conv).connect(master);
+    const voices = [];
+
+    // 一个齿：钢齿的基音带一个略微跑调的副本（慢慢地“呜哇”），加上不成倍数的高次泛音，起音很脆，衰减很长；拨之前星轮先“嗒”一下
+    function note(row, t, vel = 1) {
+      t = Math.max(t, ac.currentTime);              // 刚建好的音频时钟从 0 起，别排到过去去
+      const f = freq(MIDI[row]);
+      const tau = clamp(0.6 * Math.sqrt(261.6 / f), 0.2, 0.95);
+      const amp = 0.13 * vel * Math.pow(f / 523.25, -0.22);
+      const bright = 0.7 + 0.3 * vel;
+      const prev = voices[row];
+      if (prev && prev.end > t) {
+        // 还在响的时候又被拨：先把它按住，避免两层叠在一起
+        prev.g.gain.cancelScheduledValues(t);
+        prev.g.gain.setTargetAtTime(0, t, 0.006);
+        prev.srcs.forEach(s => { try { s.stop(t + 0.05); } catch {} });
+      }
+      const v = { g: ac.createGain(), srcs: [], end: t + tau * 7 };
+      v.g.connect(dry);
+      const parts = [[1, 1, tau], [1.0021, 0.2, tau * 0.85], [2, 0.1 * bright, tau * 0.3], [5.93, 0.21 * bright, 0.075], [11.4, 0.07 * bright, 0.026]];
+      for (const [ra, a, tc] of parts) {
+        if (f * ra > 15000) continue;
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.frequency.value = f * ra;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp * a, t + 0.0015);
+        g.gain.setTargetAtTime(0, t + 0.0015, tc);
+        o.connect(g).connect(v.g);
+        o.start(t); o.stop(t + 0.002 + tc * 7);
+        v.srcs.push(o);
+      }
+      const nz = ac.createBufferSource(), bp = ac.createBiquadFilter(), ng = ac.createGain();
+      nz.buffer = noise;
+      bp.type = 'bandpass'; bp.frequency.value = Math.min(8500, f * 4.5); bp.Q.value = 1.2;
+      const t0 = Math.max(0, t - 0.007);
+      ng.gain.setValueAtTime(0, t0);
+      ng.gain.linearRampToValueAtTime(0.01 * vel, t0 + 0.0005);
+      ng.gain.setTargetAtTime(0, t0 + 0.0005, 0.0012);
+      ng.gain.setValueAtTime(0, t);
+      ng.gain.linearRampToValueAtTime(0.045 * vel, t + 0.0006);
+      ng.gain.setTargetAtTime(0, t + 0.0006, 0.004);
+      nz.connect(bp).connect(ng).connect(v.g);
+      nz.start(t0, rnd() * 0.9); nz.stop(t + 0.05);
+      v.srcs.push(nz);
+      voices[row] = v;
+    }
+    function burst(t, type, f, q, lvl, tc, dest = dry) {
+      const nz = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+      nz.buffer = noise; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + 0.0008); g.gain.setTargetAtTime(0, t + 0.0008, tc);
+      nz.connect(fl).connect(g).connect(dest);
+      nz.start(t, rnd() * 0.9); nz.stop(t + tc * 8 + 0.01);
+    }
+    // 齿轮咬合的细碎声
+    const tick = (t, lvl) => burst(t, 'highpass', 1700, 0.7, lvl, 0.0015);
+    // 打孔：钳子一合“咔”，底下一记闷响，松手再“嗒”
+    function punch(t) {
+      burst(t, 'lowpass', 3200, 0.8, 0.2, 0.012);
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.05);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.002); g.gain.setTargetAtTime(0, t + 0.002, 0.025);
+      o.connect(g).connect(dry); o.start(t); o.stop(t + 0.25);
+      burst(t + 0.09, 'highpass', 2400, 0.8, 0.05, 0.004);
+    }
+    // 贴胶带：一下软软的撕拉
+    function tape(t) {
+      const nz = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+      nz.buffer = noise; fl.type = 'bandpass'; fl.Q.value = 1.4;
+      fl.frequency.setValueAtTime(1300, t); fl.frequency.exponentialRampToValueAtTime(3800, t + 0.14);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.03); g.gain.setTargetAtTime(0, t + 0.08, 0.03);
+      nz.connect(fl).connect(g).connect(dry); nz.start(t, rnd() * 0.5); nz.stop(t + 0.35);
+    }
+    // 纸带走动的沙沙声，响度跟着速度
+    let rustle = null;
+    if (live) {
+      const nz = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+      nz.buffer = noise; nz.loop = true; fl.type = 'bandpass'; fl.frequency.value = 2600; fl.Q.value = 0.5; g.gain.value = 0;
+      nz.connect(fl).connect(g).connect(master); nz.start();
+      rustle = g.gain;
+    }
+    return { note, tick, punch, tape, master: master.gain, rustle };
+  }
+
+  // 把这一帧里经过读音线的孔排进音频时间线；同一列孔多的，每个轻一点
+  function fire(syn, list, tEnd, dt, log) {
+    for (const e of list) {
+      const n = COLN.get(e.h.c) || 1, r = e.h.r;
+      let vel = (r >= MEL ? 0.95 : 1) / (1 + 0.16 * (n - 1));
+      vel *= 0.92 + 0.16 * hash(e.h.c * 31 + r, 7);
+      // 同一行紧挨着的孔：齿还没停就又被拨，声音小一点
+      if (PAT.holes.has((e.h.c - 1) * ROWS + r) && !PAT.holes.get((e.h.c - 1) * ROWS + r).patch) vel *= 0.78;
+      const t = tEnd - (1 - e.f) * dt;
+      if (syn) syn.note(r, t, vel);
+      if (log) log.push({ t, c: e.h.c, r, u: e.h.u, vel });
+    }
+  }
+
+  // 用同一套发声和过线代码离线渲染一段，测试用
+  async function renderOffline({ secs = 10, cps = 4.4, start = 0, wobble = 0, tail = 3.5 } = {}) {
+    const sr = 48000, off = new OfflineAudioContext(2, Math.ceil(sr * secs), sr);
+    const syn = makeSynth(off, false), ev = [], step = 1 / 120;
+    let pos = start;
+    for (let t = 0; t < secs - tail; t += step) {
+      const v = cps * (1 + wobble * Math.sin(t * 3.1));
+      fire(syn, crossings(pos, v * step, []), t + step + 0.05, step, ev);
+      pos += v * step;
+    }
+    const buf = await off.startRendering();
+    return { buf, ev };
+  }
+
+  let AC = null, SYN = null, soundOn = true;
+  function ensureAudio() {
+    if (!AC) {
+      const C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return;
+      AC = new C({ latencyHint: 'interactive' });
+      SYN = makeSynth(AC, true);
+      SYN.master.setTargetAtTime(soundOn ? 0.9 : 0, AC.currentTime, 0.08);
+    }
+    if (AC.state === 'suspended') AC.resume();
+  }
+
+  // ---------- 布局 ----------
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  let W, H, DPR, PORT, Lx, Ly, p, xr, stripTop, stripBot, side, LD, G;
+  const rowY = r => stripTop + (1.7 + r + 0.5) * p;
+  function layout() {
+    W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
+    PORT = H > W * 1.1;
+    Lx = PORT ? H : W; Ly = PORT ? W : H;
+    side = PORT ? 1 : -1;                                   // 齿轮在纸带哪一边：横屏在上面，竖屏在右手边
+    const SPAN = 44.2;                                      // 机器横跨纸带的方向一共占多少个 p
+    p = PORT ? Math.min(Ly * 0.97 / SPAN, 11) : clamp(Math.min(Ly * 0.92 / SPAN, Lx / 86), 5, 16);
+    const gearExt = 13, textExt = 5.2, box = 1.3, sw = (ROWS + 3.4) * p;
+    stripTop = (Ly - SPAN * p) / 2 + (box + (side < 0 ? gearExt : textExt)) * p;
+    stripBot = stripTop + sw;
+    xr = PORT ? 16.4 * p + Math.max(2.2 * p, 34) : clamp(Lx * 0.33, 18.4 * p, Lx - 60 * p);
+    // 屏幕光从左上来；竖屏时整台机器转了 90°，换算到场景坐标里
+    LD = PORT ? [0.83, -0.55] : [-0.55, -0.83];
+    const len = MIDI.map(m => (2.7 + 5.3 * Math.pow((96 - m) / 48, 0.85)) * p);
+    const pin = [xr + 2.9 * p, side < 0 ? stripTop - 2.6 * p : stripBot + 2.6 * p];
+    const ga = side < 0 ? -115 * Math.PI / 180 : 115 * Math.PI / 180;
+    const gear = [pin[0] + 5.5 * p * Math.cos(ga), pin[1] + 5.5 * p * Math.sin(ga)];
+    const plate = [xr - 14.4 * p, side < 0 ? stripTop - gearExt * p : stripTop - textExt * p, xr + 6.2 * p, side < 0 ? stripBot + textExt * p : stripBot + gearExt * p];
+    if (!st.cranked && !st.auto) { st.th = PORT ? -0.6 : -0.8; st.base = START - st.th * COLS_PER_REV / TAU; }
+    G = {
+      len, tip: xr + 0.3 * p, back: xr - 11.2 * p,
+      rollIn: xr + 2.9 * p, rollOut: xr - 12.9 * p,
+      pin, pinR: 1.1 * p, gear, gearR: 4.4 * p, arm: 6.6 * p, knob: 1.3 * p,
+      plate, box: [plate[0] - box * p, plate[1] - box * p, plate[2] + box * p, plate[3] + box * p],
+    };
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    document.body.classList.toggle('port', PORT);
+  }
+  // 场景坐标和屏幕坐标：横屏一样；竖屏把纸带竖过来，从上往下走进机器
+  const sceneT = o => PORT ? o.setTransform(0, -DPR, DPR, 0, 0, Lx * DPR) : o.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const toScene = (X, Y) => PORT ? [Lx - Y, X] : [X, Y];
+  const toScreen = (x, y) => PORT ? [y, Lx - x] : [x, y];
+
+  // ---------- 材质 ----------
+  const NZ = new Float32Array(256 * 256);
+  { const r = mulberry(11); for (let i = 0; i < NZ.length; i++) NZ[i] = r(); }
+  function vn(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const x0 = xi & 255, x1 = (xi + 1) & 255, y0 = (yi & 255) << 8, y1 = ((yi + 1) & 255) << 8;
+    const a = NZ[y0 | x0], b = NZ[y0 | x1], c = NZ[y1 | x0], d = NZ[y1 | x1];
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  // 木纹：顺着 x 走的年轮，被低频噪声扭弯，再加顺纹的细丝和棕眼
+  function wood(w, h, pal, seed) {
+    const q = Math.min(1, Math.sqrt(1.3e6 / (w * h)));
+    const cw = Math.max(2, Math.round(w * q)), ch = Math.max(2, Math.round(h * q));
+    const c = canvas(cw, ch), o = c.getContext('2d'), im = o.createImageData(cw, ch), d = im.data;
+    for (let y = 0; y < ch; y++) {
+      const Y = y / q;
+      for (let x = 0; x < cw; x++) {
+        const X = x / q;
+        const warp = vn(X * 0.0045 + seed, Y * 0.022) * 2.2 + vn(X * 0.016 + seed * 3, Y * 0.06) * 0.55;
+        let ring = Y * pal.ring + warp * pal.warp;
+        ring -= Math.floor(ring);
+        const late = Math.pow(ring, 3.2);                               // 晚材：每圈年轮末尾颜色深
+        const fib = vn(X * 0.012 + seed, Y * 0.85);
+        const fine = vn(X * 0.05, Y * 2.1 + seed);
+        const pore = vn(X * 0.06 + 9, Y * 1.4 + seed * 2) > 0.86 ? 1 : 0;
+        const fig = vn(X * 0.0015 + seed, Y * 0.004);
+        let t = 0.62 - 0.38 * late + 0.22 * (fib - 0.5) + 0.12 * (fine - 0.5) + 0.25 * (fig - 0.5);
+        t = clamp(t, 0, 1) * (1 - pore * 0.28);
+        const i = (y * cw + x) * 4;
+        d[i] = pal.a[0] + (pal.b[0] - pal.a[0]) * t;
+        d[i + 1] = pal.a[1] + (pal.b[1] - pal.a[1]) * t;
+        d[i + 2] = pal.a[2] + (pal.b[2] - pal.a[2]) * t;
+        d[i + 3] = 255;
+      }
+    }
+    o.putImageData(im, 0, 0);
+    return c;
+  }
+  function grain(size, alpha, seed) {
+    const c = canvas(size, size), o = c.getContext('2d'), im = o.createImageData(size, size), r = mulberry(seed);
+    for (let i = 0; i < size * size; i++) {
+      const v = r(), j = i * 4, fib = vn((i % size) * 0.9, ((i / size) | 0) * 0.08 + seed) - 0.5;
+      const k = v < 0.5 ? 0 : 255;
+      im.data[j] = im.data[j + 1] = im.data[j + 2] = k;
+      im.data[j + 3] = Math.abs(v - 0.5) * 2 * alpha * 255 * (0.6 + fib);
+    }
+    o.putImageData(im, 0, 0);
+    return c;
+  }
+  const lightGrad = (o, x0, y0, x1, y1, stops) => {
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, r = Math.hypot(x1 - x0, y1 - y0) / 2;
+    const g = o.createLinearGradient(cx + LD[0] * r, cy + LD[1] * r, cx - LD[0] * r, cy - LD[1] * r);
+    for (const [t, col] of stops) g.addColorStop(t, col);
+    return g;
+  };
+  // 阴影的偏移和模糊是按屏幕像素算的，不受变换影响，所以竖屏时影子方向自然还是往右下
+  const shadow = (o, blur, dx, dy, a) => { o.shadowColor = `rgba(0,0,0,${a})`; o.shadowBlur = blur * DPR; o.shadowOffsetX = dx * DPR; o.shadowOffsetY = dy * DPR; };
+  const noShadow = o => { o.shadowColor = 'transparent'; o.shadowBlur = 0; o.shadowOffsetX = 0; o.shadowOffsetY = 0; };
+  // 斜面：沿边往里刷一道亮、一道暗
+  function bevel(o, path, w, hi, lo) {
+    o.save(); path(o); o.clip();
+    o.lineWidth = w * 2;
+    o.save(); o.translate(-LD[0] * w, -LD[1] * w); path(o); o.strokeStyle = hi; o.stroke(); o.restore();
+    o.save(); o.translate(LD[0] * w, LD[1] * w); path(o); o.strokeStyle = lo; o.stroke(); o.restore();
+    o.restore();
+  }
+  const BRASS = [[0, '#f3d892'], [0.28, '#d2a85a'], [0.62, '#b48536'], [1, '#7a5520']];
+  const STEEL = [[0, '#eef3f6'], [0.3, '#b9c1c7'], [0.7, '#868f96'], [1, '#4f565b']];
+  function screw(o, x, y, r, ang, steel) {
+    o.save();
+    shadow(o, r * 0.9, r * 0.22, r * 0.32, 0.5);
+    o.beginPath(); o.arc(x, y, r, 0, TAU);
+    o.fillStyle = lightGrad(o, x - r, y - r, x + r, y + r, steel ? STEEL : BRASS); o.fill();
+    noShadow(o);
+    const g = o.createRadialGradient(x + LD[0] * r * 0.45, y + LD[1] * r * 0.45, 0, x + LD[0] * r * 0.45, y + LD[1] * r * 0.45, r * 0.9);
+    g.addColorStop(0, 'rgba(255,250,235,.55)'); g.addColorStop(1, 'rgba(255,250,235,0)');
+    o.fillStyle = g; o.fill();
+    o.translate(x, y); o.rotate(ang);
+    o.fillStyle = 'rgba(30,20,8,.75)'; o.fillRect(-r * 0.82, -r * 0.13, r * 1.64, r * 0.26);
+    o.fillStyle = 'rgba(255,240,200,.35)'; o.fillRect(-r * 0.82, r * 0.1, r * 1.64, r * 0.06);
+    o.restore();
+  }
+
+  // ---------- 静态的几层 ----------
+  let LA, LB, LV, STRIP, GEAR, PIN, PAPER, CHADS = [], FLY = [];
+  const combFront = r => xr - G.len[r];
+  function combPath(o) {
+    const y0 = stripTop - 1.4 * p, y1 = stripBot + 1.4 * p;
+    o.beginPath();
+    o.moveTo(G.back, y0);
+    o.lineTo(combFront(0), y0);
+    for (let r = 0; r < ROWS; r++) o.lineTo(combFront(r), rowY(r));
+    o.lineTo(combFront(ROWS - 1), y1);
+    o.lineTo(G.back, y1);
+    o.closePath();
+  }
+  function buildLayers() {
+    // A：桌面、盒子、铜板，以及不动的小物件
+    LA = canvas(cv.width, cv.height);
+    const o = LA.getContext('2d');
+    sceneT(o);
+    const tw = wood(Lx, Ly, { a: [24, 14, 8], b: [86, 54, 32], ring: 0.055, warp: 2.4 }, 1.7);
+    o.imageSmoothingQuality = 'high';
+    o.drawImage(tw, 0, 0, Lx, Ly);
+    // 桌面上的清漆反一点暖光
+    const lamp = toScene(...(PORT ? [W * 0.42, H * 0.55] : [W * 0.36, H * 0.36]));
+    let g = o.createRadialGradient(lamp[0], lamp[1], 0, lamp[0], lamp[1], Math.max(Lx, Ly) * 0.55);
+    g.addColorStop(0, 'rgba(255,196,128,.14)'); g.addColorStop(1, 'rgba(255,196,128,0)');
+    o.fillStyle = g; o.fillRect(0, 0, Lx, Ly);
+
+    const [bx0, by0, bx1, by1] = G.box, [px0, py0, px1, py1] = G.plate;
+    // 木盒
+    o.save();
+    shadow(o, 3.2 * p, 1.1 * p, 1.6 * p, 0.62);
+    const boxPath = q => { q.beginPath(); q.roundRect(bx0, by0, bx1 - bx0, by1 - by0, 1.1 * p); };
+    boxPath(o); o.fillStyle = '#4a2c17'; o.fill();
+    noShadow(o);
+    o.clip();
+    const bw = wood(bx1 - bx0, by1 - by0, { a: [92, 52, 26], b: [168, 112, 62], ring: 0.09, warp: 1.6 }, 4.2);
+    o.drawImage(bw, bx0, by0, bx1 - bx0, by1 - by0);
+    o.fillStyle = lightGrad(o, bx0, by0, bx1, by1, [[0, 'rgba(255,220,170,.16)'], [0.5, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,.28)']]);
+    o.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
+    o.restore();
+    bevel(o, boxPath, 0.35 * p, 'rgba(255,225,180,.28)', 'rgba(20,10,4,.55)');
+    // 铜板
+    const platePath = q => { q.beginPath(); q.roundRect(px0, py0, px1 - px0, py1 - py0, 0.6 * p); };
+    o.save();
+    shadow(o, 0.8 * p, 0.25 * p, 0.4 * p, 0.55);
+    platePath(o); o.fillStyle = lightGrad(o, px0, py0, px1, py1, BRASS); o.fill();
+    noShadow(o);
+    o.clip();
+    // 拉丝：顺着纸带方向的细线
+    const rr = mulberry(5);
+    for (let i = 0; i < (py1 - py0) * 1.4; i++) {
+      const y = py0 + rr() * (py1 - py0);
+      o.fillStyle = rr() < 0.5 ? `rgba(255,236,190,${0.05 + rr() * 0.07})` : `rgba(70,45,10,${0.04 + rr() * 0.06})`;
+      o.fillRect(px0, y, px1 - px0, 0.35 + rr() * 0.5);
+    }
+    o.restore();
+    bevel(o, platePath, 0.22 * p, 'rgba(255,246,214,.6)', 'rgba(60,36,8,.55)');
+    // 刻在板边上的双线框
+    o.save();
+    o.lineWidth = Math.max(0.6, 0.07 * p);
+    for (const inset of [0.55, 0.8]) {
+      o.beginPath(); o.roundRect(px0 + inset * p, py0 + inset * p, px1 - px0 - 2 * inset * p, py1 - py0 - 2 * inset * p, 0.3 * p);
+      shadow(o, 0, 0.6, 0.9, 0); o.shadowColor = 'rgba(255,238,190,.5)';
+      o.strokeStyle = 'rgba(70,44,10,.6)'; o.stroke();
+    }
+    o.restore();
+    // 板上的刻字
+    o.save();
+    const tY = side < 0 ? stripBot + 2.75 * p : stripTop - 2.75 * p;
+    const tX = (px0 + px1) / 2 - 1.2 * p;
+    o.textAlign = 'center'; o.textBaseline = 'middle';
+    o.shadowColor = 'rgba(255,238,190,.55)'; o.shadowOffsetX = 0.6 * DPR; o.shadowOffsetY = 0.9 * DPR;
+    o.fillStyle = 'rgba(64,40,10,.82)';
+    const big = CJK ? `700 ${1.5 * p}px "Noto Serif SC", serif` : `600 ${1.55 * p}px Fraunces, Georgia, serif`;
+    o.font = big;
+    if ('letterSpacing' in o) o.letterSpacing = (CJK ? 0.5 : 0.32) * p + 'px';
+    const bt = CJK ? brand : brand.toUpperCase();
+    o.fillText(bt, tX, tY - 0.55 * p);
+    o.font = `500 ${0.62 * p}px "Noto Serif SC", Fraunces, serif`;
+    if ('letterSpacing' in o) o.letterSpacing = 0.22 * p + 'px';
+    o.fillText('二十音 · 纸带音乐盒 · No. 008', tX, tY + 1.15 * p);
+    o.restore();
+    // 板角的螺丝
+    for (const [x, y] of [[px0 + 1.35 * p, py0 + 1.35 * p], [px1 - 1.35 * p, py0 + 1.35 * p], [px0 + 1.35 * p, py1 - 1.35 * p], [px1 - 1.35 * p, py1 - 1.35 * p]]) screw(o, x, y, 0.5 * p, hash(x | 0, y | 0) * TAU, false);
+    // 纸带两边的导轨
+    for (const y of [stripTop - 0.42 * p, stripBot + 0.08 * p]) {
+      const rp = q => { q.beginPath(); q.roundRect(px0 + 0.4 * p, y, px1 - px0 - 0.8 * p, 0.34 * p, 0.12 * p); };
+      o.save(); shadow(o, 0.3 * p, 0.1 * p, 0.15 * p, 0.5); rp(o); o.fillStyle = lightGrad(o, px0, y, px1, y + 0.34 * p, BRASS); o.fill(); o.restore();
+    }
+    // 读音线底下的缝：星轮在这里拨齿，从孔里看下去是暗的
+    o.fillStyle = 'rgba(25,15,5,.75)';
+    o.fillRect(xr - 0.42 * p, stripTop + 1.3 * p, 0.84 * p, stripBot - stripTop - 2.6 * p);
+    // 齿轮落在板上的影子（圆的，转起来也不变）
+    for (const [c, R] of [[G.gear, G.gearR], [G.pin, G.pinR]]) {
+      o.save(); shadow(o, 0.7 * p, 0.35 * p, 0.55 * p, 0.45);
+      o.beginPath(); o.arc(c[0], c[1], R * 0.98, 0, TAU); o.fillStyle = 'rgba(0,0,0,.16)'; o.fill(); o.restore();
+    }
+    // 纸带在桌面上的影子
+    o.save(); shadow(o, 0.5 * p, 0.12 * p, 0.25 * p, 0.45);
+    o.fillStyle = 'rgba(0,0,0,.2)'; o.fillRect(-10, stripTop, Lx + 20, stripBot - stripTop); o.restore();
+
+    // 横屏有地方就摆一张曲目卡和打孔钳
+    drawProps(o);
+
+    // B：压在纸带上面、不会动的部分：音梳底座、滚轴的支架、螺丝
+    LB = canvas(cv.width, cv.height);
+    const b = LB.getContext('2d');
+    sceneT(b);
+    b.save();
+    shadow(b, 0.9 * p, 0.3 * p, 0.5 * p, 0.6);
+    combPath(b); b.fillStyle = lightGrad(b, G.back, stripTop, xr, stripBot, STEEL); b.fill();
+    noShadow(b);
+    b.clip();
+    // 磨床留下的细纹，横着走
+    const r2 = mulberry(9);
+    for (let i = 0; i < 260; i++) {
+      const x = G.back + r2() * (xr - G.back);
+      b.fillStyle = r2() < 0.5 ? `rgba(255,255,255,${0.04 + r2() * 0.08})` : `rgba(20,25,30,${0.04 + r2() * 0.06})`;
+      b.fillRect(x, stripTop - 2 * p, 0.3 + r2() * 0.4, stripBot - stripTop + 4 * p);
+    }
+    b.restore();
+    bevel(b, combPath, 0.2 * p, 'rgba(255,255,255,.65)', 'rgba(20,24,28,.6)');
+    // 钢印
+    b.save();
+    b.translate(G.back + 1.6 * p, (stripTop + stripBot) / 2); b.rotate(PORT ? Math.PI / 2 : -Math.PI / 2);   // 竖屏时让钢印在屏幕上是正的
+    b.font = `600 ${0.62 * p}px ui-monospace, Consolas, monospace`; b.textAlign = 'center'; b.textBaseline = 'middle';
+    if ('letterSpacing' in b) b.letterSpacing = 0.35 * p + 'px';
+    b.shadowColor = 'rgba(255,255,255,.5)'; b.shadowOffsetX = 0.5 * DPR; b.shadowOffsetY = 0.8 * DPR;
+    b.fillStyle = 'rgba(30,36,40,.55)';
+    b.fillText('20 · C MAJ PENTA · 4/4', 0, 0);
+    b.restore();
+    for (const y of [stripTop - 0.72 * p, stripBot + 0.72 * p]) screw(b, G.back + 1.5 * p, y, 0.52 * p, hash(y | 0, 3) * TAU, true);
+    // 滚轴两头的支架
+    for (const x of [G.rollIn, G.rollOut]) {
+      for (const [y0, y1] of [[stripTop - 1.55 * p, stripTop - 0.12 * p], [stripBot + 0.12 * p, stripBot + 1.55 * p]]) {
+        const cp = q => { q.beginPath(); q.roundRect(x - 1.15 * p, y0, 2.3 * p, y1 - y0, 0.3 * p); };
+        b.save(); shadow(b, 0.5 * p, 0.2 * p, 0.3 * p, 0.55); cp(b); b.fillStyle = lightGrad(b, x - p, y0, x + p, y1, BRASS); b.fill(); b.restore();
+        bevel(b, cp, 0.14 * p, 'rgba(255,246,214,.6)', 'rgba(60,36,8,.5)');
+        b.beginPath(); b.arc(x, (y0 + y1) / 2, 0.32 * p, 0, TAU); b.fillStyle = 'rgba(40,26,8,.55)'; b.fill();
+        b.beginPath(); b.arc(x, (y0 + y1) / 2, 0.22 * p, 0, TAU); b.fillStyle = lightGrad(b, x - p, y0, x + p, y1, STEEL); b.fill();
+      }
+    }
+    // 小齿轮那根轴的轴承座
+    screw(b, G.pin[0], G.pin[1], 0.38 * p, 0, true);
+
+    // 灯光：四周压暗，中间一圈暖
+    LV = canvas(cv.width, cv.height);
+    const v = LV.getContext('2d');
+    v.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const lc = PORT ? [W * 0.55, H * 0.62] : [W * 0.38, H * 0.45];
+    g = v.createRadialGradient(lc[0], lc[1], Math.min(W, H) * 0.18, lc[0], lc[1], Math.hypot(W, H) * 0.72);
+    g.addColorStop(0, 'rgba(8,4,2,0)'); g.addColorStop(0.55, 'rgba(8,4,2,.28)'); g.addColorStop(1, 'rgba(6,3,1,.82)');
+    v.fillStyle = g; v.fillRect(0, 0, W, H);
+
+    GEAR = makeGear(G.gearR, 48, true);
+    PIN = makeGear(G.pinR, 12, false);
+    PAPER = ctx.createPattern(grain(160, 0.09, 21), 'repeat');
+  }
+  function makeGear(R, N, spokes) {
+    const pad = 0.5 * p, half = R + pad, size = half * 2;
+    const c = canvas(size * DPR, size * DPR), o = c.getContext('2d');
+    o.scale(DPR, DPR); o.translate(half, half);
+    const tip = R + 0.2 * p, root = R - 0.24 * p, pa = TAU / N;
+    o.beginPath();
+    for (let i = 0; i < N; i++) {
+      const a = i * pa;
+      o.lineTo(Math.cos(a - pa * 0.3) * root, Math.sin(a - pa * 0.3) * root);
+      o.lineTo(Math.cos(a - pa * 0.16) * tip, Math.sin(a - pa * 0.16) * tip);
+      o.lineTo(Math.cos(a + pa * 0.16) * tip, Math.sin(a + pa * 0.16) * tip);
+      o.lineTo(Math.cos(a + pa * 0.3) * root, Math.sin(a + pa * 0.3) * root);
+    }
+    o.closePath();
+    // 车床车出来的同心圆纹：转起来不变，光就不会跟着转
+    const g = o.createRadialGradient(0, 0, 0, 0, 0, tip);
+    g.addColorStop(0, '#e2bd73'); g.addColorStop(0.55, '#c99b4c'); g.addColorStop(0.9, '#ad7f34'); g.addColorStop(1, '#7c5822');
+    o.fillStyle = g; o.fill();
+    o.lineWidth = Math.max(0.6, 0.06 * p); o.strokeStyle = 'rgba(70,44,10,.7)'; o.stroke();
+    for (let rr = 0.8 * p; rr < root; rr += 0.22 * p) {
+      o.beginPath(); o.arc(0, 0, rr, 0, TAU);
+      o.strokeStyle = `rgba(${(rr * 7) % 2 < 1 ? '255,236,190' : '80,52,12'},.07)`; o.lineWidth = 0.6; o.stroke();
+    }
+    if (spokes) {
+      // 五根弯辐条之间挖空
+      const rIn = 1.7 * p, rOut = root - 0.7 * p, n = 6, half = 0.32 * p;
+      // 两根辐条之间的扇形窗，辐条宽度处处一样
+      const win = i => {
+        const a0 = i * TAU / n, a1 = (i + 1) * TAU / n;
+        o.beginPath();
+        o.arc(0, 0, rOut, a0 + Math.asin(half / rOut), a1 - Math.asin(half / rOut), false);
+        o.arc(0, 0, rIn, a1 - Math.asin(half / rIn), a0 + Math.asin(half / rIn), true);
+        o.closePath();
+      };
+      o.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < n; i++) { win(i); o.fill(); }
+      o.globalCompositeOperation = 'source-over';
+      o.strokeStyle = 'rgba(70,44,10,.55)'; o.lineWidth = Math.max(0.6, 0.06 * p);
+      for (let i = 0; i < n; i++) { win(i); o.stroke(); }
+    }
+    // 轮毂
+    o.beginPath(); o.arc(0, 0, (spokes ? 1.25 : 0.55) * p, 0, TAU);
+    const hg = o.createRadialGradient(0, 0, 0, 0, 0, 1.25 * p);
+    hg.addColorStop(0, '#f1d58f'); hg.addColorStop(1, '#a87a30');
+    o.fillStyle = hg; o.fill(); o.strokeStyle = 'rgba(70,44,10,.6)'; o.lineWidth = 0.8; o.stroke();
+    return { c, half };
+  }
+  function drawProps(o) {
+    const rnd = mulberry(31);
+    let punchAt, chadZone;
+    if (!PORT) {
+      const ax0 = G.box[2] + 2.2 * p, ax1 = Lx - 1.6 * p, ay0 = stripBot + 1.8 * p, ay1 = Ly - 1.2 * p;
+      const aw = ax1 - ax0, ah = ay1 - ay0;
+      if (aw > 16 * p && ah > 8.5 * p) {
+        const cw = Math.min(21 * p, aw * 0.62), chh = Math.min(12.5 * p, ah);
+        const cx = ax1 - cw / 2 - aw * 0.06, cy = ay0 + chh / 2 + (ah - chh) * 0.35;
+        drawCard(o, cx, cy, cw, chh, -0.035);
+        punchAt = [cx - cw / 2 - 5.2 * p, cy + 1.2 * p, 0.42];
+        chadZone = [cx - cw / 2 - 9 * p, cy - 2 * p, 7 * p, 5 * p];
+      } else {
+        punchAt = [ax0 + 5 * p, ay0 + ah * 0.6, 0.3];
+        chadZone = [ax0 + 8 * p, ay0, 6 * p, ah * 0.6];
+      }
+    } else {
+      // 竖屏：纸带右手边那一条桌面
+      const x = G.box[2] + 0.45 * (Lx - G.box[2]), y = stripBot + (Ly - stripBot) * 0.52;
+      punchAt = [x - 6 * p, y, -1.25];
+      chadZone = [x - 14 * p, stripBot + 2 * p, 8 * p, Ly - stripBot - 4 * p];
+    }
+    if (punchAt && punchAt[0] > 0) drawPunch(o, ...punchAt);
+    CHADS = [];
+    if (chadZone) {
+      for (let i = 0; i < 16; i++) CHADS.push({ x: chadZone[0] + rnd() * chadZone[2], y: chadZone[1] + rnd() * chadZone[3], a: rnd() * TAU, flip: rnd() < 0.35 });
+    }
+    PROPS = { chadZone };
+  }
+  let PROPS = {};
+  function drawCard(o, cx, cy, w, h, rot) {
+    // 卡片里的排版按卡片自己的高度算，桌面挤的时候整张缩小
+    const q = Math.min(h / 12.5, w / 21);
+    o.save();
+    o.translate(cx, cy); o.rotate(rot);
+    shadow(o, 1.4 * p, 0.4 * p, 0.7 * p, 0.55);
+    o.fillStyle = '#e8dcc0'; o.fillRect(-w / 2, -h / 2, w, h);
+    noShadow(o);
+    o.fillStyle = ctx.createPattern(grain(120, 0.12, 13), 'repeat'); o.fillRect(-w / 2, -h / 2, w, h);
+    o.fillStyle = lightGrad(o, -w / 2, -h / 2, w / 2, h / 2, [[0, 'rgba(255,248,230,.18)'], [1, 'rgba(60,40,20,.16)']]); o.fillRect(-w / 2, -h / 2, w, h);
+    // 双线框和四角的小菱形
+    o.strokeStyle = 'rgba(140,46,36,.75)';
+    o.lineWidth = Math.max(0.8, 0.09 * q); o.strokeRect(-w / 2 + 0.7 * q, -h / 2 + 0.7 * q, w - 1.4 * q, h - 1.4 * q);
+    o.lineWidth = Math.max(0.5, 0.04 * q); o.strokeRect(-w / 2 + 0.95 * q, -h / 2 + 0.95 * q, w - 1.9 * q, h - 1.9 * q);
+    o.fillStyle = 'rgba(140,46,36,.8)';
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      o.save(); o.translate(sx * (w / 2 - 0.82 * q), sy * (h / 2 - 0.82 * q)); o.rotate(Math.PI / 4); o.fillRect(-0.22 * q, -0.22 * q, 0.44 * q, 0.44 * q); o.restore();
+    }
+    o.textAlign = 'center'; o.textBaseline = 'alphabetic';
+    const top = -h / 2;
+    o.fillStyle = 'rgba(140,46,36,.9)';
+    o.font = `600 ${0.62 * q}px "Noto Serif SC", Fraunces, serif`;
+    if ('letterSpacing' in o) o.letterSpacing = 0.3 * q + 'px';
+    o.fillText('曲 目 卡　·　No. 008', 0, top + 2.3 * q);
+    if ('letterSpacing' in o) o.letterSpacing = '0px';
+    o.fillStyle = '#2b1d12';
+    let fs = 3.5 * q;
+    const fam = CJK ? `700 FS "Noto Serif SC", serif` : `italic 600 FS Fraunces, Georgia, serif`;
+    o.font = fam.replace('FS', fs + 'px');
+    const mw = o.measureText(brand).width;
+    if (mw > w - 3.4 * q) { fs *= (w - 3.4 * q) / mw; o.font = fam.replace('FS', fs + 'px'); }
+    o.fillText(brand, 0, top + 6.3 * q);
+    o.strokeStyle = 'rgba(140,46,36,.55)'; o.lineWidth = Math.max(0.5, 0.05 * q);
+    o.beginPath(); o.moveTo(-w * 0.18, top + 7.3 * q); o.lineTo(w * 0.18, top + 7.3 * q); o.stroke();
+    o.fillStyle = 'rgba(43,29,18,.82)';
+    o.font = `500 ${0.72 * q}px "Noto Serif SC", Fraunces, serif`;
+    o.fillText(`二十音纸带音乐盒　·　${PAT.bars} 小节一圈`, 0, top + 8.9 * q);
+    o.fillStyle = 'rgba(43,29,18,.6)';
+    o.font = `500 ${0.6 * q}px "Noto Serif SC", Fraunces, serif`;
+    o.fillText('C 大调五声音阶　·　4/4　·　摇一圈是一小节', 0, top + 10.2 * q);
+    o.restore();
+  }
+  function drawPunch(o, x, y, rot) {
+    o.save();
+    o.translate(x, y); o.rotate(rot);
+    const L = 9 * p;
+    shadow(o, 0.9 * p, 0.35 * p, 0.6 * p, 0.55);
+    // 两根柄
+    for (const s of [-1, 1]) {
+      o.beginPath();
+      o.moveTo(-L * 0.08, s * 0.35 * p);
+      o.quadraticCurveTo(L * 0.35, s * 1.15 * p, L * 0.95, s * 1.35 * p);
+      o.lineTo(L, s * 0.75 * p);
+      o.quadraticCurveTo(L * 0.4, s * 0.55 * p, -L * 0.08, s * 0.05 * p);
+      o.closePath();
+      o.fillStyle = '#7c1f1a'; o.fill();
+    }
+    noShadow(o);
+    for (const s of [-1, 1]) {
+      o.beginPath(); o.moveTo(L * 0.42, s * 0.82 * p); o.quadraticCurveTo(L * 0.7, s * 1.05 * p, L * 0.95, s * 1.12 * p);
+      o.strokeStyle = 'rgba(255,190,170,.28)'; o.lineWidth = 0.18 * p; o.stroke();
+    }
+    // 钳头
+    shadow(o, 0.6 * p, 0.25 * p, 0.4 * p, 0.55);
+    o.beginPath(); o.roundRect(-L * 0.24, -0.62 * p, L * 0.34, 1.24 * p, 0.5 * p);
+    o.fillStyle = lightGrad(o, -L * 0.24, -0.62 * p, L * 0.1, 0.62 * p, STEEL); o.fill();
+    noShadow(o);
+    o.beginPath(); o.arc(-L * 0.15, 0, 0.36 * p, 0, TAU); o.fillStyle = '#2a2d30'; o.fill();
+    o.beginPath(); o.arc(-L * 0.15, 0, 0.24 * p, 0, TAU); o.fillStyle = lightGrad(o, -L * 0.2, -0.3 * p, -L * 0.1, 0.3 * p, STEEL); o.fill();
+    screw(o, L * 0.04, 0, 0.3 * p, 0.7, true);
+    o.restore();
+  }
+
+  // 一圈纸带（循环的一段）画成一张图，平时平移着贴
+  function renderStrip() {
+    const P = PAT.cols * p, h = (ROWS + 3.4) * p;
+    STRIP = canvas(P * DPR, h * DPR);
+    const o = STRIP.getContext('2d');
+    o.scale(DPR, DPR);
+    o.fillStyle = '#ebe1c9'; o.fillRect(0, 0, P, h);
+    o.fillStyle = PAPER; o.fillRect(0, 0, P, h);
+    const ry = r => (1.7 + r + 0.5) * p;
+    // 印好的格线：每个音一条横线，每拍一条竖线，每小节一条红线
+    o.lineWidth = Math.max(0.6, 0.05 * p);
+    o.strokeStyle = 'rgba(70,108,140,.24)';
+    o.beginPath();
+    for (let r = 0; r < ROWS; r++) { o.moveTo(0, ry(r)); o.lineTo(P, ry(r)); }
+    o.stroke();
+    for (let c = 0; c < PAT.cols; c += 2) {
+      const bar = c % 8 === 0;
+      o.strokeStyle = bar ? 'rgba(168,58,44,.42)' : 'rgba(70,108,140,.14)';
+      o.lineWidth = Math.max(0.6, (bar ? 0.08 : 0.05) * p);
+      o.beginPath(); o.moveTo(c * p, 1.1 * p); o.lineTo(c * p, h - 1.1 * p); o.stroke();
+    }
+    // 低音区和旋律区之间一条虚线
+    o.setLineDash([0.3 * p, 0.3 * p]); o.strokeStyle = 'rgba(168,58,44,.3)';
+    o.beginPath(); o.moveTo(0, (1.7 + MEL) * p); o.lineTo(P, (1.7 + MEL) * p); o.stroke(); o.setLineDash([]);
+    // 小节号、开头的题头、末尾的音名
+    o.fillStyle = 'rgba(168,58,44,.75)';
+    o.font = `600 ${0.62 * p}px ui-monospace, Consolas, monospace`;
+    o.textBaseline = 'middle';
+    for (let b = 0; b < PAT.bars; b++) o.fillText(String(b + 1), b * 8 * p + 0.3 * p, h - 0.85 * p);
+    o.font = `600 ${0.66 * p}px ui-monospace, Consolas, monospace`;
+    if ('letterSpacing' in o) o.letterSpacing = 0.12 * p + 'px';
+    o.fillText(`No.008 ▸ ${CJK ? brand : brand.toUpperCase()} ▸ 4/4`, 0.4 * p, 0.85 * p);
+    if ('letterSpacing' in o) o.letterSpacing = '0px';
+    o.fillStyle = 'rgba(70,108,140,.6)';
+    o.font = `500 ${0.5 * p}px ui-monospace, Consolas, monospace`;
+    o.textAlign = 'right';
+    for (let r = 0; r < ROWS; r++) o.fillText(NAMES[r], P - 0.35 * p, ry(r));
+    o.textAlign = 'left';
+    // 孔
+    const R = 0.35 * p, sh = 0.14 * p;
+    for (const hl of PAT.holes.values()) {
+      const x = (hl.c + 0.5 + hl.dx) * p, y = ry(hl.r);
+      o.globalCompositeOperation = 'destination-out';
+      o.beginPath(); o.arc(x, y, R, 0, TAU); o.fill();
+      o.globalCompositeOperation = 'source-over';
+      // 冲压时纸边被压实的一圈
+      o.beginPath(); o.arc(x, y, R + 0.05 * p, 0, TAU);
+      o.strokeStyle = 'rgba(96,74,48,.32)'; o.lineWidth = Math.max(0.5, 0.07 * p); o.stroke();
+      // 纸有厚度：靠灯那一侧的孔壁在孔里投一道细影
+      o.save();
+      o.beginPath(); o.arc(x, y, R, 0, TAU); o.clip();
+      o.beginPath(); o.arc(x, y, R + 1, 0, TAU); o.arc(x - LDs[0] * sh, y - LDs[1] * sh, R, 0, TAU, true);
+      o.fillStyle = 'rgba(0,0,0,.32)'; o.fill('evenodd');
+      o.restore();
+      if (hl.patch) {
+        // 贴上的一小块胶带
+        o.save(); o.translate(x, y); o.rotate((hash(hl.c, hl.r + 50) - 0.5) * 0.5);
+        o.fillStyle = 'rgba(244,238,214,.84)'; o.fillRect(-0.62 * p, -0.5 * p, 1.24 * p, 1.0 * p);
+        o.strokeStyle = 'rgba(255,255,255,.55)'; o.lineWidth = Math.max(0.5, 0.05 * p); o.strokeRect(-0.62 * p, -0.5 * p, 1.24 * p, 1.0 * p);
+        o.fillStyle = 'rgba(255,255,255,.22)'; o.fillRect(-0.62 * p, -0.5 * p, 1.24 * p, 0.25 * p);
+        o.restore();
+      }
+    }
+  }
+  // 纸带画在纸带自己的坐标里（x 顺着走向），光的方向要用场景坐标里的那个
+  let LDs = [0, 0];
+
+  // ---------- 状态 ----------
+  // 开场时读音线停在纸带 -1.5 列：一摇先拨两下低音，旋律接着进来；摇柄停的角度横竖屏不一样，停在不压纸带的那边
+  const START = -1.5;
+  const st = { th: 0, base: START, notes: 0, w: 0, drag: null, auto: false, cranked: 0, punched: 0, ready: false, t0: 0, wig: 0 };
+  const pos = () => st.base + st.th * COLS_PER_REV / TAU;
+  const amp = new Float32Array(ROWS), hit = new Float64Array(ROWS).fill(-9);
+
+  function drawStrip(o) {
+    const P = PAT.cols * p, h = (ROWS + 3.4) * p, s = pos() * p;
+    let x = xr - s;
+    x -= Math.ceil(x / P) * P;
+    x = Math.round(x * DPR) / DPR;
+    o.save();
+    o.beginPath(); o.rect(0, stripTop, Lx, h); o.clip();
+    for (; x < Lx; x += P) o.drawImage(STRIP, x, stripTop, P, h);
+    o.restore();
+  }
+  function drawRoller(o, cx, rot) {
+    const R = 0.8 * p, y0 = stripTop - 1.0 * p, y1 = stripBot + 1.0 * p;
+    o.save();
+    shadow(o, 0.6 * p, 0.25 * p, 0.4 * p, 0.5);
+    // 圆柱横着放在纸带上：沿 x 方向一暗一亮一暗，亮的那条偏向光来的一边
+    const g = o.createLinearGradient(cx - R, 0, cx + R, 0), hi = 0.5 + 0.3 * LD[0];
+    g.addColorStop(0, '#5e4318'); g.addColorStop(hi, '#f0d48c'); g.addColorStop(1, '#4e3812');
+    o.fillStyle = g;
+    o.fillRect(cx - R, y0, 2 * R, y1 - y0);
+    noShadow(o);
+    // 滚花：一圈 22 道，转到正面的才看得见，越靠两边越挤
+    o.lineWidth = Math.max(0.5, 0.06 * p);
+    for (let i = 0; i < 22; i++) {
+      const a = rot + i * TAU / 22, c = Math.cos(a);
+      if (c <= 0.05) continue;
+      const x = cx + R * Math.sin(a);
+      o.strokeStyle = `rgba(60,38,8,${0.45 * c})`;
+      o.beginPath(); o.moveTo(x, stripTop - 0.1 * p); o.lineTo(x, stripBot + 0.1 * p); o.stroke();
+    }
+    o.restore();
+  }
+  function drawTeeth(o, now) {
+    const w = 0.74 * p;
+    for (let r = 0; r < ROWS; r++) {
+      const y = rowY(r), x0 = combFront(r) - 0.3 * p, x1 = G.tip;
+      const age = now - hit[r], env = age >= 0 ? Math.exp(-age / 0.5) * amp[r] : 0;
+      const a = REDUCED ? 0 : env * 0.22 * p;
+      const path = (dy) => {
+        o.beginPath();
+        o.moveTo(x0, y - w / 2);
+        o.lineTo(x1 - 0.3 * p, y - w / 2 + dy);
+        o.quadraticCurveTo(x1, y - w / 2 + dy, x1, y + dy);
+        o.quadraticCurveTo(x1, y + w / 2 + dy, x1 - 0.3 * p, y + w / 2 + dy);
+        o.lineTo(x0, y + w / 2);
+        o.closePath();
+      };
+      const g = o.createLinearGradient(0, y - w / 2, 0, y + w / 2);
+      const top = LD[1] < 0;
+      g.addColorStop(0, top ? '#f2f6f8' : '#596066'); g.addColorStop(0.3, '#c5ccd1'); g.addColorStop(0.75, '#80888e'); g.addColorStop(1, top ? '#4a5055' : '#e6ebee');
+      o.save();
+      shadow(o, 0.35 * p, 0.18 * p, 0.3 * p, 0.45);
+      o.fillStyle = g;
+      if (a > 0.02 * p) {
+        // 正在响的齿：快得看不清，画成两道虚影
+        // 中间是实的，两边扫过的地方半透明
+        path(0); o.fill(); noShadow(o);
+        o.globalAlpha = 0.38; path(a); o.fill(); path(-a); o.fill(); o.globalAlpha = 1;
+      } else { path(0); o.fill(); }
+      noShadow(o);
+      if (env > 0.03) {
+        const gx = x1 - 0.6 * p, gl = o.createRadialGradient(gx, y, 0, gx, y, 1.6 * p);
+        gl.addColorStop(0, `rgba(255,244,214,${0.7 * env})`); gl.addColorStop(1, 'rgba(255,244,214,0)');
+        o.fillStyle = gl; o.fillRect(gx - 1.6 * p, y - 1.6 * p, 3.2 * p, 3.2 * p);
+      }
+      o.restore();
+    }
+  }
+  function drawGears(o) {
+    const pa = -st.th * 4;
+    for (const [spr, c, ang, R] of [[PIN, G.pin, pa, G.pinR], [GEAR, G.gear, st.th, G.gearR]]) {
+      o.save(); o.translate(c[0], c[1]); o.rotate(ang);
+      o.drawImage(spr.c, -spr.half, -spr.half, spr.half * 2, spr.half * 2);
+      o.restore();
+      // 不跟着转的那一点光
+      o.save();
+      o.beginPath(); o.arc(c[0], c[1], R + 0.2 * p, 0, TAU); o.clip();
+      const hx = c[0] + LD[0] * R * 0.45, hy = c[1] + LD[1] * R * 0.45;
+      const g = o.createRadialGradient(hx, hy, 0, hx, hy, R * 1.1);
+      g.addColorStop(0, 'rgba(255,240,200,.28)'); g.addColorStop(1, 'rgba(255,240,200,0)');
+      o.fillStyle = g; o.fillRect(c[0] - R - p, c[1] - R - p, 2 * R + 2 * p, 2 * R + 2 * p);
+      const d = o.createRadialGradient(c[0] - LD[0] * R * 0.6, c[1] - LD[1] * R * 0.6, 0, c[0] - LD[0] * R * 0.6, c[1] - LD[1] * R * 0.6, R * 1.2);
+      d.addColorStop(0, 'rgba(40,24,4,.25)'); d.addColorStop(1, 'rgba(40,24,4,0)');
+      o.fillStyle = d; o.fillRect(c[0] - R - p, c[1] - R - p, 2 * R + 2 * p, 2 * R + 2 * p);
+      o.restore();
+    }
+  }
+  function drawCrank(o) {
+    const [gx, gy] = G.gear, a = st.th, ca = Math.cos(a), sa = Math.sin(a);
+    const kx = gx + ca * G.arm, ky = gy + sa * G.arm, nx = -sa, ny = ca;
+    const w0 = 0.62 * p, w1 = 0.4 * p;
+    o.save();
+    shadow(o, 0.9 * p, 0.55 * p, 0.95 * p, 0.55);
+    o.beginPath();
+    o.moveTo(gx + nx * w0, gy + ny * w0);
+    o.lineTo(kx + nx * w1, ky + ny * w1);
+    o.arc(kx, ky, w1, a + Math.PI / 2, a - Math.PI / 2, true);
+    o.lineTo(gx - nx * w0, gy - ny * w0);
+    o.arc(gx, gy, w0, a - Math.PI / 2, a + Math.PI / 2, true);
+    o.closePath();
+    // 摇柄是抛光的钢，亮线顺着柄走，位置看光从哪边来
+    const lit = nx * LD[0] + ny * LD[1];
+    const g = o.createLinearGradient(gx - nx * w0, gy - ny * w0, gx + nx * w0, gy + ny * w0);
+    const hiAt = 0.5 + 0.35 * lit;
+    g.addColorStop(0, '#4b5257'); g.addColorStop(clamp(hiAt - 0.25, 0.01, 0.98), '#9aa3a9'); g.addColorStop(clamp(hiAt, 0.02, 0.99), '#f4f8fa'); g.addColorStop(1, '#3d4347');
+    o.fillStyle = g; o.fill();
+    noShadow(o);
+    // 轴头的铜螺母
+    o.beginPath(); o.arc(gx, gy, 0.82 * p, 0, TAU);
+    o.fillStyle = lightGrad(o, gx - p, gy - p, gx + p, gy + p, BRASS); o.fill();
+    o.strokeStyle = 'rgba(60,36,8,.6)'; o.lineWidth = 0.7; o.stroke();
+    o.beginPath(); o.arc(gx, gy, 0.3 * p, 0, TAU); o.fillStyle = 'rgba(50,30,6,.6)'; o.fill();
+    // 木把手
+    shadow(o, 1.1 * p, 0.6 * p, 1.0 * p, 0.6);
+    o.beginPath(); o.arc(kx, ky, G.knob, 0, TAU);
+    const kg = o.createRadialGradient(kx + LD[0] * G.knob * 0.4, ky + LD[1] * G.knob * 0.4, G.knob * 0.1, kx, ky, G.knob);
+    kg.addColorStop(0, '#9a6236'); kg.addColorStop(0.6, '#5d3519'); kg.addColorStop(1, '#2c170a');
+    o.fillStyle = kg; o.fill();
+    noShadow(o);
+    o.beginPath(); o.arc(kx, ky, G.knob * 0.42, 0, TAU);
+    o.strokeStyle = 'rgba(230,190,110,.75)'; o.lineWidth = 0.14 * p; o.stroke();
+    o.beginPath(); o.arc(kx + LD[0] * G.knob * 0.45, ky + LD[1] * G.knob * 0.45, G.knob * 0.22, 0, TAU);
+    o.fillStyle = 'rgba(255,230,190,.28)'; o.fill();
+    o.restore();
+  }
+  function drawChad(o, x, y, a, flip, lift) {
+    const R = 0.35 * p;
+    o.save();
+    if (lift > 0) shadow(o, (0.2 + lift) * p, (0.1 + lift * 0.8) * p, (0.15 + lift * 1.2) * p, 0.45);
+    else shadow(o, 0.15 * p, 0.06 * p, 0.1 * p, 0.5);
+    o.translate(x, y); o.rotate(a);
+    o.beginPath(); o.ellipse(0, 0, R * (1 + lift * 0.4), R * (1 + lift * 0.4) * (flip ? 0.85 : 1), 0, 0, TAU);
+    o.fillStyle = flip ? '#d9ceb4' : '#ebe1c9'; o.fill();
+    noShadow(o);
+    if (!flip) { o.beginPath(); o.arc(-R * 0.3, R * 0.1, R * 0.5, 0, Math.PI); o.strokeStyle = 'rgba(70,108,140,.28)'; o.lineWidth = 0.6; o.stroke(); }
+    o.restore();
+  }
+
+  // ---------- 主循环 ----------
+  let last = 0, lastTooth = 0, frames = 0;
+  const AUTO_W = TAU * 0.55;
+  function step(dt, now) {
+    // 拖动是在指针事件里改的角度，所以“上一帧在哪”要自己记着
+    const before = st.prev ?? pos();
+    if (st.drag) {
+      // 拖动时直接跟手；速度用最近一小段算，松手时带一点惯性
+    } else if (st.auto) {
+      const target = AUTO_W * (1 + 0.07 * Math.sin(st.th));          // 人手摇，一圈里快慢有一点起伏
+      st.w += (target - st.w) * (1 - Math.exp(-dt / 0.4));
+      st.th += st.w * dt;
+    } else if (st.wig) {
+      // 开场让摇柄轻轻晃一下，告诉人它能动；幅度很小，不会碰到孔
+      const k = (now - st.wigAt) / 1.1;
+      if (k >= 1) { st.wig = 0; st.th = st.wigBase; }
+      else st.th = st.wigBase + Math.sin(k * Math.PI) * Math.sin(k * TAU * 1.5) * 0.16;
+    } else {
+      st.w *= Math.exp(-dt / 0.3);
+      if (Math.abs(st.w) < 0.03) st.w = 0;
+      st.th += st.w * dt;
+    }
+    const du = pos() - before;
+    if (Math.abs(du) > 0 && Math.abs(du) < 14) {
+      const list = crossings(before, du, []);
+      if (list.length) {
+        const live = AC && AC.state === 'running' && soundOn;
+        fire(live ? SYN : null, list, live ? AC.currentTime + 0.06 : 0, dt, null);
+        if (live) st.notes += list.length;
+        for (const e of list) { hit[e.h.r] = now - (1 - e.f) * dt; amp[e.h.r] = 1; }
+      }
+    }
+    // 大齿轮的齿一个个咬过去，细碎地响
+    const toothIdx = Math.floor(st.th / (TAU / 48));
+    if (toothIdx !== lastTooth) {
+      if (AC && AC.state === 'running' && soundOn && Math.abs(du) < 3) SYN.tick(AC.currentTime + 0.03, 0.004 + 0.004 * hash(toothIdx, 2));
+      lastTooth = toothIdx;
+    }
+    if (SYN && SYN.rustle) SYN.rustle.setTargetAtTime(soundOn ? Math.min(0.018, Math.abs(du / Math.max(dt, 1e-3)) * 0.0032) : 0, AC.currentTime, 0.06);
+    st.cranked += Math.abs(du);
+    st.prev = pos();
+    if (st.cranked > 1.5 && !st.hintGone) { st.hintGone = true; hideHint(hintCrank); }
+  }
+  function draw(now) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(LA, 0, 0);
+    sceneT(ctx);
+    for (const c of CHADS) drawChad(ctx, c.x, c.y, c.a, c.flip, 0);
+    drawStrip(ctx);
+    const s = pos() * p;
+    drawRoller(ctx, G.rollIn, s / (0.8 * p));
+    drawRoller(ctx, G.rollOut, s / (0.8 * p));
+    drawTeeth(ctx, now);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(LB, 0, 0);
+    sceneT(ctx);
+    drawGears(ctx);
+    drawCrank(ctx);
+    for (let i = FLY.length - 1; i >= 0; i--) {
+      const f = FLY[i], k = (now - f.t0) / 0.55;
+      if (k >= 1) { CHADS.push({ x: f.x1, y: f.y1, a: f.a, flip: f.flip }); if (CHADS.length > 90) CHADS.shift(); FLY.splice(i, 1); continue; }
+      const e = 1 - (1 - k) ** 2, lift = Math.sin(k * Math.PI) * 0.9;
+      drawChad(ctx, f.x0 + (f.x1 - f.x0) * e, f.y0 + (f.y1 - f.y0) * e, f.a + k * 5, f.flip, lift);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(LV, 0, 0);
+  }
+  function loop(t) {
+    requestAnimationFrame(loop);
+    const now = t / 1000, dt = Math.min(0.05, last ? now - last : 0.016);
+    last = now;
+    if (!st.ready) return;
+    step(dt, now);
+    draw(now);
+    frames++;
+  }
+
+  // ---------- 交互 ----------
+  const hintCrank = $('#h-crank'), hintPunch = $('#h-punch');
+  function placeHints() {
+    const [gx, gy] = toScreen(...G.gear);
+    const [kx, ky] = toScreen(G.gear[0] + Math.cos(st.th) * G.arm, G.gear[1] + Math.sin(st.th) * G.arm);
+    const R = G.arm + 2.2 * p, a0 = Math.atan2(ky - gy, kx - gx) + 0.32, a1 = a0 + (PORT ? 0.95 : 1.35), S = 2 * (R + 40);
+    const pt = (a, r = R) => [Math.cos(a) * r, Math.sin(a) * r];
+    const [x0, y0] = pt(a0), [x1, y1] = pt(a1);
+    const tx = -Math.sin(a1), ty = Math.cos(a1), nx = Math.cos(a1), ny = Math.sin(a1), hl = 9;
+    Object.assign(hintCrank.style, { left: gx + 'px', top: gy + 'px', width: S + 'px', height: S + 'px' });
+    const svg = hintCrank.querySelector('svg');
+    svg.setAttribute('viewBox', `${-S / 2} ${-S / 2} ${S} ${S}`);
+    svg.querySelector('.arc').setAttribute('d', `M${x0.toFixed(1)} ${y0.toFixed(1)}A${R.toFixed(1)} ${R.toFixed(1)} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`);
+    svg.querySelector('.head').setAttribute('d', `M${(x1 - tx * hl + nx * hl * 0.6).toFixed(1)} ${(y1 - ty * hl + ny * hl * 0.6).toFixed(1)}L${x1.toFixed(1)} ${y1.toFixed(1)}L${(x1 - tx * hl - nx * hl * 0.6).toFixed(1)} ${(y1 - ty * hl - ny * hl * 0.6).toFixed(1)}`);
+    const [lx, ly] = pt((a0 + a1) / 2, R + 24), lab = hintCrank.querySelector('span');
+    lab.style.left = (S / 2 + lx) + 'px'; lab.style.top = (S / 2 + ly) + 'px';
+    const [hx, hy] = toScreen(PORT ? xr + 9 * p : xr + 24 * p, PORT ? stripTop - 0.2 * p : stripTop - 1.6 * p);
+    hintPunch.style.left = (PORT ? clamp(hx, 120, W - 120) : hx) + 'px';
+    hintPunch.style.top = (PORT ? hy - 26 : hy - 22) + 'px';
+    if (PORT) { hintPunch.style.transform = 'translate(-50%, 0) rotate(0deg)'; }
+  }
+  const inStrip = (x, y) => y > stripTop && y < stripBot;
+  const inMachine = x => x > G.box[0] && x < G.box[2];
+  function local(e) {
+    const r = cv.getBoundingClientRect();
+    return toScene(e.clientX - r.left, e.clientY - r.top);
+  }
+  cv.addEventListener('pointerdown', e => {
+    if (!st.ready) return;
+    ensureAudio();
+    const [x, y] = local(e);
+    const dg = Math.hypot(x - G.gear[0], y - G.gear[1]);
+    const kx = G.gear[0] + Math.cos(st.th) * G.arm, ky = G.gear[1] + Math.sin(st.th) * G.arm;
+    if (dg < G.arm + 1.8 * p || Math.hypot(x - kx, y - ky) < 2.4 * p) {
+      st.drag = { kind: 'crank', a: Math.atan2(y - G.gear[1], x - G.gear[0]), hist: [[performance.now(), st.th]] };
+      setAuto(false);
+    } else if (inStrip(x, y)) {
+      st.drag = { kind: 'strip', x0: x, y0: y, x, t: performance.now(), moved: false, hist: [[performance.now(), st.th]] };
+    } else return;
+    st.wig = 0; st.w = 0;
+    cv.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  cv.addEventListener('pointermove', e => {
+    const d = st.drag;
+    if (!d) {
+      if (!st.ready || e.pointerType !== 'mouse') return;
+      const [x, y] = local(e);
+      const kx = G.gear[0] + Math.cos(st.th) * G.arm, ky = G.gear[1] + Math.sin(st.th) * G.arm;
+      const overCrank = Math.hypot(x - G.gear[0], y - G.gear[1]) < G.arm + 1.8 * p || Math.hypot(x - kx, y - ky) < 2.4 * p;
+      cv.style.cursor = overCrank ? 'grab' : inStrip(x, y) ? (inMachine(x) ? 'ew-resize' : 'pointer') : '';
+      return;
+    }
+    const [x, y] = local(e);
+    if (d.kind === 'crank') {
+      if (Math.hypot(x - G.gear[0], y - G.gear[1]) < 1.2 * p) return;        // 太靠近轴心，角度不稳
+      const a = Math.atan2(y - G.gear[1], x - G.gear[0]);
+      let da = a - d.a;
+      da -= Math.round(da / TAU) * TAU;
+      d.a = a;
+      st.th += clamp(da, -1.2, 1.2);
+      cv.style.cursor = 'grabbing';
+    } else {
+      if (!d.moved && Math.hypot(x - d.x0, y - d.y0) > 6) d.moved = true;
+      if (d.moved) { st.th -= (x - d.x) / p * TAU / COLS_PER_REV; cv.style.cursor = 'grabbing'; }
+      d.x = x;
+    }
+    const t = performance.now();
+    d.hist.push([t, st.th]);
+    while (d.hist.length > 2 && t - d.hist[0][0] > 90) d.hist.shift();
+  });
+  function endDrag(e) {
+    const d = st.drag;
+    if (!d) return;
+    st.drag = null;
+    cv.style.cursor = '';
+    const [t0, th0] = d.hist[0], t1 = performance.now();
+    st.w = t1 - t0 > 8 ? clamp((st.th - th0) / ((t1 - t0) / 1000), -TAU * 3, TAU * 3) : 0;
+    if (t1 - d.hist[d.hist.length - 1][0] > 70) st.w = 0;                    // 停住再松手就不滑
+    if (d.kind === 'strip' && !d.moved && e && e.type === 'pointerup') tap(d.x0, d.y0);
+    if (st.cranked > 1) { hideHint(hintCrank); if (!st.punched && !st.punchShown) { st.punchShown = true; showHint(hintPunch, 7000); } }
+  }
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  // 点纸带：空格打孔，孔贴胶带，胶带再撕掉
+  function tap(x, y) {
+    if (inMachine(x)) return;
+    const row = Math.floor((y - stripTop) / p - 1.7);
+    if (row < 0 || row >= ROWS) return;
+    const u = pos() + (x - xr) / p, P = PAT.cols;
+    const c = ((Math.floor(u) % P) + P) % P, key = c * ROWS + row;
+    const h = PAT.holes.get(key);
+    const t = AC ? AC.currentTime + 0.01 : 0, live = AC && soundOn;
+    if (!h) {
+      PAT.holes.set(key, { c, r: row, dx: (hash(c, row + 99) - 0.5) * 0.1, patch: false, user: true });
+      if (live) { SYN.punch(t); SYN.note(row, t + 0.16, 0.7); }
+      // 冲下来的纸屑蹦到桌上
+      const cx = x, cy = rowY(row), z = PROPS.chadZone;
+      const tx = z ? z[0] + Math.random() * z[2] : x + (Math.random() - 0.5) * 6 * p;
+      const ty = z ? z[1] + Math.random() * z[3] : (side < 0 ? stripBot + 2 * p + Math.random() * 3 * p : stripTop - 2 * p - Math.random() * 3 * p);
+      FLY.push({ x0: cx, y0: cy, x1: tx, y1: ty, a: Math.random() * TAU, flip: Math.random() < 0.4, t0: performance.now() / 1000 });
+    } else if (!h.patch) {
+      h.patch = true;
+      if (live) SYN.tape(t);
+    } else {
+      h.patch = false;
+      if (live) { SYN.tape(t); SYN.note(row, t + 0.12, 0.6); }
+    }
+    PAT.edited = true;
+    $('#reset').hidden = false;
+    st.punched++;
+    hideHint(hintPunch);
+    renderStrip(); rebuildHoles();
+  }
+
+  function showHint(el, ms) { el.classList.add('on'); if (ms) setTimeout(() => el.classList.remove('on'), ms); }
+  function hideHint(el) { el.classList.remove('on'); }
+
+  const autoBtn = $('#auto'), sndBtn = $('#snd'), resetBtn = $('#reset');
+  function setAuto(on) {
+    st.auto = on;
+    autoBtn.setAttribute('aria-pressed', String(on));
+  }
+  autoBtn.addEventListener('click', () => { ensureAudio(); st.wig = 0; setAuto(!st.auto); if (st.auto) hideHint(hintCrank); });
+  sndBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    sndBtn.setAttribute('aria-pressed', String(soundOn));
+    sndBtn.querySelector('span').textContent = soundOn ? '声音' : '静音';
+    sndBtn.querySelector('.w').style.opacity = soundOn ? 1 : 0.15;
+    ensureAudio();
+    if (SYN) SYN.master.setTargetAtTime(soundOn ? 0.9 : 0, AC.currentTime, 0.06);
+  });
+  resetBtn.addEventListener('click', () => {
+    PAT.holes = new Map([...PAT.orig].map(([k, h]) => [k, { ...h }]));
+    PAT.edited = false; resetBtn.hidden = true;
+    renderStrip(); rebuildHoles();
+  });
+  // 键盘：左右键摇，空格自己转
+  cv.addEventListener('keydown', e => {
+    if (!st.ready) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { ensureAudio(); setAuto(false); st.wig = 0; st.w = clamp(st.w + 1.8, -TAU * 2, TAU * 2); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { ensureAudio(); setAuto(false); st.wig = 0; st.w = clamp(st.w - 1.8, -TAU * 2, TAU * 2); e.preventDefault(); }
+    else if (e.key === ' ' || e.key === 'Enter') { ensureAudio(); st.wig = 0; setAuto(!st.auto); e.preventDefault(); }
+    if (st.cranked > 0) hideHint(hintCrank);
+  });
+
+  // ---------- 启动 ----------
+  let buildMs = 0;
+  function build() {
+    const t0 = performance.now();
+    layout();
+    LDs = LD;
+    buildLayers();
+    renderStrip();
+    rebuildHoles();
+    placeHints();
+    buildMs = performance.now() - t0;
+  }
+  const cssReady = new Promise(res => {
+    const l = $('#font-css');
+    if (!l || l.media === 'all') return res();
+    l.addEventListener('load', res); l.addEventListener('error', res);
+    setTimeout(res, 2000);
+  });
+  const fontsReady = () => cssReady.then(() => Promise.all([
+    document.fonts.load('700 100px Outfit', brand), document.fonts.load('400 100px "Noto Sans SC"', brand),
+    document.fonts.load('600 40px Fraunces', brand.toUpperCase() + 'No.0123456789'), document.fonts.load('italic 600 40px Fraunces', brand),
+    document.fonts.load('700 40px "Noto Serif SC"', brand + '曲目卡二十音纸带音乐盒小节一圈大调五声阶摇是'),
+    document.fonts.load('500 20px "Noto Serif SC"', '曲目卡二十音纸带音乐盒小节一圈大调五声阶摇是'),
+  ])).catch(() => {});
+  // 字体最多等 2 秒：孔是按字形打的，开演以后就不再换
+  Promise.race([fontsReady(), new Promise(r => setTimeout(r, 2000))]).then(() => {
+    layout();
+    buildPattern();
+    build();
+    st.ready = true;
+    draw(performance.now() / 1000);
+    requestAnimationFrame(() => document.body.classList.add('ready'));
+    if (!REDUCED) setTimeout(() => { if (!st.cranked && !st.drag && !st.auto) { st.wig = 1; st.wigAt = performance.now() / 1000; st.wigBase = st.th; } }, 1500);
+    setTimeout(() => { if (st.cranked < 1 && !st.auto) showHint(hintCrank); }, REDUCED ? 0 : 1300);
+  });
+  requestAnimationFrame(loop);
+
+  let tmr, lastW = innerWidth, lastH = innerHeight;
+  addEventListener('resize', () => {
+    if (innerWidth === lastW && innerHeight === lastH) return;
+    lastW = innerWidth; lastH = innerHeight;
+    clearTimeout(tmr);
+    tmr = setTimeout(() => {
+      if (!st.ready) return;
+      layout();
+      if (CJK && PORT !== VERT) buildPattern();      // 中文横竖屏的打法不一样，转屏要重新打孔
+      build();
+    }, 160);
+  });
+
+  // 测试用的钩子
+  window.__mb = { st, pos, get ac() { return AC && AC.state; }, get PAT() { return PAT; }, get SH() { return SH; }, crossings, renderOffline, makeSynth, MIDI, NAMES, ROWS, get frames() { return frames; }, get buildMs() { return buildMs; },
+    geom: () => ({ p, xr, stripTop, stripBot, Lx, Ly, PORT, gear: G.gear, arm: G.arm, toScreen }) };
+})();
+</script>
+</body>
+</html>

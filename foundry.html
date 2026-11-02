@@ -1,0 +1,1958 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>浇铸 · 一千零一页</title>
+<meta name="description" content="昏暗的铸造车间里，一包铁水倒进砂型，把品牌名的每一笔灌满；冷下来以后落砂开箱，再把字面打磨出光。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="font-css" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ultra&family=Noto+Serif+SC:wght@900&display=swap" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --bg: #080706;
+    --ink: #dcd4c8;
+    --muted: #8f867a;
+    --faint: #5b544b;
+    --line: rgb(220 212 200 / .13);
+    --hot: #ff9b45;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 var(--sans); overflow: hidden; }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  .stage {
+    position: relative; height: 100vh; height: 100svh; overflow: hidden; background: var(--bg);
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  /* 画布还没画出第一帧时，先用一层同色调的底：左上角炉口的一点暖光 */
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: radial-gradient(ellipse 70% 60% at 0% 0%, rgb(70 30 10 / .28), transparent 70%), var(--bg); }
+  .stage.pointing canvas { cursor: none; }
+
+  /* 铸造单：左下角一张工票，跟着工序走 */
+  .ticket {
+    position: absolute; left: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3.4vh, 36px); width: 252px;
+    font: 11.5px/1.55 var(--mono); color: var(--muted); pointer-events: none;
+    animation: rise 1s .3s both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  .ticket .hd { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 7px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .ticket .hd span { font: 600 12px/1 var(--sans); letter-spacing: .2em; color: var(--ink); }
+  .ticket .hd b { font-weight: 500; letter-spacing: .1em; color: var(--muted); }
+  .ticket dl { display: grid; grid-template-columns: 4.6em 1fr; gap: 2px 10px; margin: 0; }
+  .ticket dt { color: var(--faint); }
+  .ticket dd { margin: 0; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .ticket dd .hot { color: var(--hot); }
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 12px; }
+  .steps div { display: flex; flex-direction: column; gap: 5px; font: 10.5px/1 var(--sans); color: var(--faint); letter-spacing: .08em; transition: color .5s; }
+  .steps div::before { content: ""; height: 2px; border-radius: 1px; background: var(--line); transition: background .5s, box-shadow .5s; }
+  .steps .done { color: var(--muted); }
+  .steps .done::before { background: #6d655b; }
+  .steps .now { color: var(--ink); }
+  .steps .now::before { background: var(--hot); box-shadow: 0 0 8px rgb(255 150 60 / .7); }
+
+  /* 测温枪：指到哪里读哪里 */
+  .probe { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; transition: opacity .2s; will-change: transform; }
+  .probe.on { opacity: 1; }
+  .probe i { position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border: 1px solid rgb(255 236 214 / .55); border-radius: 50%; }
+  .probe i::before, .probe i::after { content: ""; position: absolute; background: rgb(255 236 214 / .55); }
+  .probe i::before { left: 10px; top: -5px; width: 1px; height: 30px; clip-path: polygon(0 0, 100% 0, 100% 30%, 0 30%, 0 70%, 100% 70%, 100% 100%, 0 100%); }
+  .probe i::after { top: 10px; left: -5px; height: 1px; width: 30px; clip-path: polygon(0 0, 30% 0, 30% 100%, 0 100%, 0 0, 70% 0, 100% 0, 100% 100%, 70% 100%); }
+  .probe b { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: #ff3b2f; box-shadow: 0 0 6px 1px rgb(255 50 30 / .9); }
+  .probe .pv {
+    position: absolute; left: 18px; top: -30px; padding: 3px 7px 3px 6px; border-radius: 3px; white-space: nowrap;
+    font: 11.5px/1.2 var(--mono); color: #ffe4c6; background: rgb(12 10 9 / .72); border: 1px solid rgb(255 220 190 / .14);
+    font-variant-numeric: tabular-nums;
+  }
+  .probe em { font-style: normal; color: #9c9184; margin-right: 6px; }
+  .probe strong { font-weight: 500; }
+
+  .hint {
+    position: absolute; left: 50%; bottom: clamp(20px, 4.4vh, 44px); transform: translateX(-50%); margin: 0;
+    font: 13px/1.4 var(--sans); letter-spacing: .08em; color: #b3a99c; white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity .7s;
+  }
+  .hint.on { opacity: 1; }
+  .ctl { position: absolute; right: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3.4vh, 36px); display: flex; gap: 8px; animation: rise 1s .5s both; }
+  .ctl button {
+    font: 12.5px/1 var(--sans); color: var(--muted); cursor: pointer; letter-spacing: .04em;
+    background: rgb(12 10 9 / .55); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .ctl button:hover { color: var(--ink); border-color: rgb(220 212 200 / .3); }
+  .ctl button:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
+  .ctl button[hidden] { display: none; }
+
+  @media (max-width: 720px) {
+    .ticket { width: auto; right: 16px; bottom: 64px; font-size: 11px; }
+    .ticket dl { grid-template-columns: 4.4em 1fr 4.4em 1fr; }
+    .ticket .hd { padding-bottom: 6px; margin-bottom: 6px; }
+    .steps { margin-top: 10px; }
+    .hint { bottom: 218px; font-size: 12.5px; }
+    .ctl { left: 16px; right: 16px; bottom: 16px; }
+    .ctl button { flex: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticket, .ctl { animation: none; }
+    .probe, .hint { transition: none; }
+  }
+  @media (max-height: 640px) and (min-width: 721px) {
+    .ticket dl .opt { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 007</a>
+
+<main class="stage" id="stage">
+  <canvas id="gl" role="img" aria-label="铸造车间俯视：一包铁水倒进品牌名形状的砂型，冷却后落砂开箱，再把字面打磨出光"></canvas>
+  <div class="probe" id="probe" aria-hidden="true"><i></i><b></b><div class="pv"><em id="probe-k">砂型</em><strong id="probe-t">28 °C</strong></div></div>
+  <section class="ticket" aria-label="铸造单">
+    <div class="hd"><span>铸造单</span><b>No.007</b></div>
+    <dl>
+      <dt>铸件</dt><dd><span class="bn">Lumen</span> 铭字</dd>
+      <dt class="opt">材质</dt><dd class="opt">HT250 灰铸铁</dd>
+      <dt>浇注</dt><dd>1420 °C</dd>
+      <dt>实测</dt><dd id="live">—</dd>
+    </dl>
+    <div class="steps" id="steps"><div>吊包</div><div>浇注</div><div>冷却</div><div>落砂</div><div>打磨</div></div>
+  </section>
+  <p class="hint" id="hint" aria-live="polite"></p>
+  <div class="ctl"><button type="button" id="again" hidden>再浇一炉</button><button type="button" id="sound" aria-pressed="false">声音 · 关</button></div>
+</main>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const easeOut = x => 1 - (1 - clamp(x, 0, 1)) ** 3;
+  const easeIn = x => clamp(x, 0, 1) ** 3;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const Q = new URLSearchParams(location.search);
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (Q.get('name') || '').trim().slice(0, 16) || 'Lumen';
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+  const CJK = /[⺀-鿿豈-﫿＀-￯]/.test(brand);
+  // 拉丁字母用 Ultra（粗重的板衬线，像老铸铁招牌），中文用思源宋体最粗的一档
+  const FONT = px => CJK ? `900 ${px}px "Noto Serif SC", "Songti SC", "SimSun", serif` : `400 ${px}px Ultra, Rockwell, "Roboto Slab", Georgia, serif`;
+  const setFont = (o, px) => { o.font = FONT(px); if ('letterSpacing' in o) o.letterSpacing = (CJK ? 0.08 : innerWidth < 720 ? 0.025 : 0.04) * px + 'px'; };
+
+  const stage = $('#stage'), glc = $('#gl');
+  const S_OBL = 0.66;   // 斜俯视：高度每升 1，画面上往上挪 0.66
+
+  // ---------- 黑体色表：真实的普朗克谱乘 CIE 配色函数，亮度按真实比例压缩 ----------
+  const BB = (() => {
+    const n = 256, tex = new Float32Array(n * 4), lum = new Float32Array(n);
+    const g = (l, mu, s1, s2) => { const t = (l - mu) / (l < mu ? s1 : s2); return Math.exp(-0.5 * t * t); };
+    const xyz = K => {
+      let X = 0, Y = 0, Z = 0;
+      for (let l = 380; l <= 780; l += 4) {
+        const lm = l * 1e-9, B = 1 / (lm ** 5 * (Math.exp(0.014388 / (lm * K)) - 1));
+        X += B * (1.056 * g(l, 599.8, 37.9, 31.0) + 0.362 * g(l, 442.0, 16.0, 26.7) - 0.065 * g(l, 501.1, 20.4, 26.2));
+        Y += B * (0.821 * g(l, 568.8, 46.9, 40.5) + 0.286 * g(l, 530.9, 16.3, 31.1));
+        Z += B * (1.217 * g(l, 437.0, 11.8, 36.0) + 0.681 * g(l, 459.0, 26.0, 13.8));
+      }
+      return [X, Y, Z];
+    };
+    const ref = xyz(1420 + 273.15)[1];
+    for (let i = 0; i < n; i++) {
+      const T = 400 + 1300 * i / (n - 1), [X, Y, Z] = xyz(T + 273.15);
+      const r = Math.max(0, 3.2406 * X - 1.5372 * Y - 0.4986 * Z), gg = Math.max(0, -0.9689 * X + 1.8758 * Y + 0.0415 * Z), b = Math.max(0, 0.0557 * X - 0.2040 * Y + 1.0570 * Z);
+      const l0 = (0.2126 * r + 0.7152 * gg + 0.0722 * b) || 1e-30;
+      // 1420 °C 约等于 6（远超白），1000 °C 约 1.5 的橙，700 °C 只剩 0.3 的暗红，450 °C 以下淡到没有
+      const I = 6 * Math.pow(Y / ref, 0.28) * smooth((T - 420) / 140);
+      tex.set([r / l0 * I, gg / l0 * I, b / l0 * I, I], i * 4);
+      lum[i] = I;
+    }
+    const at = T => { const f = clamp((T - 400) / 1300, 0, 1) * (n - 1), i = Math.floor(f), k = f - i, j = Math.min(n - 1, i + 1); return [lerp(tex[i * 4], tex[j * 4], k), lerp(tex[i * 4 + 1], tex[j * 4 + 1], k), lerp(tex[i * 4 + 2], tex[j * 4 + 2], k)]; };
+    const L = T => { if (T <= 400) return 0; const f = clamp((T - 400) / 1300, 0, 1) * (n - 1), i = Math.floor(f); return lerp(lum[i], lum[Math.min(n - 1, i + 1)], f - i); };
+    return { tex, at, L };
+  })();
+
+  // ---------- 布局：所有尺寸用 CSS 像素，地面是 z = 0 ----------
+  let W, H, DPR, MOB, K, KL, LAY;
+  function layout() {
+    W = Math.max(320, stage.clientWidth);
+    H = Math.max(360, stage.clientHeight);
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    MOB = W < 720 || W < H * 0.75;
+    K = MOB ? clamp(W / 640, 0.56, 0.78) : clamp(Math.min(W / 1280, H / 800), 0.72, 1.35);
+    KL = MOB ? clamp(W / 470, 0.72, 0.95) : K;
+    const mc = canvas(8, 8).getContext('2d');
+    setFont(mc, 200);
+    const m0 = mc.measureText(brand);
+    const iw = m0.actualBoundingBoxLeft + m0.actualBoundingBoxRight, ih = m0.actualBoundingBoxAscent + m0.actualBoundingBoxDescent;
+    const cupR = 21 * K, riserR = 18 * K, runHW = 6.5 * K, gapL = cupR + (MOB ? 22 : 36) * K, gapR = riserR + (MOB ? 14 : 30) * K;
+    const FW = (MOB ? 12 : 17) * K, padIn = (MOB ? 12 : 34) * K;
+    // 浇包挂在浇口杯左上方：桌面往左让，手机往上让
+    const u = MOB ? [-0.36, 0.933] : [0.96, 0.28];   // 手机上浇包挂在浇口杯右上方，高过字
+    const ladR = 68 * KL, back = 110 * KL;
+    const leftExt = MOB ? cupR + 12 * K + FW : Math.max(cupR + padIn + FW, back * u[0] + ladR + 46 * KL);   // 倾倒时包底往外甩，多留一点
+    const rightExt = gapR + riserR + padIn + FW;
+    const margin = MOB ? 6 : 36;
+    const maxW = Math.min(W - 2 * margin - leftExt - gapL - rightExt, (MOB ? 9999 : 900 * K));
+    const maxH = MOB ? H * 0.17 : H * 0.3;
+    const sc = Math.min(maxW / iw, maxH / ih);
+    const fontPx = 200 * sc, tw = iw * sc, th = ih * sc;
+    const total = leftExt + gapL + tw + rightExt;
+    const tx0 = Math.round(W / 2 - total / 2 + leftExt + gapL);
+    const ventLen = 13 * K, ventR = 4.6 * K, runGap = clamp(th * 0.15, 20 * K, 40 * K);
+    const groupH = ventLen + ventR + th + runGap + runHW;
+    const cy = MOB ? H * 0.54 : H * 0.56;
+    const ty0 = Math.round(cy - groupH / 2 + ventLen + ventR);
+    const ty1 = ty0 + th, runnerY = Math.round(ty1 + runGap);
+    const cup = { x: tx0 - gapL, y: runnerY, r: cupR }, riser = { x: tx0 + tw + gapR, y: runnerY - riserR * 0.35, r: riserR };
+    const fl = { x0: cup.x - cupR - (MOB ? 10 * K : padIn), y0: ty0 - ventLen - ventR - 26 * K, x1: riser.x + riserR + padIn, y1: runnerY + runHW + 30 * K };
+    const tex = { x: Math.floor(fl.x0) - 4, y: Math.floor(fl.y0) - 4 };
+    tex.w = Math.ceil(fl.x1) + 4 - tex.x;
+    tex.h = Math.ceil(fl.y1) + 4 - tex.y;
+    // 浇包：枢轴（耳轴中心）的位置、尺寸
+    const zHi = 44 * KL, zLo = -60 * KL;
+    const P = [cup.x - u[0] * back, cup.y - u[1] * back, (MOB ? 190 : 236) * KL];
+    LAY = {
+      fontPx, tw, th, tx0, ty0, ty1, textX: tx0 + m0.actualBoundingBoxLeft * sc, baseY: ty0 + m0.actualBoundingBoxAscent * sc,
+      cup, riser, runnerY, runHW, gateHW: 5 * K, ventLen, ventR, fl, FW, tex,
+      lad: { u, a: [-u[1], u[0]], R: ladR, Ri: ladR * 0.74, zLo, zHi, P, back, bottom: zLo + 13 * KL },
+      grindR: (MOB ? 13 : 22) * K,
+    };
+  }
+
+  // ---------- 型腔：掩码、距离场、铁水先到哪儿 ----------
+  let MD = null;   // mould data
+  function buildMould() {
+    const T = LAY.tex, mw = T.w, mh = T.h, NPX = mw * mh;
+    const cv = canvas(mw, mh), o = cv.getContext('2d', { willReadFrequently: true });
+    setFont(o, LAY.fontPx);
+    o.textBaseline = 'alphabetic';
+    o.fillStyle = '#fff';
+    o.fillText(brand, LAY.textX - T.x, LAY.baseY - T.y);
+    const lt = o.getImageData(0, 0, mw, mh).data;
+    const letter = new Uint8Array(NPX);
+    for (let i = 0; i < NPX; i++) letter[i] = lt[i * 4 + 3] > 127 ? 1 : 0;
+    // 连通的笔画
+    const comp = new Int32Array(NPX).fill(-1), stack = new Int32Array(NPX), comps = [];
+    for (let i = 0; i < NPX; i++) {
+      if (!letter[i] || comp[i] >= 0) continue;
+      const id = comps.length;
+      let sp = 0, n = 0, x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
+      stack[sp++] = i;
+      comp[i] = id;
+      while (sp) {
+        const j = stack[--sp], x = j % mw, y = (j / mw) | 0;
+        n++;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        if (x > 0 && letter[j - 1] && comp[j - 1] < 0) { comp[j - 1] = id; stack[sp++] = j - 1; }
+        if (x < mw - 1 && letter[j + 1] && comp[j + 1] < 0) { comp[j + 1] = id; stack[sp++] = j + 1; }
+        if (y > 0 && letter[j - mw] && comp[j - mw] < 0) { comp[j - mw] = id; stack[sp++] = j - mw; }
+        if (y < mh - 1 && letter[j + mw] && comp[j + mw] < 0) { comp[j + mw] = id; stack[sp++] = j + mw; }
+      }
+      comps.push({ id, n, x0, x1, y0, y1 });
+    }
+    const big = comps.filter(c => c.n >= 14);
+    const rowMid = (c, y) => { const xs = []; for (let x = c.x0; x <= c.x1; x++) if (comp[y * mw + x] === c.id) xs.push(x); return xs[xs.length >> 1]; };
+    // 整张型腔：字、内浇道（每块笔画从最低处往下接到横浇道或别的笔画）、出气孔、横浇道、浇口杯、冒口
+    o.clearRect(0, 0, mw, mh);
+    o.fillText(brand, LAY.textX - T.x, LAY.baseY - T.y);
+    const ry = LAY.runnerY - T.y, gh = LAY.gateHW, vents = [];
+    for (const c of big) {
+      const gx = rowMid(c, c.y1);
+      let y = c.y1 + 1;
+      while (y < ry && !(letter[y * mw + gx] && comp[y * mw + gx] !== c.id)) y++;
+      o.fillRect(gx - gh, c.y1 - 3, gh * 2, y - c.y1 + 4);
+      if (c.n >= 160) {
+        const vx = rowMid(c, c.y0), vy = Math.max(LAY.ventR + 3, c.y0 - LAY.ventLen);
+        o.fillRect(vx - 1.6 * K, vy, 3.2 * K, c.y0 - vy + 3);
+        o.beginPath(); o.arc(vx, vy, LAY.ventR, 0, 7); o.fill();
+        vents.push({ x: vx + T.x, y: vy + T.y, cx: vx, cy: vy, n: c.n });
+      }
+    }
+    const cup = LAY.cup, rs = LAY.riser;
+    o.beginPath(); o.roundRect(cup.x - T.x, ry - LAY.runHW, rs.x - cup.x, LAY.runHW * 2, LAY.runHW); o.fill();
+    o.beginPath(); o.ellipse(cup.x - T.x, ry, cup.r * 1.06, cup.r, 0, 0, 7); o.fill();
+    o.fillRect(rs.x - T.x - LAY.runHW, rs.y - T.y, LAY.runHW * 2, ry - (rs.y - T.y));
+    o.beginPath(); o.arc(rs.x - T.x, rs.y - T.y, rs.r, 0, 7); o.fill();
+    const md = o.getImageData(0, 0, mw, mh).data;
+    // 太碎的小块（抗锯齿残渣）不算
+    const tiny = new Set(comps.filter(c => c.n < 14).map(c => c.id));
+    const cov = new Float32Array(NPX);
+    for (let i = 0; i < NPX; i++) cov[i] = (tiny.size && tiny.has(comp[i])) ? 0 : md[i * 4 + 3] / 255;
+    // 有符号距离场：型腔里为负
+    const INF = 1e20, fA = new Float32Array(NPX), fB = new Float32Array(NPX);
+    for (let i = 0; i < NPX; i++) { const in_ = cov[i] >= 0.5; fA[i] = in_ ? 0 : INF; fB[i] = in_ ? INF : 0; }
+    edt(fA, mw, mh); edt(fB, mw, mh);
+    const sdf = new Float32Array(NPX);
+    for (let i = 0; i < NPX; i++) {
+      const c = cov[i];
+      let d = c >= 0.5 ? -(Math.sqrt(fB[i]) - 0.5) : Math.sqrt(fA[i]) - 0.5;
+      if (c > 0.02 && c < 0.98) d = 0.5 - c;
+      sdf[i] = d;
+    }
+    // 低分辨率的模拟网格
+    const C = MOB ? 2 : 3, gw = Math.ceil(mw / C), ghh = Math.ceil(mh / C), G = gw * ghh;
+    const cav = new Uint8Array(G), thick = new Float32Array(G), isL = new Uint8Array(G);
+    for (let j = 0; j < ghh; j++) for (let i = 0; i < gw; i++) {
+      const x = Math.min(mw - 1, i * C + (C >> 1)), y = Math.min(mh - 1, j * C + (C >> 1)), s = sdf[y * mw + x], g = j * gw + i;
+      if (s < 0.25) { cav[g] = 1; thick[g] = Math.max(0, -s); isL[g] = letter[y * mw + x] ? 1 : 0; }
+    }
+    // 从浇口杯出发的最短路：贴着型壁走得慢，中间先流过去，前沿是圆舌头
+    const dist = new Float32Array(G).fill(Infinity);
+    const heapK = new Float32Array(G * 8), heapV = new Int32Array(G * 8);
+    let hn = 0;
+    const push = (k, v) => { let i = hn++; heapK[i] = k; heapV[i] = v; while (i) { const p = (i - 1) >> 1; if (heapK[p] <= heapK[i]) break; [heapK[p], heapK[i]] = [heapK[i], heapK[p]]; [heapV[p], heapV[i]] = [heapV[i], heapV[p]]; i = p; } };
+    const pop = () => { const v = heapV[0]; hn--; heapK[0] = heapK[hn]; heapV[0] = heapV[hn]; let i = 0; for (;;) { const l = i * 2 + 1, r = l + 1; let m = i; if (l < hn && heapK[l] < heapK[m]) m = l; if (r < hn && heapK[r] < heapK[m]) m = r; if (m === i) break; [heapK[m], heapK[i]] = [heapK[i], heapK[m]]; [heapV[m], heapV[i]] = [heapV[i], heapV[m]]; i = m; } return v; };
+    const g0 = Math.floor((cup.y - T.y) / C) * gw + Math.floor((cup.x - T.x) / C);
+    dist[g0] = 0; push(0, g0);
+    const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [-1, 1, 1.414], [1, -1, 1.414], [-1, -1, 1.414]];
+    while (hn) {
+      const g = pop(), d = dist[g], x = g % gw, y = (g / gw) | 0;
+      for (const [dx, dy, l] of NB) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= gw || ny >= ghh) continue;
+        const k = ny * gw + nx;
+        if (!cav[k]) continue;
+        const nd = d + l * (1 + 2.2 * Math.exp(-thick[k] / (2.2 * C)));
+        if (nd < dist[k]) { dist[k] = nd; if (hn < heapK.length) push(nd, k); }
+      }
+    }
+    const cells = [];
+    for (let g = 0; g < G; g++) if (cav[g]) cells.push(g);
+    let maxD = 0;
+    for (const g of cells) if (isFinite(dist[g])) maxD = Math.max(maxD, dist[g]);
+    for (const g of cells) if (!isFinite(dist[g])) dist[g] = maxD + 1;   // 万一没接上，最后再灌
+    cells.sort((a, b) => dist[a] - dist[b]);
+    const N = cells.length, arr = new Float32Array(G).fill(2);
+    cells.forEach((g, r) => { arr[g] = r / N; });
+    // 往型壁外面渗两格，双线性采样时边上也有合理的值
+    for (let pass = 0; pass < 2; pass++) {
+      const nxt = arr.slice();
+      for (let g = 0; g < G; g++) {
+        if (cav[g]) continue;
+        const x = g % gw, y = (g / gw) | 0;
+        let mn = 2;
+        for (const [dx, dy] of NB) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < gw && ny < ghh) mn = Math.min(mn, arr[ny * gw + nx]); }
+        if (mn < 2) nxt[g] = mn + 0.002;
+      }
+      arr.set(nxt);
+    }
+    // 型壁外一圈的格子从哪个型腔格子抄温度
+    const rim = [];
+    for (let g = 0; g < G; g++) {
+      if (cav[g]) continue;
+      const x = g % gw, y = (g / gw) | 0;
+      let src = -1, best = -1;
+      for (const [dx, dy] of NB) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= gw || ny >= ghh) continue; const k = ny * gw + nx; if (cav[k] && thick[k] > best) { best = thick[k]; src = k; } }
+      if (src >= 0) rim.push(g, src);
+    }
+    // 冷却快慢：薄的地方快
+    const kc = new Float32Array(G);
+    for (const g of cells) kc[g] = 0.058 * (1 + 2.4 / (1 + thick[g] / (4 * K)));
+    const aux = new Float32Array(G * 4);
+    for (let g = 0; g < G; g++) { aux[g * 4] = arr[g]; aux[g * 4 + 1] = thick[g] / 20; aux[g * 4 + 2] = isL[g]; }
+    // 出气孔：最多 8 个，挑大的
+    vents.sort((a, b) => b.n - a.n);
+    const VS = vents.slice(0, 8).map(v => {
+      const g = Math.floor(v.cy / C) * gw + Math.floor(v.cx / C);
+      return { x: v.x, y: v.y, arr: cav[g] ? arr[g] : 0.5, life: 0 };
+    });
+    // 打磨路线：每个字的外框里来回走几趟
+    const R = LAY.grindR, path = [];
+    big.filter(c => c.n >= 160).sort((a, b) => a.x0 - b.x0).forEach(c => {
+      const x0 = c.x0 + T.x + R * 0.35, x1 = c.x1 + T.x - R * 0.35, y0 = c.y0 + T.y + R * 0.55, y1 = c.y1 + T.y - R * 0.45;
+      const rows = Math.max(1, Math.round((y1 - y0) / (R * 1.25)));
+      for (let r = 0; r <= rows; r++) {
+        const y = lerp(y0, y1, r / rows), ltr = r % 2 === 0;
+        path.push({ x: ltr ? x0 : x1, y, lift: r === 0 }, { x: ltr ? x1 : x0, y, lift: false });
+      }
+    });
+    MD = { mw, mh, sdf, letter, C, gw, gh: ghh, G, cav, thick, isL, arr, cells: Int32Array.from(cells), N, rim: Int32Array.from(rim), kc, aux, vents: VS, path };
+  }
+  // Felzenszwalb 的线性时间距离变换（平方距离）
+  function edt(f, w, h) {
+    const n = Math.max(w, h), d = new Float32Array(n), v = new Int32Array(n), z = new Float32Array(n + 1), g = new Float32Array(n);
+    const dt1 = len => {
+      let k = 0; v[0] = 0; z[0] = -1e20; z[1] = 1e20;
+      for (let q = 1; q < len; q++) {
+        let s = ((g[q] + q * q) - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+        while (s <= z[k]) { k--; s = ((g[q] + q * q) - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+        k++; v[k] = q; z[k] = s; z[k + 1] = 1e20;
+      }
+      k = 0;
+      for (let q = 0; q < len; q++) { while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + g[v[k]]; }
+    };
+    for (let x = 0; x < w; x++) { for (let y = 0; y < h; y++) g[y] = f[y * w + x]; dt1(h); for (let y = 0; y < h; y++) f[y * w + x] = d[y]; }
+    for (let y = 0; y < h; y++) { for (let x = 0; x < w; x++) g[x] = f[y * w + x]; dt1(w); for (let x = 0; x < w; x++) f[y * w + x] = d[x]; }
+  }
+
+  // ---------- 着色器 ----------
+  const HEAD = '#version 300 es\nprecision highp float;\nprecision highp sampler2D;\n';
+  const VS_FULL = HEAD + `const vec2 P[3] = vec2[3](vec2(-1., -1.), vec2(3., -1.), vec2(-1., 3.));
+void main() { gl_Position = vec4(P[gl_VertexID], 0., 1.); }`;
+
+  // 可平铺的噪声：R/G 两层分形值噪声，B 是 Worley 距离，A 是 Worley 的格边（裂纹）
+  const FS_NOISE = HEAD + `out vec4 o;
+float h21(vec2 p) { vec3 q = fract(vec3(p.xyx) * .1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+float vn(vec2 p, float per) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3. - 2. * f);
+  float a = h21(mod(i, per)), b = h21(mod(i + vec2(1, 0), per)), c = h21(mod(i + vec2(0, 1), per)), d = h21(mod(i + vec2(1, 1), per));
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+float fbm(vec2 p, float per) { float s = 0., a = .5; for (int k = 0; k < 5; k++) { s += a * vn(p, per); p *= 2.; per *= 2.; a *= .5; } return s / .96875; }
+vec2 wor(vec2 p, float per) {
+  vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    vec2 g = vec2(x, y), c = mod(i + g, per), r = g + vec2(h21(c), h21(c + 17.3)) - f; float d = dot(r, r);
+    if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+  }
+  return vec2(sqrt(d1), sqrt(d2));
+}
+void main() {
+  vec2 uv = gl_FragCoord.xy / 256.;
+  vec2 w = wor(uv * 10., 10.);
+  o = vec4(fbm(uv * 8., 8.), fbm(uv * 16. + vec2(5.2, 1.3), 16.), clamp(w.x, 0., 1.), clamp((w.y - w.x) * 1.4, 0., 1.));
+}`;
+
+  const COMMON = `
+uniform vec2 uView, uRes;
+uniform float uDpr, uPx, uK, uS, uTime, uV, uRamp, uKnock, uFW;
+uniform vec4 uTexR, uFl;
+uniform vec2 uSdfTx, uAuxTx, uShake;
+uniform sampler2D uSDF, uAux, uState, uNoise, uBB;
+uniform vec3 uLadP; uniform mat3 uLadM; uniform vec4 uLadD, uLadL; uniform vec3 uUnder;
+uniform vec4 uStrA, uStrB;
+uniform vec4 uVent[8]; uniform int uNV;
+uniform vec3 uFurnC, uFurnD, uSky;
+float h12(vec2 p) { vec3 q = fract(vec3(p.xyx) * .1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+float ss(float a, float b, float x) { return a < b ? smoothstep(a, b, x) : 1. - smoothstep(b, a, x); }
+float lum(vec3 c) { return dot(c, vec3(.2126, .7152, .0722)); }
+vec2 toM(vec2 p) { return (p - uTexR.xy) / uTexR.zw; }
+vec3 bb(float T) { return T < 400. ? vec3(0.) : texture(uBB, vec2(clamp((T - 400.) / 1300., 0., 1.) * (255. / 256.) + .5 / 256., .5)).rgb; }
+vec2 proj(vec3 w) { return vec2(w.x, w.y - w.z * uS); }
+float sdSeg(vec2 p, vec2 a, vec2 b, out float h) { vec2 pa = p - a, ba = b - a; h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.); return length(pa - ba * h); }
+float nz(vec2 p) { return texture(uNoise, p).r; }
+
+// 浇包：在它自己的坐标里求视线和圆筒的交点（外壁、杯口、内壁、铁水面）
+vec4 ladle(vec2 p, out vec3 em) {
+  em = vec3(0.);
+  if (uLadL.w < .5) return vec4(0.);
+  float R = uLadD.x, Ri = uLadD.y, zLo = uLadD.z, zHi = uLadD.w;
+  vec2 c = proj(uLadP);
+  if (abs(p.x - c.x) > R * 1.5 + 30. || abs(p.y - c.y) > R * 1.5 + (zHi - zLo) * uS + 30.) return vec4(0.);
+  vec3 O = vec3(p.x, p.y + 4000. * uS, 4000.), D = vec3(0., -uS, -1.);
+  vec3 Ol = uLadM * (O - uLadP), Dl = uLadM * D;
+  float a = dot(Dl.xy, Dl.xy), b = 2. * dot(Ol.xy, Dl.xy);
+  float best = 1e9, edge = 1.; int kind = 0; vec3 hp = vec3(0.);
+  float cO = dot(Ol.xy, Ol.xy) - R * R, dO = b * b - 4. * a * cO;
+  float dmin = sqrt(max(cO + R * R - b * b / (4. * a), 0.));
+  if (dO > 0.) {
+    float t = (-b - sqrt(dO)) / (2. * a); vec3 q = Ol + Dl * t;
+    if (q.z > zLo && q.z < zHi) { best = t; kind = 1; hp = q; edge = clamp((R - dmin) / uPx, 0., 1.) * clamp((q.z - zLo) * uS / uPx, 0., 1.); }
+  }
+  float tT = (zHi - Ol.z) / Dl.z; vec3 qT = Ol + Dl * tT; float rT = length(qT.xy);
+  if (rT < R && tT < best) {
+    if (rT > Ri) { best = tT; kind = 2; hp = qT; edge = clamp((R - rT) / uPx, 0., 1.); }
+    else {
+      float cI = dot(Ol.xy, Ol.xy) - Ri * Ri, dI = max(b * b - 4. * a * cI, 0.);
+      float tW = (-b + sqrt(dI)) / (2. * a);
+      float tL = max((uLadL.x - O.z) / D.z, tT);     // 液面高过杯口的地方，就贴着杯口
+      vec3 qL = Ol + Dl * tL;
+      edge = 1.;
+      if (uLadL.y > .01 && length(qL.xy) < Ri + .5 && qL.z > uLadL.z && tL <= tW) { kind = 4; hp = qL; }
+      else {
+        vec3 qW = Ol + Dl * tW;
+        if (qW.z < uLadL.z) { hp = Ol + Dl * ((uLadL.z - Ol.z) / Dl.z); kind = 5; } else { hp = qW; kind = 3; }
+      }
+    }
+  }
+  if (kind == 0) return vec4(0.);
+  mat3 Mt = transpose(uLadM);
+  vec3 V = normalize(vec3(0., uS, 1.));
+  float phi = atan(hp.y, hp.x);
+  vec3 col = vec3(0.);
+  if (kind == 1) {
+    vec3 N = Mt * vec3(hp.xy / R, 0.);
+    float h = hp.z - zLo, Hh = zHi - zLo;
+    float rust = smoothstep(.42, .78, nz(vec2(phi * .32, h / 80.)));
+    vec3 alb = mix(vec3(.072, .07, .068), vec3(.15, .066, .032), rust * .75);
+    float drip = smoothstep(.45, .0, abs(phi)) * smoothstep(.5, .78, texture(uNoise, vec2(phi * 1.9, h / 55. + .3)).g);
+    alb = mix(alb, vec3(.21, .2, .19), drip * .8);
+    float weld = exp(-pow((h - Hh * .2) / (1.5 * uK), 2.)) + exp(-pow((h - Hh * .8) / (1.5 * uK), 2.));
+    vec3 Nb = normalize(N + (Mt * vec3(0., 0., 1.)) * weld * .7);
+    float lip = smoothstep(Hh - 3. * uK, Hh, h);
+    col = alb * (uSky * (.45 + .55 * max(Nb.z, 0.)) + uFurnC * max(dot(Nb, uFurnD), 0.) * 1.3 + uUnder * (.35 + .65 * max(dot(Nb, normalize(vec3(.2, .7, -.4))), 0.)));
+    col += uFurnC * pow(max(dot(Nb, normalize(uFurnD + V)), 0.), 28.) * .3 + vec3(.05, .045, .04) * lip * (1. + 2. * uLadL.y);
+  } else if (kind == 2) {
+    // 杯口：外面一圈钢壳，里面是耐火材料，越靠里越烫
+    vec3 N = Mt * vec3(0., 0., 1.);
+    float tr = (rT - Ri) / (R - Ri), n = nz(hp.xy / 200.);
+    float shell = smoothstep(.78, .86, tr);
+    vec3 alb = vec3(.44, .4, .35) * (.72 + .42 * n);
+    float slag = smoothstep(.5, .72, texture(uNoise, hp.xy / 170. + 2.).g) * (1. - shell);
+    alb = mix(alb, vec3(.075, .07, .065), slag * .85);
+    alb = mix(alb, vec3(.085, .082, .08), shell);
+    col = alb * (uSky * 1.3 + uFurnC * max(dot(N, uFurnD), 0.) * 1.2 + uUnder * .3) + vec3(.06, .055, .05) * smoothstep(.97, 1., tr);
+    em = bb(1240. - 900. * tr + 90. * (n - .5)) * uLadL.y * .45 * (1. - slag * .6) * (1. - shell);
+  } else if (kind == 3 || kind == 5) {
+    // 液面以上的内壁：贴着液面的一圈最烫
+    vec3 wp = Mt * hp + uLadP;
+    float dz = max(wp.z - uLadL.x, 0.) / uK;
+    float n = nz(hp.xy / 120. + hp.z / 90.);
+    float slag = smoothstep(.55, .75, n);
+    col = vec3(.06, .055, .05) * (uSky + uFurnC * .3);
+    em = bb(1360. - 16. * dz - 160. * slag) * uLadL.y * .9;
+  } else {
+    // 液面：翻滚的白热铁水，上面漂着一片片发暗的渣皮，渣皮的缝里透亮
+    vec2 q = hp.xy;
+    float conv = texture(uNoise, q / 130. + uTime * .03).r * .65 + texture(uNoise, q / 70. - uTime * .05).g * .35;
+    vec2 dq = q / 260. + vec2(-uTime * .006, uTime * .002);
+    float sl = texture(uNoise, dq).g * .7 + texture(uNoise, dq * 2.3 + .4).r * .3;
+    float slag = smoothstep(.46, .6, sl) * (.55 + .45 * smoothstep(-Ri, Ri, -q.x));
+    float crk = 1. - smoothstep(.02, .08, texture(uNoise, q / 90.).a);
+    float skin = smoothstep(Ri - 7. * uK, Ri, length(q));
+    col = vec3(.11, .1, .09) * slag * (uSky * 2. + uFurnC * .5 + uUnder * .4);
+    vec3 hot = bb(1430. + 130. * (conv - .5));
+    vec3 crust = bb(820. + 330. * crk + 60. * conv);
+    em = mix(hot, crust, slag) * (1. - .5 * skin) * uLadL.y;
+  }
+  return vec4(col, edge);
+}
+
+// 铁水流：从包嘴到浇口杯的一条二次曲线，白芯、橙边，里面的丝往下走
+vec4 streamF(vec2 p) {
+  float flow = uStrB.w;
+  if (flow < .002) return vec4(0.);
+  vec2 P0 = uStrA.xy, P1 = uStrA.zw, P2 = uStrB.xy;
+  float w0 = uStrB.z;
+  vec2 lo = min(min(P0, P1), P2) - w0 - 6., hi = max(max(P0, P1), P2) + w0 + 6.;
+  if (any(lessThan(p, lo)) || any(greaterThan(p, hi))) return vec4(0.);
+  float best = 1e9, bt = 0.; vec2 prev = P0;
+  for (int i = 1; i <= 14; i++) {
+    float t = float(i) / 14.; vec2 q = mix(mix(P0, P1, t), mix(P1, P2, t), t); float h;
+    float d = sdSeg(p, prev, q, h); if (d < best) { best = d; bt = (float(i - 1) + h) / 14.; }
+    prev = q;
+  }
+  float hw = w0 * mix(.42, .3, bt) * smoothstep(-.02, .06, bt) * (1. + .07 * sin(bt * 26. - uTime * 34.)) + .6;
+  float cov = 1. - smoothstep(hw - uPx, hw + uPx, best);
+  if (cov <= 0.) return vec4(0.);
+  float x = best / max(hw, .5);
+  float fil = texture(uNoise, vec2(x * .22 + bt * .05, bt * 1.4 - uTime * 2.6)).r;
+  float T = 1450. - 240. * x * x - 110. * (1. - fil);
+  return vec4(bb(T) * (.78 + .45 * fil), cov);
+}
+
+// 出气孔烧起来的小火苗：根上发蓝，往上变黄、变橙
+vec3 flamesF(vec2 p) {
+  vec3 e = vec3(0.);
+  for (int i = 0; i < 8; i++) {
+    if (i >= uNV) break;
+    vec4 v = uVent[i];
+    if (v.w < .01) continue;
+    vec2 q = p - v.xy; float s = v.z;
+    if (abs(q.x) > s * 1.6 || q.y > s * .8 || q.y < -s * 4.2) continue;
+    float y = -q.y / s;
+    float wob = texture(uNoise, vec2(q.x / (s * 4.) + float(i) * .13, y * .3 + uTime * 1.7)).r - .5;
+    float x = q.x / s + wob * 1.1 * max(y, 0.);
+    float hgt = .4 + 3.2 * v.w;
+    float width = .52 * (1. - smoothstep(0., hgt, y)) * smoothstep(-.45, .15, y);
+    float f = 1. - smoothstep(-.12, .22, abs(x) - width);
+    float flick = texture(uNoise, vec2(float(i) * .21, uTime * 2.3)).g;
+    vec3 c = mix(vec3(.18, .26, .9), vec3(2.8, 1.3, .32), smoothstep(-.2, .1, y));
+    c = mix(c, vec3(1.5, .32, .05), smoothstep(hgt * .45, hgt, y));
+    e += c * f * v.w * (.55 + .7 * flick);
+  }
+  return e;
+}
+`;
+
+  // 一次性烘好的“底”：地面、砂箱、型砂、型腔的颜色、法线、高度、材质
+  const FS_BAKE = HEAD + COMMON + `
+uniform sampler2D uStencil;
+uniform float uSeed;
+layout(location = 0) out vec4 o0;
+layout(location = 1) out vec4 o1;
+float sdBox(vec2 p, vec2 c, vec2 h) { vec2 d = abs(p - c) - h; return length(max(d, 0.)) + min(max(d.x, d.y), 0.); }
+void surf(vec2 p, out float h, out vec3 alb, out float mat) {
+  vec2 c = (uFl.xy + uFl.zw) * .5, hs = (uFl.zw - uFl.xy) * .5;
+  float dIn = sdBox(p, c, hs), dOut = sdBox(p, c, hs + uFW);
+  float g = h12(floor(p * 2.) + uSeed);
+  // 砂箱两侧的吊耳
+  float lug = min(sdBox(p, vec2(uFl.x - uFW - 7. * uK, c.y), vec2(9. * uK, 15. * uK)), sdBox(p, vec2(uFl.z + uFW + 7. * uK, c.y), vec2(9. * uK, 15. * uK)));
+  if (dIn < 0.) {
+    vec2 m = toM(p);
+    float sd = texture(uSDF, m).r;
+    float n1 = nz(p / 900. + .3), n2 = texture(uNoise, p / 300.).g, n3 = nz(p / 8.);
+    alb = vec3(.098, .095, .092) * (.78 + .32 * n1) * (.86 + .26 * n2) * (.86 + .28 * g);
+    float strike = texture(uNoise, vec2(p.x / 900., p.y / 2.4)).g;     // 刮板刮平留下的横纹
+    alb *= .93 + .14 * strike;
+    float dust = smoothstep(.62, .85, nz(p / 260. + 3.1)) * smoothstep(.45, .9, texture(uNoise, p / 900.).g);   // 撒过的分型粉
+    alb = mix(alb, vec3(.26, .24, .21), dust * .4);
+    h = (n2 - .5) * .9 + (g - .5) * .45 + (strike - .5) * .35 + (n3 - .5) * .3;
+    mat = 2.;
+    // 靠砂箱内壁的一圈压得更实、更暗
+    alb *= .8 + .2 * smoothstep(0., 14. * uK, -dIn);
+    if (sd < 4.) {
+      float depth = 13. * uK;
+      float k = 1. - smoothstep(-4. * uK, .6, sd);       // 型腔口有一圈圆角
+      h = mix(h, -depth + (n2 - .5) * .5, k);
+      vec3 coat = vec3(.052, .05, .052) * (.8 + .4 * n2) * (.85 + .3 * g);  // 刷过石墨涂料，发黑
+      alb = mix(alb, coat, smoothstep(.2, 1., k));
+      if (k > .5) mat = 3.;
+    }
+  } else if (dOut < 0. || lug < 0.) {
+    // 钢砂箱：比砂面高一截，边上磨亮，带锈
+    float edgeIn = dIn, edgeOut = -min(dOut, lug);
+    float e = min(edgeIn, edgeOut);
+    h = 9. * uK * smoothstep(0., 2.2 * uK, e) + (lug < 0. ? -2. * uK : 0.);
+    float n = nz(p / 600.), rust = smoothstep(.55, .8, texture(uNoise, p / 700. + 1.3).g * .7 + nz(p / 180.) * .3);
+    alb = vec3(.12, .12, .122) * (.7 + .5 * n);
+    alb = mix(alb, vec3(.2, .088, .04), rust * .7);
+    alb = mix(alb, vec3(.22, .21, .2), smoothstep(2.5 * uK, 0., e) * .6);         // 棱上磨亮
+    alb = mix(alb, vec3(.16, .15, .14), smoothstep(.6, .85, nz(p / 12.)) * .35);  // 砂灰
+    // 螺栓
+    vec2 bq = vec2(mod(p.x - uFl.x + 60. * uK, 120. * uK) - 60. * uK, 0.);
+    float side = min(abs(p.y - (uFl.y - uFW * .5)), abs(p.y - (uFl.w + uFW * .5)));
+    float bolt = length(vec2(bq.x, side)) - 3.6 * uK;
+    if (bolt < 0. && lug >= 0.) { h += 2.2 * uK * sqrt(clamp(-bolt / (3.6 * uK), 0., 1.)); alb = vec3(.17, .16, .15); }
+    // 喷漆的编号
+    float paint = texture(uStencil, vec2(p.x / uView.x, p.y / uView.y)).r;
+    alb = mix(alb, vec3(.62, .6, .55) * (.75 + .3 * n), paint * (.55 + .45 * smoothstep(.3, .7, texture(uNoise, p / 9.).g)));
+    mat = 1.;
+  } else {
+    // 车间地面：压实的旧砂，零星的铁豆
+    float n1 = nz(p / 1500.), n2 = texture(uNoise, p / 1400. + .3).g, n3 = nz(p / 200.);
+    alb = vec3(.05, .049, .048) * (.68 + .62 * n1) * (.85 + .3 * n2) * (.8 + .4 * g);
+    float spill = smoothstep(26. * uK, 0., dOut) * smoothstep(.35, .7, n3);
+    alb = mix(alb, vec3(.088, .084, .08) * (.8 + .4 * g), spill * .8);
+    h = (n2 - .5) * 2. + (n3 - .5) * 1.2 + (g - .5) * .4 + spill * 1.5;
+    float shot = texture(uNoise, p / 30.).b;
+    if (shot < .07 && h12(floor(p / 30. * 10.) + 3.) > .55) { h += (1. - shot / .07) * 1.6; alb = vec3(.05, .047, .045); }
+    mat = 0.;
+  }
+}
+void main() {
+  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr;
+  float h, hx0, hx1, hy0, hy1; vec3 alb, a2; float mat, m2;
+  surf(p, h, alb, mat);
+  float e = .6;
+  surf(p - vec2(e, 0.), hx0, a2, m2); surf(p + vec2(e, 0.), hx1, a2, m2);
+  surf(p - vec2(0., e), hy0, a2, m2); surf(p + vec2(0., e), hy1, a2, m2);
+  vec3 N = normalize(vec3(-(hx1 - hx0) / (2. * e), -(hy1 - hy0) / (2. * e), 1.));
+  vec2 c = (uFl.xy + uFl.zw) * .5, hs = (uFl.zw - uFl.xy) * .5;
+  vec2 d = abs(p - c) - hs; float dIn = length(max(d, 0.)) + min(max(d.x, d.y), 0.);
+  vec2 d2 = abs(p - c) - hs - uFW; float dOut = length(max(d2, 0.)) + min(max(d2.x, d2.y), 0.);
+  float ao = 1.;
+  if (mat >= 2.) ao *= .55 + .45 * smoothstep(0., 20. * uK, -dIn);
+  if (mat == 3.) ao *= .75;
+  if (mat == 0.) ao *= .55 + .45 * smoothstep(0., 16. * uK, dOut);
+  o0 = vec4(sqrt(clamp(alb, 0., 1.)), mat / 3.);
+  o1 = vec4(N.xy * .5 + .5, clamp(h / 48. + .5, 0., 1.), ao);
+}`;
+
+  // 发光层（三分之一分辨率）：铁水、浇包、铁水流、火苗、火花；用来打光和泛光
+  const FS_EMIT = HEAD + COMMON + `
+out vec4 o;
+void main() {
+  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) * (uView.x / uRes.x);
+  bool inBox = p.x > uFl.x - uFW && p.x < uFl.z + uFW && p.y > uFl.y - uFW && p.y < uFl.w + uFW;
+  vec2 ps = inBox ? p + uShake : p;
+  vec3 e = vec3(0.);
+  vec2 m = toM(ps);
+  if (m.x > 0. && m.y > 0. && m.x < 1. && m.y < 1.) {
+    float sd = texture(uSDF, m).r;
+    float cv = 1. - smoothstep(-1., 1., sd);
+    if (cv > 0.) {
+      vec4 ax = texture(uAux, m), st = texture(uState, m);
+      float nf = textureLod(uNoise, ps / 90., 2.).g;
+      float fill = uKnock > 0. ? 1. : smoothstep(0., uRamp, uV - ax.r + (nf - .5) * .016);
+      float T = st.r * 1000. - 150. * exp(-max(-sd, 0.) / (3. * uK));
+      e = bb(T) * cv * fill * mix(1., .55, 1. - smoothstep(1100., 1220., T));
+    }
+  }
+  vec3 le; vec4 L = ladle(p, le); e = mix(e, le, L.a);
+  vec4 s = streamF(p); e = mix(e, s.rgb, s.a);
+  e += flamesF(p);
+  o = vec4(e, 1.);
+}`;
+
+  const FS_SCENE = HEAD + COMMON + `
+out vec4 o;
+uniform sampler2D uGA, uGB, uEmit, uLE, uLD;
+uniform vec3 uLampP, uLampC;
+uniform vec4 uPL; uniform vec3 uPLc;
+uniform vec3 uBail[5]; uniform float uBailFront;
+uniform vec4 uGr; uniform float uGrR;
+uniform float uCrack;
+vec3 V0;
+
+vec4 gA(vec2 q) { ivec2 i = clamp(ivec2(vec2(q.x, uView.y - q.y) * uDpr), ivec2(0), ivec2(uRes) - 1); return texelFetch(uGA, i, 0); }
+vec4 gB(vec2 q) { ivec2 i = clamp(ivec2(vec2(q.x, uView.y - q.y) * uDpr), ivec2(0), ivec2(uRes) - 1); return texelFetch(uGB, i, 0); }
+vec3 decN(vec2 e) { vec2 n = e * 2. - 1.; return vec3(n, sqrt(max(1. - dot(n, n), 0.))); }
+
+// 发光层当光源：几级模糊叠起来，梯度给出光从哪边来
+void glowAt(vec2 p, out vec3 Eg, out vec3 Lg) {
+  vec2 ue = vec2(p.x / uView.x, 1. - p.y / uView.y);
+  Eg = texture(uLE, ue).rgb;
+  Lg = normalize(texture(uLD, ue).xyz + vec3(0., 0., 1e-4));
+}
+vec3 shade(vec3 alb, vec3 N, float rough, float spec, vec3 P, float ao, float shF, vec3 Eg, vec3 Lg) {
+  vec3 c = alb * uSky * (.5 + .5 * N.z) * ao;
+  float ff = ss(1.75, .05, length(P.xy / uView - vec2(-.05, -.12)));
+  c += alb * uFurnC * max(dot(N, uFurnD), 0.) * ff * shF * ao;
+  c += alb * Eg * (.3 + .7 * max(dot(N, Lg), 0.)) * 1.15;
+  if (uPL.w > 0.) {
+    vec3 d = uPL.xyz - P; float r2 = dot(d, d); vec3 L = d * inversesqrt(r2);
+    float occ = smoothstep(uLadD.x * .7, uLadD.x * 1.7, length(P.xy - uLadP.xy));
+    c += alb * uPLc * max(dot(N, L), 0.) * uPL.w / (1. + r2 / (240. * 240. * uK * uK)) * occ;
+  }
+  float sh = mix(6., 140., 1. - rough);
+  vec3 Hf = normalize(uFurnD + V0);
+  c += uFurnC * ff * shF * pow(max(dot(N, Hf), 0.), sh) * spec * .5;
+  if (uLampC.r > 0.) {
+    vec3 d = uLampP - P; float r2 = dot(d, d); vec3 L = d * inversesqrt(r2);
+    float pool = 1. / (1. + r2 / (430. * 430. * uK * uK));
+    c += alb * uLampC * max(dot(N, L), 0.) * pool * ao;
+    c += uLampC * pool * pow(max(dot(N, normalize(L + V0)), 0.), sh) * spec * (sh + 8.) / 40.;
+  }
+  return c;
+}
+
+// 碎成一块块的砂：每块按自己的时间往下掉，掉的时候缩小、变暗
+vec4 vor(vec2 p, float cs) {
+  vec2 g = floor(p / cs), f = p / cs - g; float d1 = 9., d2 = 9.; vec2 c1 = g, c2 = g;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    vec2 cell = g + vec2(x, y), r = vec2(x, y) + .15 + .7 * vec2(h12(cell), h12(cell + 7.7)) - f; float d = dot(r, r);
+    if (d < d1) { d2 = d1; c2 = c1; d1 = d; c1 = cell; } else if (d < d2) { d2 = d; c2 = cell; }
+  }
+  vec2 s1 = (c1 + .15 + .7 * vec2(h12(c1), h12(c1 + 7.7))) * cs, s2 = (c2 + .15 + .7 * vec2(h12(c2), h12(c2 + 7.7))) * cs;
+  return vec4(s1, h12(c1 + 3.1), -dot(p - (s1 + s2) * .5, normalize(s2 - s1)));
+}
+// 落砂以后露出来的格栅
+void grate(vec2 p, out vec3 alb, out vec3 N, out float ao) {
+  float per = 15. * uK, bw = 9.5 * uK;
+  float y = mod(p.y - uFl.y, per) - per * .5;
+  float d = y / (bw * .5);
+  float n = nz(p / 40.);
+  if (abs(d) < 1.) { N = normalize(vec3(0., d * 1.2, sqrt(max(1. - d * d, 0.)) + .05)); alb = vec3(.1, .095, .09) * (.7 + .55 * n); ao = 1.; }
+  else { N = vec3(0., 0., 1.); alb = vec3(.012, .011, .01); ao = .35; }
+  float rs = smoothstep(.52, .78, nz(p / 240. + 4.2)) * (.5 + .5 * smoothstep(.3, .8, texture(uNoise, p / 9.).g));   // 留在格栅上的砂
+  alb = mix(alb, vec3(.04, .037, .034) * (.8 + .4 * h12(floor(p * 2.))), rs);
+  N = normalize(mix(N, vec3(0., 0., 1.), rs));
+  ao = mix(ao, .9, rs);
+}
+// 吊包的提梁、吊钩、链条：屏幕上的圆杆
+vec4 rod(vec2 p, vec2 a, vec2 b, float r) {
+  float h; float d = sdSeg(p, a, b, h);
+  float cv = 1. - smoothstep(r - uPx, r + uPx, d);
+  if (cv <= 0.) return vec4(0.);
+  vec2 t = normalize(b - a), n = vec2(-t.y, t.x);
+  float s = clamp(dot(p - (a + (b - a) * h), n) / r, -1., 1.);
+  vec3 N = normalize(vec3(n * s, sqrt(1. - s * s)));
+  vec3 alb = vec3(.16, .15, .14);
+  vec3 c = alb * (uSky * (.6 + .6 * N.z) + uFurnC * max(dot(N, uFurnD), 0.) * 1.6 + uUnder * max(N.x * .6 + .4, 0.)) + (uFurnC + uUnder * .5) * pow(max(dot(N, normalize(uFurnD + V0)), 0.), 22.) * .5;
+  return vec4(c, cv);
+}
+vec4 chain(vec2 p, vec2 top) {
+  if (abs(p.x - top.x) > 10. * uK || p.y > top.y + 2.) return vec4(0.);
+  float L = 16. * uK, y = top.y - p.y;
+  float k = floor(y / L), f = mod(y, L) - L * .5;
+  vec2 q = vec2(p.x - top.x, f);
+  float d = mod(k, 2.) < .5 ? abs(length(q / vec2(.55, 1.)) * .55 - 4. * uK) - 1.6 * uK : abs(q.x) - 1.9 * uK - step(5.8 * uK, abs(q.y)) * 9.;
+  float cv = 1. - smoothstep(-uPx, uPx, d);
+  return vec4(vec3(.05, .048, .046) * (uSky * 3. + uFurnC * .6 + uUnder * .3) + vec3(.03) * step(0., q.x), cv);
+}
+// 角磨机：俯视看是一只护罩、一片转着的砂轮和机身
+vec4 grinderF(vec2 p, out float shadow) {
+  shadow = 1.;
+  if (uGr.z < .01) return vec4(0.);
+  float R = uGrR; vec2 q = p - uGr.xy;
+  if (dot(q, q) > R * R * 30.) return vec4(0.);
+  vec2 dB = normalize(vec2(.78, -.62));
+  float sB = length(q - vec2(10., 16.) * uK - dB * R * 1.4) - R * 1.9;
+  shadow = mix(1., .42, (1. - smoothstep(-R * .6, R * .9, sB)) * uGr.z);
+  vec3 col = vec3(0.); float a = 0.;
+  // 机身和侧把手
+  float hb; float body = sdSeg(q, dB * R * .2, dB * R * 3.3, hb) - R * (.46 - .06 * hb);
+  float hh; float handle = sdSeg(q, dB * R * .9, dB * R * .9 + vec2(-dB.y, dB.x) * R * 1.5, hh) - R * .16;
+  float bd = min(body, handle);
+  float guard = length(q) - R * 1.12;
+  bool gside = dot(q, dB) > -R * .18;
+  float disc = length(q) - R;
+  if (disc < uPx) {
+    float r = length(q) / R, ang = atan(q.y, q.x);
+    float blur = .6 + .4 * texture(uNoise, vec2(r * 3., uGr.w * .1)).r;
+    vec3 dc = vec3(.2, .19, .185) * blur * (.75 + .25 * smoothstep(.95, .7, r));
+    dc += vec3(.3) * smoothstep(.2, .14, r);
+    col = dc * (uSky * 4. + uLampC * .5 + uUnder); a = 1. - smoothstep(-uPx, uPx, disc);
+  }
+  if (gside && guard < uPx) { float g = 1. - smoothstep(-uPx, uPx, guard); col = mix(col, vec3(.09, .088, .085) * (uSky * 4. + uLampC * .6) + vec3(.06) * smoothstep(-2. * uK, 0., guard), g); a = max(a, g); }
+  if (bd < uPx) {
+    float g = 1. - smoothstep(-uPx, uPx, bd);
+    vec2 t = dB; float s = clamp(dot(q - dB * dot(q, dB), vec2(-t.y, t.x)) / (R * .46), -1., 1.);
+    vec3 bc = mix(vec3(.13, .12, .11), vec3(.55, .2, .06), step(R * 1.6, dot(q, dB)) * step(dot(q, dB), R * 2.8));
+    bc *= .55 + .45 * (1. - s * s);
+    col = mix(col, bc * (uSky * 4. + uLampC * .55) + uLampC * .12 * pow(max(1. - abs(s + .4), 0.), 6.), g); a = max(a, g);
+  }
+  return vec4(col, a * uGr.z);
+}
+
+void main() {
+  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr;
+  V0 = normalize(vec3(0., uS, 1.));
+  bool inBox = p.x > uFl.x - uFW - 2. && p.x < uFl.z + uFW + 2. && p.y > uFl.y - uFW - 2. && p.y < uFl.w + uFW + 2.;
+  vec2 ps = inBox ? p + uShake : p;
+  vec4 ga = gA(ps), gb = gB(ps);
+  vec3 alb = ga.rgb * ga.rgb; float mat = floor(ga.a * 3. + .5);
+  vec3 N = decN(gb.xy); float hgt = (gb.z - .5) * 48., ao = gb.w;
+  float rough = mat == 1. ? .5 : .92, spec = mat == 1. ? .3 : .025;
+  bool interior = ps.x > uFl.x && ps.x < uFl.z && ps.y > uFl.y && ps.y < uFl.w;
+  vec2 m = toM(ps);
+  float sd = texture(uSDF, m).r;
+  vec4 ax = texture(uAux, m), st = texture(uState, m);
+  float knock = step(.001, uKnock);
+  float ext = 9. * uK;      // 铸件的厚度，在画面上往下露出的侧面
+  float shCast = 1.;
+  // ---- 落砂 ----
+  if (interior && uKnock > 0. && sd > -1.5) {
+    float cs = 66. * uK;
+    vec4 v = vor(ps, cs);
+    float tf = .1 + v.z * 1.25 + .3 * h12(v.xy * .37);
+    float f = clamp((uKnock - tf) / .55, 0., 1.);
+    bool fallen = f >= 1.;
+    if (!fallen && f > 0.) {
+      float sc = 1. - .38 * f * f; vec2 drop = vec2(0., 30. * uK * f * f);
+      vec2 qq = v.xy + (ps - v.xy - drop) / sc;
+      vec4 v2 = vor(qq, cs);
+      if (distance(v2.xy, v.xy) > .5) fallen = true;
+      else {
+        vec4 a2 = gA(qq), b2 = gB(qq);
+        if (floor(a2.a * 3. + .5) >= 3.) fallen = true;
+        else {
+          alb = a2.rgb * a2.rgb * (1. - .78 * f) * mix(.55, 1., smoothstep(0., 3. * uK, v2.w));
+          N = decN(b2.xy); ao = b2.w;
+        }
+      }
+    }
+    if (fallen) {
+      grate(ps, alb, N, ao);
+      rough = .6; spec = .2; hgt = -4.;
+      // 铸件立在格栅上：下边露出一条侧面，再往下是影子
+      float side = 0.;
+      for (int i = 1; i <= 4; i++) { if (texture(uSDF, toM(ps - vec2(0., ext * float(i) / 4.))).r < 0.) { side = float(i); break; } }
+      if (side > 0.) {
+        float n = nz(ps / 14.);
+        alb = vec3(.06, .057, .054) * (.7 + .5 * n);
+        N = normalize(vec3(0., .75, .5)); ao = .8; rough = .8; spec = .15;
+      } else {
+        float s2 = texture(uSDF, toM(ps - vec2(5. * uK, ext + 5. * uK))).r;
+        shCast = mix(.38, 1., smoothstep(-2., 12. * uK, s2));
+        ao *= shCast;
+      }
+    }
+  }
+  // ---- 砂面：挨着铁水的地方被烤黑；震动时裂开 ----
+  if (interior && mat >= 2. && sd > 0. && knock < .5) {
+    float fn = smoothstep(0., .04, uV - ax.r);
+    alb *= 1. - .55 * fn * (1. - smoothstep(0., 7. * uK, sd));
+  }
+  if (interior && uCrack > 0. && sd > 0.) {
+    vec4 v = vor(ps, 66. * uK);
+    float cr = 1. - smoothstep(.3, 1.2 + 1.2 * uCrack, v.w);
+    alb *= 1. - .85 * cr * uCrack;
+  }
+  // ---- 打光 ----
+  vec3 Eg, Lg; glowAt(p, Eg, Lg);
+  // 浇包挡住炉火的影子
+  vec2 shC = uLadP.xy + vec2(.62, .7) * uLadP.z;
+  float shL = uLadL.w > .5 ? mix(1., .35, 1. - smoothstep(uLadD.x * .6, uLadD.x * 1.7, length(p - shC))) : 1.;
+  float gsh; vec4 grd = grinderF(p, gsh);
+  vec3 P3 = vec3(p, hgt);
+  vec3 col = shade(alb, N, rough, spec, P3, ao * gsh, shL, Eg, Lg);
+  // ---- 金属 ----
+  float cov = interior ? 1. - smoothstep(-.5 * uPx - .25, .5 * uPx + .25, sd) : 0.;
+  if (cov > 0.) {
+    float nf = textureLod(uNoise, ps / 90., 2.).g;
+    float fill = knock > .5 ? 1. : smoothstep(0., uRamp, uV - ax.r + (nf - .5) * .016);
+    if (fill > 0.) {
+      float dw = max(-sd, 0.);
+      float T = st.r * 1000. - 150. * exp(-dw / (3. * uK));
+      vec2 gs = vec2(texture(uSDF, m + vec2(uSdfTx.x, 0.)).r - texture(uSDF, m - vec2(uSdfTx.x, 0.)).r,
+                     texture(uSDF, m + vec2(0., uSdfTx.y)).r - texture(uSDF, m - vec2(0., uSdfTx.y)).r) * .5;
+      float liquid = smoothstep(1100., 1230., T);
+      float slope = mix(1.1, 1.5, knock) * exp(-dw / (mix(2.4, 1.9, knock) * uK));
+      vec3 Nm = normalize(vec3(gs * slope, 1.));
+      float nn = nz(ps / 110.), nn2 = texture(uNoise, ps / 47.).g * .5 + texture(uNoise, ps / 61. + .5).g * .5;
+      Nm = normalize(Nm + vec3((nn - .5) * .3, (nn2 - .5) * .3, 0.) * (1. - liquid));
+      // 发光：液态时表面在翻滚、漂着渣；结壳后壳暗、裂缝亮
+      float age = uV - ax.r;
+      float fresh = 1. - smoothstep(0., .18, age);
+      vec3 em = vec3(0.);
+      if (T > 600.) {
+        vec2 ga2 = vec2(texture(uAux, m + vec2(uAuxTx.x, 0.)).r - texture(uAux, m - vec2(uAuxTx.x, 0.)).r,
+                        texture(uAux, m + vec2(0., uAuxTx.y)).r - texture(uAux, m - vec2(0., uAuxTx.y)).r);
+        vec2 fl = normalize(ga2 + 1e-6) * 52. * uK * (.2 + .8 * fresh);
+        float ph = uTime * .8, f1 = fract(ph), f2 = fract(ph + .5);
+        float c1 = textureLod(uNoise, (ps - fl * f1) / 220., .5).r, c2 = textureLod(uNoise, (ps - fl * f2) / 220. + .37, .5).r;
+        float conv = mix(c1, c2, abs(1. - 2. * f1)) * .75 + texture(uNoise, ps / 26. + uTime * .015).g * .25;
+        // 液态：表面一团团翻滚（温度高低不一），漂着几片渣
+        float slag = smoothstep(.64, .82, textureLod(uNoise, ps / 120. + vec2(uTime * .004, .1), 1.5).g) * (.2 + .5 * (1. - fresh));
+        vec3 eL = bb(T + (conv - .5) * 170. - 260. * slag);
+        // 结壳：壳暗，裂缝里透出里面更亮的铁水
+        vec2 wq = ps + (vec2(textureLod(uNoise, ps / 320., 1.).r, textureLod(uNoise, ps / 320. + .5, 1.).g) - .5) * 60. * uK;
+        float cr1 = texture(uNoise, wq / 260.).a, cr2 = texture(uNoise, wq / 95. + .5).a;
+        float crack = max(1. - smoothstep(.025, .09, cr1), .6 * (1. - smoothstep(.015, .06, cr2)));
+        float skinV = texture(uNoise, ps / 160. + .7).r;
+        vec3 eC = mix(bb(T - 140. - 60. * skinV), bb(T + 40.), crack);
+        em = mix(eC, eL, liquid);
+        // 流动的前沿裹着一层暗一点的氧化皮
+        float frontE = fill * (1. - fill) * 4.;
+        em *= 1. - .45 * frontE * (knock < .5 ? 1. : 0.);
+      }
+      // 冷下来以后：铸铁，铸造面的砂粒感，粘着烧黑的砂；打磨过的地方是亮钢
+      vec3 albM = vec3(.085, .085, .09) * (.75 + .45 * nn) * (1. - liquid);
+      float roughM = .55, specM = .45 * (1. - liquid);
+      float res = knock * smoothstep(.55, .8, nz(ps / 220. + 1.7)) * (.45 + .55 * (1. - smoothstep(0., 9. * uK, dw)));
+      float pol = clamp(st.b, 0., 1.) * smoothstep(.3, .7, ax.b);
+      res *= 1. - pol;
+      albM = mix(albM, vec3(.06, .055, .05) * (.8 + .4 * h12(floor(ps * 2.))), res);
+      roughM = mix(roughM, .95, res); specM = mix(specM, .04, res);
+      if (pol > 0.) {
+        // 砂轮留下的一道道弧形磨痕
+        vec4 cv = vor(ps, 30. * uK);
+        vec2 dr = normalize(ps - cv.xy + 1e-4);
+        float arc = sin(length(ps - cv.xy) * 1.7 / uK + cv.z * 6.);
+        Nm = normalize(Nm + vec3(dr * arc * .05 * pol, 0.));
+        albM = mix(albM, vec3(.11, .112, .118), pol);
+        roughM = mix(roughM, .12, pol); specM = mix(specM, 1.4, pol);
+      }
+      vec3 mc = shade(albM, Nm, roughM, specM, vec3(ps, 0.), 1., shL, Eg, Lg) + em;
+      if (pol > 0.) {
+        vec3 Rr = reflect(-V0, Nm);
+        vec3 Ll = normalize(uLampP - vec3(ps, 0.));
+        float rl = max(dot(Rr, Ll), 0.);
+        vec3 env = vec3(.035, .037, .042) * smoothstep(-.1, 1., Rr.z) + vec3(.012) ;      // 头顶暗处、四周地面
+        mc += pol * (env + Eg * .5 + uLampC * (.16 * pow(rl, 10.) + .9 * pow(rl, 90.)));
+      }
+      col = mix(col, mc, cov * fill);
+    }
+  }
+  // ---- 角磨机 ----
+  col = mix(col, grd.rgb, grd.a);
+  // ---- 浇包、提梁、链条 ----
+  if (uLadL.w > .5) {
+    vec2 tA = proj(uBail[0]), tB = proj(uBail[1]), uA = proj(uBail[2]), uB = proj(uBail[3]), hk = proj(uBail[4]);
+    float rr = 5.4 * uK;
+    vec4 back = uBailFront > .5 ? rod(p, tB, uB, rr) : rod(p, tA, uA, rr);
+    col = mix(col, back.rgb, back.a);
+    vec3 le; vec4 L = ladle(p, le);
+    col = mix(col, L.rgb + le, L.a);
+    vec4 front = uBailFront > .5 ? rod(p, tA, uA, rr) : rod(p, tB, uB, rr);
+    col = mix(col, front.rgb, front.a);
+    vec4 bar = rod(p, uA, uB, rr * 1.1); col = mix(col, bar.rgb, bar.a);
+    vec2 mid = (uA + uB) * .5;
+    vec4 hook = rod(p, mid, hk, rr * .9); col = mix(col, hook.rgb, hook.a);
+    vec4 ch = chain(p, hk); col = mix(col, ch.rgb, ch.a);
+  }
+  vec4 s = streamF(p); col = mix(col, s.rgb, s.a);
+  col += flamesF(p);
+  o = vec4(col, 1.);
+}`;
+
+  // 发光层当光源：几级模糊叠起来，梯度给出光从哪边来；低分辨率算一次，场景里直接取
+  const FS_LIGHT = HEAD + `
+layout(location = 0) out vec4 o0;
+layout(location = 1) out vec4 o1;
+uniform sampler2D uEmit; uniform vec2 uRes;
+float lum(vec3 c) { return dot(c, vec3(.2126, .7152, .0722)); }
+void main() {
+  vec2 ue = gl_FragCoord.xy / uRes;
+  vec3 Eg = textureLod(uEmit, ue, 1.).rgb * .22 + textureLod(uEmit, ue, 2.5).rgb * .4 + textureLod(uEmit, ue, 4.).rgb * .55 + textureLod(uEmit, ue, 5.5).rgb * .6;
+  float dl = .025;
+  float gx = lum(textureLod(uEmit, ue + vec2(dl, 0.), 3.5).rgb) - lum(textureLod(uEmit, ue - vec2(dl, 0.), 3.5).rgb);
+  float gy = lum(textureLod(uEmit, ue - vec2(0., dl), 3.5).rgb) - lum(textureLod(uEmit, ue + vec2(0., dl), 3.5).rgb);
+  o0 = vec4(Eg, 1.);
+  o1 = vec4(normalize(vec3(gx, gy, 0.) * 5. + vec3(0., 0., .3)), 1.);
+}`;
+
+  // 合成：热浪扭曲、泛光、烟和蒸汽、色调映射
+  const FS_COMP = HEAD + `
+out vec4 o;
+uniform sampler2D uScene, uEmit, uState, uNoise;
+uniform vec2 uView, uRes;
+uniform vec4 uTexR;
+uniform float uTime, uExpo, uFade, uSmoke, uDust, uHaze, uSteamK;
+uniform vec4 uFl;
+float lum(vec3 c) { return dot(c, vec3(.2126, .7152, .0722)); }
+vec3 aces(vec3 x) { return clamp(x * (2.51 * x + .03) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+float h12(vec2 p) { vec3 q = fract(vec3(p.xyx) * .1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+void main() {
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 p = vec2(uv.x, 1. - uv.y) * uView;
+  // 热浪：热的东西上方，画面轻轻抖
+  vec3 Eh = textureLod(uEmit, uv - vec2(0., .035), 3.5).rgb;
+  float heat = min(lum(Eh), 3.) * uHaze;
+  vec2 hz = vec2(texture(uNoise, p / 64. + vec2(0., uTime * .7)).r, texture(uNoise, p / 64. + vec2(.5, uTime * .7)).g) - .5;
+  vec2 off = hz * heat * 2.6 / uView;
+  vec3 c = texture(uScene, uv + off).rgb;
+  // 泛光
+  vec3 bl = textureLod(uEmit, uv, 1.).rgb * .5 + textureLod(uEmit, uv, 2.5).rgb * .35 + textureLod(uEmit, uv, 4.).rgb * .3 + textureLod(uEmit, uv, 5.5).rgb * .28;
+  c += bl * .2;
+  // 烟：从热的地方往上冒，底下被铁水照成橙色
+  float sm = texture(uNoise, vec2(p.x / 300., p.y / 300. + uTime * .03)).r * .6 + texture(uNoise, vec2(p.x / 130. + uTime * .01, p.y / 130. + uTime * .065)).g * .4;
+  vec3 src = textureLod(uEmit, uv - vec2(0., .07), 5.).rgb;
+  float dens = uSmoke * smoothstep(.42, .82, sm) * clamp(lum(src) * .5, 0., 1.);
+  vec3 lit = textureLod(uEmit, uv, 4.5).rgb;
+  vec3 smokeC = vec3(.05, .047, .044) + lit * .35;
+  c = mix(c, smokeC, dens * .6);
+  // 泼水冒的蒸汽
+  vec2 mm = (p - uTexR.xy) / uTexR.zw;
+  float st = textureLod(uState, mm + vec2(0., .05), 2.).g + textureLod(uState, mm + vec2(0., .13), 3.).g * .8 + textureLod(uState, mm + vec2(0., .24), 4.).g * .5;
+  float sn = texture(uNoise, vec2(p.x / 260., p.y / 260. + uTime * .09)).r * .6 + texture(uNoise, vec2(p.x / 90. + uTime * .02, p.y / 90. + uTime * .2)).g * .4;
+  float steam = clamp(st * uSteamK, 0., 1.) * smoothstep(.3, .7, sn);
+  c = mix(c, vec3(.42, .42, .43) + lit * .5, steam * .7);
+  // 落砂扬起的灰
+  vec2 fc = (uFl.xy + uFl.zw) * .5, fh = (uFl.zw - uFl.xy) * .5;
+  vec2 dd = max(abs(p - fc + vec2(0., uDust * 40.)) - fh * vec2(.9, .6), 0.);
+  float area = 1. - smoothstep(0., 140., length(dd));
+  float dn = textureLod(uNoise, vec2(p.x / 520. + uTime * .006, p.y / 520. + uTime * .022), 1.).g * .6 + textureLod(uNoise, vec2(p.x / 190. - uTime * .01, p.y / 190. + uTime * .05), 1.).r * .4;
+  c = mix(c, vec3(.1, .094, .088) + lit * .2, uDust * area * smoothstep(.4, .85, dn) * .26);
+  // 色调映射：一半按通道（太亮的发白），一半按亮度（保住橙黄的色相）
+  c *= uExpo;
+  float L = lum(c);
+  vec3 a1 = aces(c);
+  vec3 a2 = c * (aces(vec3(L)).x / max(L, 1e-4)); a2 /= max(1., max(a2.r, max(a2.g, a2.b)));
+  c = mix(a1, a2, .3);
+  // 暗角、颗粒、抖动（去色带）
+  vec2 q = uv - .5; c *= 1. - .38 * dot(q, q) * 1.6;
+  c = pow(c, vec3(1. / 2.2));
+  float g = h12(gl_FragCoord.xy + fract(uTime) * 61.) + h12(gl_FragCoord.xy * 1.37 - fract(uTime) * 17.) - 1.;
+  c += g * (1.4 / 255.) + (h12(gl_FragCoord.xy + 3.3) - .5) * .012 * (1. - L);
+  o = vec4(c * uFade, 1.);
+}`;
+
+  const VS_PART = HEAD + `layout(location = 0) in vec2 aQ;
+layout(location = 1) in vec4 aSeg;
+layout(location = 2) in vec4 aCol;
+layout(location = 3) in float aW;
+uniform vec2 uView; uniform float uPxCss;
+out vec2 vL; out vec4 vC; out float vLen, vHW, vAA;
+void main() {
+  vec2 a = aSeg.xy, b = aSeg.zw, d = b - a; float len = length(d);
+  vec2 t = len > 1e-3 ? d / len : vec2(1., 0.), n = vec2(-t.y, t.x);
+  float hw = max(aW * .5, uPxCss * .5), r = hw + uPxCss * 1.5;
+  float along = aQ.x > 0. ? len + r : -r;
+  vec2 pos = a + t * along + n * aQ.y * r;
+  vL = vec2(along, aQ.y * r); vLen = len; vHW = hw; vAA = uPxCss;
+  float k = min(1., aW / max(uPxCss, 1e-3));   // 比一个像素还细的线，亮度按宽度打折
+  vC = vec4(aCol.rgb * k, aCol.a * k);
+  vec2 ndc = pos / uView * 2. - 1.; gl_Position = vec4(ndc.x, -ndc.y, 0., 1.);
+}`;
+  const FS_PART = HEAD + `in vec2 vL; in vec4 vC; in float vLen, vHW, vAA; out vec4 o;
+void main() {
+  float x = clamp(vL.x, 0., vLen), d = length(vL - vec2(x, 0.));
+  float cv = 1. - smoothstep(vHW - vAA * .5, vHW + vAA * .5, d);
+  float tail = vLen > .01 ? mix(.2, 1., clamp(vL.x / vLen, 0., 1.)) : 1.;
+  o = vec4(vC.rgb * cv * tail, vC.a * cv);
+}`;
+
+  // ---------- WebGL ----------
+  let gl = null, P = {}, TX = {}, FB = {}, partVAO, partBuf, glOK = false, emitW = 0, emitH = 0, lightW = 0, lightH = 0;
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  // 编译分两步：先把源码交给驱动（有 KHR_parallel_shader_compile 时在后台编），等编好了再查状态、取 uniform
+  function program(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    return { p, u: null };
+  }
+  function finish(pr) {
+    const p = pr.p;
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+      gl.getAttachedShaders(p).forEach(sh => { if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(sh)); });
+      throw new Error(gl.getProgramInfoLog(p));
+    }
+    const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) { const a = gl.getActiveUniform(p, i); u[a.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, a.name); }
+    pr.u = u;
+  }
+  function tex(w, h, ifmt, fmt, type, data, filter = gl.LINEAR, wrap = gl.CLAMP_TO_EDGE) {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, ifmt, w, h, 0, fmt, type, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter === gl.NEAREST ? gl.NEAREST : gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
+    return t;
+  }
+  function fbo(...texs) {
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    texs.forEach((t, i) => gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, t, 0));
+    gl.drawBuffers(texs.map((_, i) => gl.COLOR_ATTACHMENT0 + i));
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('framebuffer incomplete');
+    return f;
+  }
+  let PAR = null;
+  function startGL() {
+    gl = glc.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: true, depth: false, stencil: false, powerPreference: 'high-performance' });   // 透明画布：第一帧画出来之前露出 CSS 的底色，不会先黑一块
+    if (!gl || !gl.getExtension('EXT_color_buffer_float')) return false;
+    PAR = gl.getExtension('KHR_parallel_shader_compile');
+    P.noise = program(VS_FULL, FS_NOISE);
+    P.bake = program(VS_FULL, FS_BAKE);
+    P.emit = program(VS_FULL, FS_EMIT);
+    P.scene = program(VS_FULL, FS_SCENE);
+    P.comp = program(VS_FULL, FS_COMP);
+    P.light = program(VS_FULL, FS_LIGHT);
+    P.part = program(VS_PART, FS_PART);
+    return true;
+  }
+  // 后台编译完了没有：每帧问一次，不阻塞
+  const compiled = () => !PAR || Object.values(P).every(pr => gl.getProgramParameter(pr.p, PAR.COMPLETION_STATUS_KHR));
+  function initGL() {
+    Object.values(P).forEach(finish);
+    gl.bindVertexArray(gl.createVertexArray());
+    // 噪声：烘一次，平铺、带多级纹理
+    TX.noise = tex(256, 256, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, null, gl.LINEAR_MIPMAP_LINEAR, gl.REPEAT);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo(TX.noise));
+    gl.viewport(0, 0, 256, 256);
+    gl.useProgram(P.noise.p);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindTexture(gl.TEXTURE_2D, TX.noise);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    TX.bb = tex(256, 1, gl.RGBA16F, gl.RGBA, gl.FLOAT, BB.tex);
+    // 火花等粒子：一个四边形，按实例画成带拖尾的线
+    partVAO = gl.createVertexArray();
+    gl.bindVertexArray(partVAO);
+    const qb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    partBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, partBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, PMAX * 36, gl.DYNAMIC_DRAW);
+    [[1, 4, 0], [2, 4, 16], [3, 1, 32]].forEach(([loc, n, off]) => { gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, n, gl.FLOAT, false, 36, off); gl.vertexAttribDivisor(loc, 1); });
+    gl.bindVertexArray(null);
+    return true;
+  }
+
+  // 每次布局变了：尺寸相关的纹理、帧缓冲、烘焙
+  function buildGL() {
+    const rw = Math.round(W * DPR), rh = Math.round(H * DPR);
+    glc.width = rw; glc.height = rh;
+    ['sdf', 'aux', 'state', 'gA', 'gB', 'emit', 'scene', 'stencil', 'lE', 'lD'].forEach(k => { if (TX[k]) gl.deleteTexture(TX[k]); });
+    ['g', 'emit', 'scene', 'light'].forEach(k => { if (FB[k]) gl.deleteFramebuffer(FB[k]); });
+    TX.sdf = tex(MD.mw, MD.mh, gl.R16F, gl.RED, gl.FLOAT, MD.sdf);
+    TX.aux = tex(MD.gw, MD.gh, gl.RGBA16F, gl.RGBA, gl.FLOAT, MD.aux);
+    TX.state = tex(MD.gw, MD.gh, gl.RGBA16F, gl.RGBA, gl.FLOAT, null, gl.LINEAR_MIPMAP_LINEAR);
+    TX.gA = tex(rw, rh, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, null, gl.NEAREST);
+    TX.gB = tex(rw, rh, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, null, gl.NEAREST);
+    FB.g = fbo(TX.gA, TX.gB);
+    emitW = Math.ceil(W / 3); emitH = Math.ceil(H / 3);
+    TX.emit = tex(emitW, emitH, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null, gl.LINEAR_MIPMAP_LINEAR);
+    FB.emit = fbo(TX.emit);
+    lightW = Math.ceil(emitW / 2); lightH = Math.ceil(emitH / 2);
+    TX.lE = tex(lightW, lightH, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null);
+    TX.lD = tex(lightW, lightH, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null);
+    FB.light = fbo(TX.lE, TX.lD);
+    TX.scene = tex(rw, rh, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null);
+    FB.scene = fbo(TX.scene);
+    // 砂箱上喷漆的编号
+    const sc = canvas(Math.ceil(W), Math.ceil(H)), so = sc.getContext('2d');
+    so.fillStyle = '#fff';
+    so.font = `700 ${Math.round(11 * K)}px "Arial Black", Impact, sans-serif`;
+    if ('letterSpacing' in so) so.letterSpacing = `${(2.2 * K).toFixed(1)}px`;
+    so.textBaseline = 'middle';
+    const fl = LAY.fl;
+    so.fillText('No.007  HT250', fl.x0 + 22 * K, fl.y1 + LAY.FW * 0.52);
+    so.textAlign = 'right';
+    so.fillText(MOB ? '▲' : '▲ 上箱', fl.x1 - 22 * K, fl.y1 + LAY.FW * 0.52);
+    TX.stencil = tex(sc.width, sc.height, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, sc);
+    // 烘焙
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FB.g);
+    gl.viewport(0, 0, rw, rh);
+    gl.useProgram(P.bake.p);
+    setCommon(P.bake, rw, rh);
+    bindT(P.bake, 'uStencil', TX.stencil, 9);
+    gl.uniform1f(P.bake.u.uSeed, 3.7);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function bindT(pr, name, t, unit) {
+    if (pr.u[name] == null) return;
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.uniform1i(pr.u[name], unit);
+  }
+  function setCommon(pr, rw, rh) {
+    const u = pr.u, f = (n, ...v) => { if (u[n] != null) gl['uniform' + v.length + 'f'](u[n], ...v); };
+    f('uView', W, H); f('uRes', rw, rh); f('uDpr', rw / W); f('uPx', W / rw); f('uK', K); f('uS', S_OBL);
+    f('uTime', S.time); f('uV', S.V); f('uRamp', 0.022); f('uKnock', S.knock); f('uFW', LAY.FW);
+    const T = LAY.tex, fl = LAY.fl;
+    f('uTexR', T.x, T.y, T.w, T.h); f('uFl', fl.x0, fl.y0, fl.x1, fl.y1);
+    f('uSdfTx', 1 / MD.mw, 1 / MD.mh); f('uAuxTx', 1 / MD.gw, 1 / MD.gh);
+    f('uShake', S.shakeX, S.shakeY);
+    bindT(pr, 'uSDF', TX.sdf, 0); bindT(pr, 'uAux', TX.aux, 1); bindT(pr, 'uState', TX.state, 2); bindT(pr, 'uNoise', TX.noise, 3); bindT(pr, 'uBB', TX.bb, 4);
+    const L = S.lad;
+    f('uLadP', L.P[0], L.P[1], L.P[2]);
+    if (u.uLadM != null) gl.uniformMatrix3fv(u.uLadM, false, L.M);
+    f('uLadD', LAY.lad.R, LAY.lad.Ri, LAY.lad.zLo, LAY.lad.zHi);
+    f('uLadL', L.liqZ, L.melt, LAY.lad.bottom, L.vis ? 1 : 0);
+    f('uUnder', ...S.under);
+    f('uStrA', S.str[0], S.str[1], S.str[2], S.str[3]); f('uStrB', S.str[4], S.str[5], S.str[6], S.str[7]);
+    if (u.uVent != null) gl.uniform4fv(u.uVent, S.ventU);
+    if (u.uNV != null) gl.uniform1i(u.uNV, MD.vents.length);
+    f('uFurnC', ...S.furn); f('uFurnD', ...FURN_D); f('uSky', ...S.sky);
+  }
+  const FURN_D = (() => { const v = [-0.5, -0.56, 0.66], l = Math.hypot(...v); return v.map(x => x / l); })();
+
+  // ---------- 模拟 ----------
+  const PMAX = 3200, PDATA = new Float32Array(PMAX * 9);
+  let SP = [], DEB = [];     // 火花、落砂的碎块
+  const S = { time: 0 };
+  function resetSim() {
+    Object.assign(S, {
+      t: 0, phase: 'arrive', pt: 0, V: 0, tilt: 0, tiltV: 0, flow: 0, boost: false, boostEver: false,
+      lad: { P: [0, 0, 0], M: new Float32Array(9), liqZ: 0, melt: 1, vis: false, lip: [0, 0, 0] },
+      knock: 0, crack: 0, shakeX: 0, shakeY: 0, lamp: 0, dust: 0, smoke: 0, steamK: 1,
+      expo: 0.62, fade: 0.22, firstHit: false, hitFlash: 0, maxT: 0, maxLT: 0, glowSum: 0,
+      grind: { i: 0, x: 0, y: 0, vis: 0, contact: 0, auto: false, manual: false, spin: 0 },
+      str: new Float32Array(8), ventU: new Float32Array(32), under: [0, 0, 0],
+      furn: [0, 0, 0], sky: [0.044, 0.052, 0.066], quenched: 0, sheen: 0,
+    });
+    if (MD) { TG = new Float32Array(MD.G); STEAM = new Float32Array(MD.G); POL = new Float32Array(MD.G); FILLED = new Uint8Array(MD.G); MD.vents.forEach(v => { v.life = 0; }); }
+    SP = []; DEB = [];
+  }
+  let TG, STEAM, POL, FILLED, STATE;
+  const HL = () => LAY.lad.zHi - LAY.lad.zLo - 13 * KL;   // 内腔高
+  // 浇包的姿态：tilt 是绕耳轴往包嘴方向倾的角度
+  function poseLadle(P, tilt) {
+    const L = LAY.lad, u = L.u, a = L.a, c = Math.cos(tilt), s = Math.sin(tilt);
+    const ex = [u[0] * c, u[1] * c, -s], ey = [a[0], a[1], 0], ez = [u[0] * s, u[1] * s, c];
+    // 世界 → 包自身：行是 ex、ey、ez；按列存
+    S.lad.M.set([ex[0], ey[0], ez[0], ex[1], ey[1], ez[1], ex[2], ey[2], ez[2]]);
+    S.lad.P = P;
+    const toW = (x, y, z) => [P[0] + ex[0] * x + ey[0] * y + ez[0] * z, P[1] + ex[1] * x + ey[1] * y + ez[1] * z, P[2] + ex[2] * x + ey[2] * y + ez[2] * z];
+    S.lad.toW = toW;
+    S.lad.lip = toW(L.R - 1, 0, L.zHi);
+  }
+  const hAxis = () => lerp(0.64, 0.24, S.V) * HL();      // 包里铁水在轴线上的深度
+  const tiltStart = () => Math.atan((HL() - hAxis()) / LAY.lad.Ri);
+  const project = (x, y, z) => [x, y - z * S_OBL];
+
+  function quench(x, y) {
+    if (!MD) return false;
+    const T = LAY.tex, C = MD.C, R = 22 * K, gx = (x - T.x) / C, gy = (y - T.y) / C, r = R / C;
+    let hit = 0;
+    for (let j = Math.floor(gy - r * 1.4); j <= gy + r * 1.4; j++) for (let i = Math.floor(gx - r * 1.4); i <= gx + r * 1.4; i++) {
+      if (i < 0 || j < 0 || i >= MD.gw || j >= MD.gh) continue;
+      const g = j * MD.gw + i, d = Math.hypot(i - gx, j - gy) / r;
+      if (d > 1.4) continue;
+      if (MD.cav[g] && FILLED[g] && TG[g] > 380 && d < 1) { TG[g] -= (TG[g] - 40) * 0.62 * (1 - d * d); hit++; STEAM[g] = Math.min(2, STEAM[g] + 1.4 * (1 - d * 0.6)); }
+    }
+    if (!hit) return false;
+    S.quenched++;
+    for (let i = 0; i < 26; i++) {
+      const a = rand(0, 6.283), v = rand(40, 200) * K;
+      SP.push({ x: x + rand(-6, 6) * K, y: y + rand(-6, 6) * K, z: 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rand(80, 260) * K, T: rand(900, 1150), life: rand(0.2, 0.5), age: 0, kind: 0, w: 1 });
+    }
+    AU.hiss(Math.min(1, hit / 60));
+    return true;
+  }
+
+  function spawnSpark(x, y, z, speed, up, T, life, kind = 0, dir = null, spread = Math.PI) {
+    if (SP.length >= PMAX - 400) return;
+    const a = dir == null ? rand(0, 6.283) : dir + rand(-spread, spread), v = speed * rand(0.45, 1);
+    SP.push({ x, y, z, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: up * rand(0.4, 1), T, life, age: 0, kind, w: rand(1.1, 2.1) * K, bounce: 0 });
+  }
+
+  function update(dt) {
+    S.time += dt;
+    S.t += dt;
+    S.pt += dt;
+    const L = LAY.lad, cup = LAY.cup;
+    const base = [cup.x - L.u[0] * L.back, cup.y - L.u[1] * L.back, L.P[2]];
+    S.fade = Math.min(1, S.fade + dt / 1.1);
+    // 炉火：左上角一点暖光，慢慢地闪
+    const fk = 0.82 + 0.18 * Math.sin(S.time * 7.3 + Math.sin(S.time * 2.1) * 2) * Math.sin(S.time * 3.1);
+    S.furn = [0.36 * fk, 0.16 * fk, 0.055 * fk];
+    let ladPos = null, tiltTarget = S.tilt;
+    const ph = S.phase;
+    if (ph === 'arrive') {
+      const k = easeOut(S.pt / 2.4);
+      const from = [base[0] - 430 * KL, base[1] - 220 * KL, base[2] + 140 * KL];
+      ladPos = [lerp(from[0], base[0], k), lerp(from[1], base[1], k), lerp(from[2], base[2], k)];
+      if (S.pt > 2.4) { S.phase = 'ready'; S.pt = 0; }
+    } else if (ph === 'ready') {
+      ladPos = base;
+      tiltTarget = tiltStart() * 0.75;
+      if (S.pt > 0.9 || S.boost) { S.phase = 'pour'; S.pt = 0; }
+    } else if (ph === 'pour') {
+      ladPos = base;
+      const st = tiltStart();
+      // 先慢慢倾到包嘴，再多倾一点出铁；按住倾得更多
+      const extra = S.pt < 0.7 ? lerp(-0.08, 0.13, smooth(S.pt / 0.7)) : (S.boost ? 0.3 : 0.13);
+      tiltTarget = st + extra;
+      const over = S.tilt - st;
+      S.flow = clamp(over / 0.3, 0, 1) ** 1.5;
+      S.V = Math.min(1, S.V + S.flow * 0.42 * dt);
+      if (S.flow > 0.02 && !S.firstHit) { S.firstHit = true; S.hitFlash = 1; for (let i = 0; i < 170; i++) spawnSpark(cup.x, cup.y, 2, 420 * K, 640 * K, rand(1300, 1530), rand(0.5, 1.4)); AU.thump(); }
+      if (S.V >= 1) { S.phase = 'retract'; S.pt = 0; S.flow = 0; }
+    } else if (ph === 'retract') {
+      tiltTarget = 0;
+      const k = easeIn((S.pt - 0.8) / 1.8);
+      ladPos = [base[0] - 340 * KL * k, base[1] - 300 * KL * k, base[2] + 260 * KL * k];
+      S.flow = 0;
+      if (S.pt > 2.7) { S.phase = 'cool'; S.pt = 0; }
+    } else if (ph === 'cool') {
+      if ((S.maxLT < 470 && S.pt > 3) || S.pt > 40) { S.phase = 'shake'; S.pt = 0; AU.shake(); }
+    } else if (ph === 'shake') {
+      const a = 2.2 * K * smooth(S.pt / 0.2) * (1 - smooth((S.pt - 0.8) / 0.25));
+      S.shakeX = Math.sin(S.time * 97) * a; S.shakeY = Math.cos(S.time * 83) * a * 0.7;
+      S.crack = smooth(S.pt / 0.95);
+      if (S.pt > 1.05) { S.phase = 'fall'; S.pt = 0; S.shakeX = S.shakeY = 0; AU.sand(); }
+    } else if (ph === 'fall') {
+      S.knock = S.pt;
+      S.crack = Math.max(0, 1 - S.pt * 2);
+      S.dust = Math.min(1, S.pt * 1.6) * (1 - smooth((S.pt - 1.2) / 2.2));
+      // 砂块往下掉的碎屑
+      const fl = LAY.fl;
+      const n = Math.round((S.pt < 1.8 ? 90 : 20) * dt * 60 / 60 * 3);
+      for (let i = 0; i < n && DEB.length < 900; i++) {
+        const x = rand(fl.x0, fl.x1), y = rand(fl.y0, fl.y1);
+        DEB.push({ x, y, z: rand(0, 4), vx: rand(-40, 40) * K, vy: rand(-30, 30) * K, vz: rand(-40, 60) * K, life: rand(0.4, 0.9), age: 0, s: rand(1, 3.2) * K, c: rand(0.04, 0.09) });
+      }
+      if (S.pt > 2.6) { S.phase = 'lamp'; S.pt = 0; AU.clunk(); }
+    } else if (ph === 'lamp') {
+      S.knock = 2.6 + S.pt;
+      S.dust = Math.max(0, S.dust - dt * 0.4);
+      // 日光灯启辉：闪两下再亮稳
+      const t = S.pt;
+      S.lamp = t < 0.12 ? 0.7 : t < 0.2 ? 0.05 : t < 0.3 ? 0.9 : t < 0.38 ? 0.2 : Math.min(1, 0.6 + (t - 0.38) * 1.2);
+      if (S.pt > 1.1) { S.phase = 'grind'; S.pt = 0; S.grind.i = 0; S.grind.auto = true; const p0 = MD.path[0]; if (p0) { S.grind.x = p0.x - 160 * K; S.grind.y = p0.y - 60 * K; } }
+    } else if (ph === 'grind') {
+      S.knock = 2.6 + 1.1 + S.pt;
+      S.dust = Math.max(0, S.dust - dt * 0.4);
+      S.lamp = 1;
+      const G = S.grind, path = MD.path;
+      if (G.i < path.length) {
+        G.vis = Math.min(1, G.vis + dt * 3);
+        const tgt = path[G.i], dx = tgt.x - G.x, dy = tgt.y - G.y, d = Math.hypot(dx, dy), sp = (tgt.lift ? 900 : 620) * K * dt;
+        G.contact = tgt.lift ? 0 : 1;
+        if (d <= sp) { G.x = tgt.x; G.y = tgt.y; G.i++; } else { G.x += dx / d * sp; G.y += dy / d * sp; }
+      } else {
+        G.contact = 0;
+        G.x += 260 * K * dt; G.y -= 160 * K * dt;
+        G.vis = Math.max(0, G.vis - dt * 2.2);
+        if (G.vis <= 0) { S.phase = 'done'; S.pt = 0; G.auto = false; onDone(); }
+      }
+    } else if (ph === 'done') {
+      S.knock = 10; S.lamp = 1; S.dust = 0;
+      const G = S.grind;
+      if (G.manual) { G.vis = Math.min(1, G.vis + dt * 6); G.contact = 1; } else { G.vis = Math.max(0, G.vis - dt * 4); G.contact = 0; }
+    }
+    // 浇包的倾角：弹簧跟随
+    const kS = 18, kD = 2 * Math.sqrt(kS) * 0.9;
+    S.tiltV += ((tiltTarget - S.tilt) * kS - S.tiltV * kD) * dt;
+    S.tilt += S.tiltV * dt;
+    if (ladPos) {
+      // 吊在行车上，到位以后还轻轻晃一阵
+      const sw = S.phase === 'arrive' ? 0 : Math.exp(-S.t * 0.45) * 7 * KL * Math.sin(S.t * 3.4);
+      poseLadle([ladPos[0] + L.u[0] * sw, ladPos[1] + L.u[1] * sw, ladPos[2]], S.tilt);
+      S.lad.vis = ladPos[0] > -400 && ladPos[1] - ladPos[2] * S_OBL > -400;
+      S.lad.melt = 1;
+      const ex = S.lad;
+      S.lad.liqZ = ex.toW(0, 0, L.zLo + 13 * KL + hAxis())[2];
+    } else S.lad.vis = false;
+    // 铁水流
+    S.flowVis = lerp(S.flowVis || 0, S.flow, 1 - Math.exp(-dt * 14));
+    if (S.lad.vis && S.flowVis > 0.01 && S.phase === 'pour') {
+      const lip = S.lad.lip, p0 = project(...lip), p2 = [cup.x, cup.y];
+      const mid = project(lerp(lip[0], cup.x, 0.55), lerp(lip[1], cup.y, 0.55), lip[2]);
+      S.str.set([p0[0], p0[1], mid[0], mid[1], p2[0], p2[1], (8 + 13 * Math.sqrt(S.flowVis)) * KL, S.flowVis]);
+    } else S.str[7] = 0;
+    // 火花：铁水砸进浇口杯
+    if (S.phase === 'pour' && S.flowVis > 0.05) {
+      const n = S.flowVis * 300 * dt * (S.boost ? 1.7 : 1);
+      for (let i = 0; i < n || Math.random() < n - i; i++) spawnSpark(cup.x + rand(-5, 5) * K, cup.y + rand(-4, 4) * K, 2, 330 * K, 560 * K, rand(1260, 1510), rand(0.35, 1.2));
+      AU.crackle(n / dt * 0.22);
+    }
+    S.hitFlash = Math.max(0, S.hitFlash - dt * 2.5);
+    // 磨：砂轮接触到字面就出火花、把那一圈磨亮
+    const G = S.grind;
+    G.spin += dt * 60;
+    if (G.vis > 0.5 && G.contact) {
+      const T = LAY.tex, C = MD.C, R = LAY.grindR * 0.92, gx = (G.x - T.x) / C, gy = (G.y - T.y) / C, r = R / C;
+      let on = 0;
+      for (let j = Math.floor(gy - r); j <= gy + r; j++) for (let i = Math.floor(gx - r); i <= gx + r; i++) {
+        if (i < 0 || j < 0 || i >= MD.gw || j >= MD.gh) continue;
+        const g = j * MD.gw + i, d = Math.hypot(i - gx, j - gy) / r;
+        if (d > 1 || !MD.cav[g]) continue;
+        if (MD.isL[g]) { POL[g] = Math.min(1, POL[g] + dt * 9 * (1 - d * d)); on++; }
+      }
+      G.on = on > 0;
+      if (on) {
+        const n = 260 * dt;   // 火花顺着砂轮转向，往右下方甩
+        for (let i = 0; i < n || Math.random() < n - i; i++) {
+          const a = Math.atan2(0.55, 0.83) + rand(-0.35, 0.35), v = rand(380, 820) * K;
+          if (SP.length < PMAX - 200) SP.push({ x: G.x + 0.6 * LAY.grindR * Math.cos(a), y: G.y + 0.6 * LAY.grindR * Math.sin(a), z: 6, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rand(30, 160) * K, T: rand(1150, 1320), life: rand(0.25, 0.75), age: 0, kind: 1, w: rand(0.8, 1.3) * K, bounce: 0 });
+        }
+        AU.crackle(140);
+      }
+    } else G.on = false;
+    simMetal(dt);
+    simParticles(dt);
+    // 出气孔的火：铁水到了那儿就点着，烧几秒慢慢灭
+    MD.vents.forEach((v, i) => {
+      if (S.V > v.arr && S.knock === 0) v.life += dt; else if (S.knock > 0) v.life = 99;
+      const t = v.life, I = t <= 0 ? 0 : smooth(t / 0.5) * (1 - smooth((t - 2.5) / 7));
+      S.ventU.set([v.x, v.y, 13 * K, I], i * 4);
+    });
+    S.ventSum = MD.vents.reduce((s, v, i) => s + S.ventU[i * 4 + 3], 0);
+    // 烟：开浇以后慢慢起来，落砂前散掉
+    const smokeT = S.phase === 'pour' ? 0.5 * S.V : S.phase === 'retract' || S.phase === 'cool' ? 0.55 + 0.45 * smooth(S.pt / 4) - (S.phase === 'cool' ? smooth((S.pt - 8) / 10) * 0.7 : 0) : S.phase === 'shake' ? 0.2 : 0.05;
+    S.smoke = lerp(S.smoke, smokeT, 1 - Math.exp(-dt * 0.8));
+    // 浇包和铁水流把底下照亮
+    const ul = S.flowVis * 0.5 + (S.phase === 'pour' || S.phase === 'retract' || S.phase === 'cool' ? 0.25 * smooth(S.maxT / 1300) : 0);
+    S.under = [0.9 * ul, 0.42 * ul, 0.14 * ul];
+    // 曝光：眼前越亮收得越多；开灯以后固定
+    const glow = S.glowSum + (S.lad.vis ? 0.06 : 0) + S.flowVis * 0.05;
+    let ex = clamp(0.17 / Math.sqrt(glow + 0.012), 0.34, 1.3);
+    if (S.lamp > 0) ex = lerp(ex, 1.05, S.lamp);
+    S.expo = lerp(S.expo, ex, 1 - Math.exp(-dt / 1.1));
+  }
+
+  // 铁水的温度：灌进来的格子从浇注温度开始，按厚薄降温，相邻的格子互相传热
+  function simMetal(dt) {
+    const { cells, cav, arr, kc, gw, gh, isL } = MD;
+    let maxT = 0, maxLT = 0, glow = 0;
+    for (let k = 0; k < cells.length; k++) {
+      const g = cells[k];
+      if (!FILLED[g]) { if (S.V > arr[g] && S.V > 0) { FILLED[g] = 1; TG[g] = 1435 - 50 * arr[g] + rand(-8, 8); } else continue; }
+      let T = TG[g];
+      if (T > 30) T -= (T - 28) * kc[g] * dt;
+      const x = g % gw;
+      let s = 0, n = 0;
+      if (x > 0 && cav[g - 1] && FILLED[g - 1]) { s += TG[g - 1]; n++; }
+      if (x < gw - 1 && cav[g + 1] && FILLED[g + 1]) { s += TG[g + 1]; n++; }
+      if (g >= gw && cav[g - gw] && FILLED[g - gw]) { s += TG[g - gw]; n++; }
+      if (g < gw * (gh - 1) && cav[g + gw] && FILLED[g + gw]) { s += TG[g + gw]; n++; }
+      if (n) T += (s / n - T) * clamp(5 * dt, 0, 1);
+      TG[g] = T;
+      if (T > maxT) maxT = T;
+      if (isL[g] && T > maxLT) maxLT = T;
+      glow += BB.L(T);
+    }
+    S.maxT = maxT; S.maxLT = maxLT;
+    S.glowSum = glow * MD.C * MD.C / (W * H);
+    if (S.phase === 'pour' && S.V < 1) S.maxLT = Math.max(S.maxLT, 1000);
+    for (let g = 0; g < MD.G; g++) if (STEAM[g] > 0) STEAM[g] = STEAM[g] < 0.01 ? 0 : STEAM[g] * Math.exp(-dt * 0.9);
+  }
+
+  function simParticles(dt) {
+    const g = 1500 * K;
+    SP = SP.filter(p => {
+      p.age += dt;
+      if (p.kind === 2) { p.T -= (p.T - 200) * 0.7 * dt; return p.T > 520; }   // 落在砂上的铁珠，慢慢暗下去
+      p.vz -= g * dt;
+      const dr = Math.exp(-dt * (p.kind === 1 ? 1.6 : 0.9));
+      p.vx *= dr; p.vy *= dr;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+      p.T -= (p.T - 300) * (p.kind === 1 ? 2.2 : 1.4) * dt;
+      if (p.z < 0) {
+        p.z = 0; p.bounce++;
+        if (p.kind === 0 && p.bounce >= 2 && Math.random() < 0.35 && p.T > 900) { p.kind = 2; p.vx = p.vy = p.vz = 0; return true; }
+        p.vz = -p.vz * 0.32; p.vx *= 0.55; p.vy *= 0.55;
+        if (p.bounce > 2) return false;
+      }
+      // 磨削的火花偶尔炸开
+      if (p.kind === 1 && p.age > 0.08 && Math.random() < dt * 2.2 && SP.length < PMAX - 100) {
+        for (let i = 0; i < 3; i++) { const a = rand(0, 6.283), v = rand(80, 200) * K; SP.push({ x: p.x, y: p.y, z: p.z, vx: p.vx * 0.3 + Math.cos(a) * v, vy: p.vy * 0.3 + Math.sin(a) * v, vz: rand(-40, 60) * K, T: p.T + 60, life: rand(0.06, 0.16), age: 0, kind: 3, w: p.w * 0.7, bounce: 3 }); }
+        return false;
+      }
+      return p.age < p.life && p.T > 560;
+    });
+    DEB = DEB.filter(d => { d.age += dt; d.vz -= 900 * K * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt; return d.age < d.life && d.z > -60 * K; });
+  }
+  // 粒子数据：每个是一段屏幕上的线（尾 → 头）、颜色、宽度
+  function packParticles() {
+    let n = 0;
+    const put = (x0, y0, x1, y1, r, g, b, a, w) => { if (n >= PMAX) return; const o = n * 9; PDATA[o] = x0; PDATA[o + 1] = y0; PDATA[o + 2] = x1; PDATA[o + 3] = y1; PDATA[o + 4] = r; PDATA[o + 5] = g; PDATA[o + 6] = b; PDATA[o + 7] = a; PDATA[o + 8] = w; n++; };
+    for (const d of DEB) {
+      const [x, y] = project(d.x, d.y, d.z), k = 1 - d.age / d.life;
+      put(x, y - d.s * 0.3, x, y + d.s * 0.3, d.c * 0.4, d.c * 0.37, d.c * 0.34, 0.9 * Math.min(1, k * 2), d.s);
+    }
+    for (const p of SP) {
+      const c = BB.at(p.T), [x, y] = project(p.x, p.y, p.z);
+      if (p.kind === 2) { put(x - 0.4, y, x + 0.4, y, c[0] * 0.5, c[1] * 0.5, c[2] * 0.5, 0, 1.6 * K); continue; }
+      const st = p.kind === 1 ? 0.03 : 0.022, [x0, y0] = project(p.x - p.vx * st, p.y - p.vy * st, p.z - p.vz * st);
+      const fade = Math.min(1, (p.life - p.age) / 0.12);
+      const br = (p.kind === 3 ? 1.8 : 1.5) * fade;
+      put(x0, y0, x, y, c[0] * br, c[1] * br, c[2] * br, 0, p.w);
+    }
+    return n;
+  }
+
+  function uploadState() {
+    const { G, rim, cav } = MD;
+    if (!STATE || STATE.length !== G * 4) STATE = new Float32Array(G * 4);
+    for (let g = 0; g < G; g++) { const o = g * 4; STATE[o] = (cav[g] && FILLED[g] ? TG[g] : 0) / 1000; STATE[o + 1] = STEAM[g]; STATE[o + 2] = POL[g]; }
+    for (let k = 0; k < rim.length; k += 2) { const g = rim[k], s = rim[k + 1]; STATE[g * 4] = FILLED[s] ? TG[s] / 1000 : 0; STATE[g * 4 + 2] = POL[s]; }
+    gl.bindTexture(gl.TEXTURE_2D, TX.state);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, MD.gw, MD.gh, gl.RGBA, gl.FLOAT, STATE);
+    gl.generateMipmap(gl.TEXTURE_2D);
+  }
+
+  function render() {
+    const rw = glc.width, rh = glc.height;
+    uploadState();
+    const np = packParticles();
+    gl.bindBuffer(gl.ARRAY_BUFFER, partBuf);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, PDATA, 0, np * 9);
+    // 发光层
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FB.emit);
+    gl.viewport(0, 0, emitW, emitH);
+    gl.useProgram(P.emit.p);
+    setCommon(P.emit, emitW, emitH);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    drawParticles(np, W / emitW, 1.8);
+    gl.bindTexture(gl.TEXTURE_2D, TX.emit);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    // 发光层换算成光
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FB.light);
+    gl.viewport(0, 0, lightW, lightH);
+    gl.useProgram(P.light.p);
+    bindT(P.light, 'uEmit', TX.emit, 7);
+    gl.uniform2f(P.light.u.uRes, lightW, lightH);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // 场景
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FB.scene);
+    gl.viewport(0, 0, rw, rh);
+    const sp = P.scene;
+    gl.useProgram(sp.p);
+    setCommon(sp, rw, rh);
+    bindT(sp, 'uGA', TX.gA, 5); bindT(sp, 'uGB', TX.gB, 6); bindT(sp, 'uLE', TX.lE, 10); bindT(sp, 'uLD', TX.lD, 11);
+    const f = (n, ...v) => { if (sp.u[n] != null) gl['uniform' + v.length + 'f'](sp.u[n], ...v); };
+    const fl = LAY.fl, cx = (fl.x0 + fl.x1) / 2, cy = (fl.y0 + fl.y1) / 2;
+    const lampI = S.lamp * 2.6;
+    f('uLampP', cx + (S.sheen || 0) * 420 * K, cy - 150 * K, 520 * K);
+    f('uLampC', 0.86 * lampI, 0.93 * lampI, 1.0 * lampI);
+    const lad = S.lad;
+    if (lad.vis) {
+      const mp = lad.toW(0, 0, LAY.lad.zHi + 6 * KL), c = BB.at(1420);
+      f('uPL', mp[0], mp[1], mp[2], 0.5 + S.hitFlash * 0.6);
+      f('uPLc', c[0] * 0.16, c[1] * 0.16, c[2] * 0.16);
+      // 提梁：两根立杆从耳轴往上，顶上一根横梁，再挂到吊钩上
+      const L = LAY.lad, P0 = lad.P, a = L.a, r = L.R + 6 * KL, top = 128 * KL;
+      const pts = [[P0[0] + a[0] * r, P0[1] + a[1] * r, P0[2]], [P0[0] - a[0] * r, P0[1] - a[1] * r, P0[2]], [P0[0] + a[0] * r, P0[1] + a[1] * r, P0[2] + top], [P0[0] - a[0] * r, P0[1] - a[1] * r, P0[2] + top], [P0[0], P0[1], P0[2] + top + 26 * KL]];
+      if (sp.u.uBail != null) gl.uniform3fv(sp.u.uBail, pts.flat());
+      f('uBailFront', a[1] > 0 ? 1 : 0);
+    } else f('uPL', 0, 0, 0, 0);
+    const G = S.grind;
+    f('uGr', G.x, G.y, G.vis, G.spin);
+    f('uGrR', LAY.grindR);
+    f('uCrack', S.crack);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    drawParticles(np, W / rw, 1);
+    // 合成到屏幕
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, rw, rh);
+    const cp = P.comp;
+    gl.useProgram(cp.p);
+    const g = (n, ...v) => { if (cp.u[n] != null) gl['uniform' + v.length + 'f'](cp.u[n], ...v); };
+    bindT(cp, 'uScene', TX.scene, 8); bindT(cp, 'uEmit', TX.emit, 7); bindT(cp, 'uState', TX.state, 2); bindT(cp, 'uNoise', TX.noise, 3);
+    g('uView', W, H); g('uRes', rw, rh); g('uTexR', LAY.tex.x, LAY.tex.y, LAY.tex.w, LAY.tex.h); g('uFl', LAY.fl.x0, LAY.fl.y0, LAY.fl.x1, LAY.fl.y1);
+    g('uTime', S.time); g('uExpo', S.expo); g('uFade', S.fade); g('uSmoke', S.smoke); g('uDust', S.dust);
+    g('uHaze', clamp((S.maxT - 500) / 700, 0, 1) * 0.8 + S.flowVis * 0.4); g('uSteamK', 2.6);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function drawParticles(n, pxCss, wMul) {
+    if (!n) return;
+    gl.useProgram(P.part.p);
+    gl.uniform2f(P.part.u.uView, W, H);
+    gl.uniform1f(P.part.u.uPxCss, pxCss * wMul);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(partVAO);
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
+    gl.bindVertexArray(null);
+    gl.disable(gl.BLEND);
+  }
+
+  // ---------- 声音（默认关）：炉火、铁水、火花、泼水、落砂、开灯、角磨机 ----------
+  const AU = (() => {
+    let ac = null, out = null, beds = null, on = false, nb = null, bb_ = null;
+    const now = () => ac.currentTime;
+    function noiseBuf(ctx, sec, brown) {
+      const n = Math.round(ctx.sampleRate * sec), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; if (brown) { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w; }
+      return b;
+    }
+    function loop(ctx, buf, dst) { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; s.start(0, Math.random() * buf.duration); s.connect(dst); return dst; }   // 返回滤波器，接着往下连
+    function filt(ctx, type, f, q = 0.7) { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; }
+    function gain(ctx, v) { const g = ctx.createGain(); g.gain.value = v; return g; }
+    // 一段短噪声：滤一下、包一个包络
+    function burst(ctx, dst, t, { type = 'bandpass', f = 600, q = 1, g = 0.2, dur = 0.1, attack = 0.004, buf }) {
+      const s = ctx.createBufferSource(); s.buffer = buf || nb; s.playbackRate.value = rand(0.9, 1.1);
+      const b = filt(ctx, type, f, q), e = gain(ctx, 0);
+      e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + attack); e.gain.exponentialRampToValueAtTime(0.0008, t + attack + dur);
+      s.connect(b).connect(e).connect(dst); s.start(t, Math.random() * 1.5); s.stop(t + attack + dur + 0.05);
+    }
+    function tone(ctx, dst, t, { f = 60, f1 = null, type = 'sine', g = 0.3, dur = 0.4, attack = 0.005 }) {
+      const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      const e = gain(ctx, 0); e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + attack); e.gain.exponentialRampToValueAtTime(0.0008, t + attack + dur);
+      o.connect(e).connect(dst); o.start(t); o.stop(t + attack + dur + 0.05);
+    }
+    function makeBeds(ctx, dst) {
+      const roar = gain(ctx, 0.0), flut = gain(ctx, 0), pour = gain(ctx, 0), sizzle = gain(ctx, 0), vent = gain(ctx, 0), grindT = gain(ctx, 0), grindN = gain(ctx, 0), hum = gain(ctx, 0);
+      loop(ctx, bb_, filt(ctx, 'lowpass', 150)).connect(roar);
+      roar.connect(dst);
+      loop(ctx, nb, filt(ctx, 'bandpass', 320, 0.9)).connect(flut); flut.connect(dst);
+      loop(ctx, nb, filt(ctx, 'bandpass', 480, 1.3)).connect(pour); pour.connect(dst);
+      loop(ctx, nb, filt(ctx, 'highpass', 4200)).connect(sizzle); sizzle.connect(dst);
+      loop(ctx, nb, filt(ctx, 'bandpass', 900, 0.7)).connect(vent); vent.connect(dst);
+      // 角磨机：电机的嗡声带几个谐波，磨的时候加上沙沙的高频
+      const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(); o1.type = 'sawtooth'; o2.type = 'square'; o1.frequency.value = 176; o2.frequency.value = 352.7;
+      const gb = filt(ctx, 'bandpass', 2400, 2.2), g2 = gain(ctx, 0.35);
+      o1.connect(gb); o2.connect(g2).connect(gb); gb.connect(grindT); grindT.connect(dst); o1.start(); o2.start();
+      loop(ctx, nb, filt(ctx, 'highpass', 2600)).connect(grindN); grindN.connect(dst);
+      const h1 = ctx.createOscillator(), h2 = ctx.createOscillator(); h1.frequency.value = 100; h2.type = 'triangle'; h2.frequency.value = 200; h1.connect(hum); h2.connect(gain(ctx, 0.4)).connect(hum); hum.connect(dst); h1.start(); h2.start();
+      return { roar, flut, pour, sizzle, vent, grindT, grindN, hum, o1 };
+    }
+    function init() {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3;
+      out = gain(ac, 0); out.connect(comp).connect(ac.destination);
+      nb = noiseBuf(ac, 2, false); bb_ = noiseBuf(ac, 3, true);
+      beds = makeBeds(ac, out);
+    }
+    // 一次性的声音事件：头一下砸进浇口杯、泼水、震箱、落砂、开灯
+    const EV = {
+      thump(ctx, dst, t) { tone(ctx, dst, t, { f: 70, f1: 38, g: 0.55, dur: 0.6 }); burst(ctx, dst, t, { type: 'lowpass', f: 900, g: 0.4, dur: 0.35, attack: 0.002 }); },
+      hiss(ctx, dst, t, k = 1) {
+        burst(ctx, dst, t, { type: 'highpass', f: 3200, q: 0.5, g: 0.22 + 0.2 * k, dur: 1.3, attack: 0.012 });
+        burst(ctx, dst, t + 0.02, { type: 'bandpass', f: 1500, q: 0.8, g: 0.12, dur: 0.5, attack: 0.01 });
+        for (let i = 0; i < 14; i++) burst(ctx, dst, t + rand(0, 0.5), { type: 'highpass', f: 2600, g: rand(0.05, 0.12), dur: 0.008, attack: 0.001 });
+      },
+      shake(ctx, dst, t) {
+        const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 47;
+        const lp = filt(ctx, 'lowpass', 240), e = gain(ctx, 0);
+        e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.16, t + 0.15); e.gain.setValueAtTime(0.16, t + 0.85); e.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+        o.connect(lp).connect(e).connect(dst); o.start(t); o.stop(t + 1.2);
+        burst(ctx, dst, t, { type: 'lowpass', f: 500, g: 0.12, dur: 1, attack: 0.1 });
+      },
+      sand(ctx, dst, t) {
+        burst(ctx, dst, t, { type: 'lowpass', f: 1100, q: 0.5, g: 0.3, dur: 2.2, attack: 0.15 });
+        for (let i = 0; i < 26; i++) burst(ctx, dst, t + rand(0, 1.8), { type: 'bandpass', f: rand(250, 900), q: 1.5, g: rand(0.05, 0.16), dur: rand(0.05, 0.16) });
+        // 铸件落在格栅上，当的一声
+        [523, 1187, 1960, 2731].forEach((f, i) => tone(ctx, dst, t + 0.55, { f: f * rand(0.98, 1.02), g: 0.16 / (i + 1), dur: 1.1 - i * 0.18, attack: 0.002 }));
+      },
+      clunk(ctx, dst, t) { tone(ctx, dst, t, { f: 90, f1: 60, g: 0.25, dur: 0.18 }); burst(ctx, dst, t, { type: 'highpass', f: 2000, g: 0.15, dur: 0.03, attack: 0.001 }); },
+      gurgle(ctx, dst, t, k) { burst(ctx, dst, t, { f: rand(200, 680), q: rand(4, 8), g: 0.16 * k, dur: rand(0.04, 0.12) }); },
+      click(ctx, dst, t) { burst(ctx, dst, t, { type: 'highpass', f: rand(1800, 4200), q: 0.7, g: rand(0.04, 0.14), dur: rand(0.004, 0.012), attack: 0.0008 }); },
+    };
+    let gurgleAcc = 0, crackAcc = 0;
+    return {
+      get on() { return on; },
+      toggle() {
+        if (!ac) init();
+        on = !on;
+        if (on) ac.resume();
+        out.gain.setTargetAtTime(on ? 0.9 : 0, now(), 0.15);
+        return on;
+      },
+      fadeTo(v) { if (ac && on) out.gain.setTargetAtTime(v * 0.9, now(), 0.3); },
+      frame(dt) {
+        if (!ac || !on) return;
+        const t = now(), B = beds, set = (g, v, k = 0.08) => g.gain.setTargetAtTime(v, t, k);
+        const glowing = S.phase !== 'done' && S.phase !== 'grind' ? 1 : 0.4;
+        set(B.roar, 0.32 * glowing, 0.5);
+        set(B.flut, 0.13 * (0.6 + 0.4 * Math.sin(S.time * 5.3)) * glowing, 0.1);
+        set(B.pour, 0.5 * S.flowVis);
+        set(B.sizzle, 0.05 * S.flowVis + 0.035 * smooth((S.maxT - 900) / 500) * (S.knock ? 0 : 1), 0.3);
+        set(B.vent, 0.06 * Math.min(1, S.ventSum), 0.25);
+        const G = S.grind;
+        set(B.grindT, 0.09 * G.vis, 0.05);
+        set(B.grindN, (G.on ? 0.07 : 0) * G.vis, 0.04);
+        B.o1.frequency.setTargetAtTime(G.on ? 158 : 176, t, 0.12);
+        set(B.hum, 0.012 * S.lamp, 0.2);
+        // 铁水灌进去的咕嘟声：一串随机的短泡
+        gurgleAcc += S.flowVis * 16 * dt;
+        while (gurgleAcc > 1) { gurgleAcc -= 1; EV.gurgle(ac, out, t + Math.random() * dt, S.flowVis); }
+      },
+      mute: false,
+      crackle(rate) {
+        if (!ac || !on || this.mute) return;
+        crackAcc += rate / 60;
+        const t = now();
+        while (crackAcc > 1) { crackAcc -= 1; EV.click(ac, out, t + Math.random() * 0.016); }
+      },
+      thump() { if (ac && on && !this.mute) EV.thump(ac, out, now()); },
+      hiss(k) { if (ac && on && !this.mute) EV.hiss(ac, out, now(), k); },
+      shake() { if (ac && on && !this.mute) EV.shake(ac, out, now()); },
+      sand() { if (ac && on && !this.mute) EV.sand(ac, out, now()); },
+      clunk() { if (ac && on && !this.mute) EV.clunk(ac, out, now()); },
+      // 给测试用：离线渲染一段，验证没有削波、各频段都有东西
+      async render(sec, script) {
+        const ctx = new OfflineAudioContext(1, Math.round(44100 * sec), 44100), o = gain(ctx, 0.9);
+        const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3;
+        o.connect(comp).connect(ctx.destination);
+        const keep = [nb, bb_]; nb = noiseBuf(ctx, 2, false); bb_ = noiseBuf(ctx, 3, true);
+        const B = makeBeds(ctx, o);
+        script({ ctx, out: o, B, EV: Object.fromEntries(Object.entries(EV).map(([k, f]) => [k, (t, ...a) => f(ctx, o, t, ...a)])) });
+        const buf = await ctx.startRendering();
+        [nb, bb_] = keep;
+        return buf.getChannelData(0);
+      },
+    };
+  })();
+
+  // ---------- 界面：工票、提示、测温枪 ----------
+  const live = $('#live'), hint = $('#hint'), probe = $('#probe'), probeK = $('#probe-k'), probeT = $('#probe-t'), steps = [...$('#steps').children];
+  const TOUCH = matchMedia('(pointer: coarse)').matches;
+  let hintTimer = 0, hintShown = {};
+  function setHint(key, text, sec = 5) {
+    if (hintShown[key] || !text) return;
+    hintShown[key] = true;
+    hint.textContent = text;
+    hint.classList.add('on');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => hint.classList.remove('on'), sec * 1000);
+  }
+  function hideHint() { hint.classList.remove('on'); }
+  const STEP = { arrive: 0, ready: 0, pour: 1, retract: 2, cool: 2, shake: 3, fall: 3, lamp: 3, grind: 4, done: 5 };
+  let lastHud = -1;
+  function hud() {
+    const k = STEP[S.phase];
+    steps.forEach((e, i) => { e.className = i < k ? 'done' : i === k ? 'now' : ''; });
+    if (S.time - lastHud < 0.2) return;
+    lastHud = S.time;
+    let txt;
+    if (S.phase === 'arrive' || S.phase === 'ready') txt = '包内 1420 °C';
+    else if (S.phase === 'pour') txt = `已浇 ${Math.round(S.V * 100)}%`;
+    else if (S.phase === 'done') txt = '完工';
+    else txt = `铸件 ${Math.round(Math.max(S.maxT, 28))} °C`;
+    live.textContent = txt;
+    live.classList.toggle('hot', S.maxT > 500 && S.phase !== 'done');
+  }
+  // 测温枪读数：铁水、浇包、铸件、砂型、地面
+  function readTemp(x, y) {
+    const L = LAY.lad, lad = S.lad;
+    if (lad.vis) {
+      const c = project(...lad.toW(0, 0, L.zHi));
+      if (Math.hypot(x - c[0], y - c[1]) < L.Ri) return ['包内铁水', 1418 + Math.round(Math.sin(S.time * 3) * 4)];
+      if (Math.hypot(x - c[0], y - c[1] - (L.zHi - L.zLo) * S_OBL * 0.5) < L.R * 1.05) return ['浇包外壁', 312];
+    }
+    if (S.str[7] > 0.02) {
+      const s = S.str;
+      for (let i = 0; i <= 10; i++) { const t = i / 10, qx = lerp(lerp(s[0], s[2], t), lerp(s[2], s[4], t), t), qy = lerp(lerp(s[1], s[3], t), lerp(s[3], s[5], t), t); if (Math.hypot(x - qx, y - qy) < s[6] * 0.5 + 3) return ['铁水流', 1436]; }
+    }
+    const T = LAY.tex, C = MD.C, i = Math.floor((x - T.x) / C), j = Math.floor((y - T.y) / C);
+    if (i >= 0 && j >= 0 && i < MD.gw && j < MD.gh) {
+      const g = j * MD.gw + i;
+      if (MD.cav[g] && FILLED[g]) return [TG[g] > 1150 ? '铁水' : '铸件', Math.round(TG[g])];
+      let near = 0;
+      for (let dj = -4; dj <= 4; dj++) for (let di = -4; di <= 4; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < MD.gw && jj < MD.gh) { const k = jj * MD.gw + ii; if (FILLED[k]) near = Math.max(near, TG[k] * (1 - Math.hypot(di, dj) / 6)); } }
+      const fl = LAY.fl;
+      if (x > fl.x0 && x < fl.x1 && y > fl.y0 && y < fl.y1) return [S.knock > 0 ? '格栅' : '砂型', Math.round(26 + near * 0.18)];
+    }
+    return ['地面', 24];
+  }
+  let ptr = { x: -99, y: -99, show: false, down: false, t0: 0, sx: 0, sy: 0, moved: false };
+  function placeProbe() {
+    if (!ptr.show || !MD) { probe.classList.remove('on'); stage.classList.remove('pointing'); return; }
+    const [k, t] = readTemp(ptr.x, ptr.y);
+    probe.style.transform = `translate(${ptr.x}px, ${ptr.y}px)`;
+    probeK.textContent = k;
+    probeT.textContent = `${t} °C`;
+    probe.classList.add('on');
+    stage.classList.add('pointing');
+  }
+  const local = e => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const onUI = e => e.target.closest('button, a');
+  stage.addEventListener('pointerdown', e => {
+    if (onUI(e) || !MD) return;
+    const [x, y] = local(e);
+    Object.assign(ptr, { x, y, down: true, t0: performance.now(), sx: x, sy: y, moved: false, show: true, id: e.pointerId });
+    try { stage.setPointerCapture(e.pointerId); } catch {}
+    if (['arrive', 'ready', 'pour'].includes(S.phase)) { S.boost = true; S.boostEver = true; hideHint(); }
+    if (S.phase === 'done' && !REDUCED) { S.grind.manual = true; S.grind.x = x; S.grind.y = y; hideHint(); }
+    dirty = true;
+  });
+  stage.addEventListener('pointermove', e => {
+    const [x, y] = local(e);
+    ptr.x = x; ptr.y = y;
+    if (e.pointerType === 'mouse') ptr.show = !onUI(e);
+    if (ptr.down && Math.hypot(x - ptr.sx, y - ptr.sy) > 8) ptr.moved = true;
+    if (S.grind.manual) { S.grind.x = x; S.grind.y = y; }
+    if (S.phase === 'done' || REDUCED) S.sheen = clamp((x / W - 0.5) * 2, -1, 1);
+    dirty = true;
+  });
+  const up = e => {
+    if (!ptr.down) return;
+    ptr.down = false;
+    S.boost = false;
+    S.grind.manual = false;
+    const quick = performance.now() - ptr.t0 < 350 && !ptr.moved;
+    if (quick && ['pour', 'retract', 'cool'].includes(S.phase)) { if (quench(ptr.x, ptr.y)) hideHint(); }
+    if (e.pointerType !== 'mouse') setTimeout(() => { if (!ptr.down) { ptr.show = false; placeProbe(); } }, 900);
+    dirty = true;
+  };
+  stage.addEventListener('pointerup', up);
+  stage.addEventListener('pointercancel', up);
+  stage.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { ptr.show = false; placeProbe(); } });
+  addEventListener('keydown', e => { if (e.key === ' ' && !e.repeat && !onUI(e) && ['arrive', 'ready', 'pour'].includes(S.phase)) { e.preventDefault(); S.boost = S.boostEver = true; } });
+  addEventListener('keyup', e => { if (e.key === ' ') S.boost = false; });
+  const soundBtn = $('#sound');
+  soundBtn.addEventListener('click', () => {
+    const on = AU.toggle();
+    soundBtn.textContent = on ? '声音 · 开' : '声音 · 关';
+    soundBtn.setAttribute('aria-pressed', on);
+  });
+  const againBtn = $('#again');
+  againBtn.addEventListener('click', () => { restarting = performance.now(); againBtn.hidden = true; });
+  let restarting = 0;
+  function onDone() {
+    if (!REDUCED) againBtn.hidden = false;
+    setHint('done', REDUCED ? (TOUCH ? '' : '左右移动鼠标，看字面的反光') : TOUCH ? '按住拖动，接着打磨' : '按住拖动，接着打磨；左右移动看反光', 6);
+  }
+  function hints() {
+    if (S.phase === 'ready' && !S.boostEver) setHint('pour', TOUCH ? '按住屏幕，倒得更猛' : '按住鼠标，倒得更猛', 5.5);
+    if (S.phase === 'cool' && S.pt > 1.5 && S.maxT > 700 && !S.quenched) setHint('quench', '点一下发红的铁，泼一瓢水', 5);
+  }
+
+  // ---------- 主循环 ----------
+  let last = performance.now(), dirty = true, started = false;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!started || !glOK || document.hidden) { last = now; return; }   // 没有 WebGL2 时只画一张静止的图
+    const dt = clamp((now - last) / 1000, 0, 0.05);   // rAF 的时间戳可能比刚记下的时间还早，别让 dt 变负
+    last = now;
+    if (restarting) {
+      const k = (now - restarting) / 600;
+      S.fade = Math.max(0, 1 - k);
+      AU.fadeTo(1 - Math.min(1, k));
+      if (k >= 1) { restarting = 0; resetSim(); hintShown = {}; AU.fadeTo(1); }
+      else { render(); return; }
+    }
+    if (REDUCED) {
+      if (!dirty) return;
+      dirty = false;
+      S.grind.vis = 0;
+      render();
+      hud();
+      placeProbe();
+      return;
+    }
+    // 完工以后：没有火花、没在磨、鼠标也没动，就不用每帧重画
+    if (S.phase === 'done' && S.pt > 2 && !SP.length && S.grind.vis <= 0 && !S.grind.manual && !dirty) { AU.frame(dt); return; }
+    dirty = false;
+    update(dt);
+    AU.frame(dt);
+    render();
+    hud();
+    hints();
+    placeProbe();
+  }
+  // 快进：跑一遍模拟不画（测试和改窗口大小以后接着演）
+  function seek(t) {
+    const dt = 1 / 60;
+    AU.mute = true;
+    while (S.t < t) update(dt);
+    AU.mute = false;
+  }
+
+  // 没有 WebGL2：画一块静止的铸件
+  function fallback() {
+    const o = glc.getContext('2d');
+    if (!o) return;
+    glc.width = Math.round(W * DPR); glc.height = Math.round(H * DPR);
+    o.scale(DPR, DPR);
+    o.fillStyle = '#0c0b0a'; o.fillRect(0, 0, W, H);
+    setFont(o, LAY.fontPx);
+    o.textBaseline = 'alphabetic';
+    const g = o.createLinearGradient(0, LAY.ty0, 0, LAY.ty1);
+    g.addColorStop(0, '#5b5652'); g.addColorStop(0.5, '#2c2a28'); g.addColorStop(1, '#1b1a19');
+    o.shadowColor = 'rgba(255, 110, 30, .45)'; o.shadowBlur = 24;
+    o.fillStyle = g;
+    o.fillText(brand, LAY.textX, LAY.baseY);
+    stage.classList.add('ready');
+  }
+
+  function build(keepTime) {
+    const t = keepTime ? S.t : 0;
+    layout();
+    buildMould();
+    resetSim();
+    if (glOK) buildGL(); else { fallback(); return; }
+    if (REDUCED) {
+      // 减少动画：直接给看打磨好的成品
+      seek(1);
+      while (S.phase !== 'done' && S.t < 120) update(1 / 30);
+      S.fade = 1; S.smoke = 0; SP = []; DEB = [];
+      dirty = true;
+    } else if (t > 0) { seek(t); }
+    const sk = parseFloat(Q.get('seek'));
+    if (!keepTime && sk > 0 && !REDUCED) { seek(sk); S.fade = 1; }
+  }
+
+  const cssReady = new Promise(r => {
+    const l = $('#font-css');
+    if (l.media === 'all' && l.sheet) r(); else { l.addEventListener('load', () => r()); l.addEventListener('error', () => r()); }
+  });
+  // 着色器先交给驱动在后台编，同时等字体
+  let glStarted = false;
+  try { glStarted = !Q.has('nogl') && startGL(); } catch (err) { console.error(err); }   // ?nogl：测试没有 WebGL2 时的样子
+  const shadersReady = new Promise(r => { const poll = () => { if (!glStarted || compiled()) r(); else requestAnimationFrame(poll); }; poll(); });
+  // 字体最多等 1.6 秒：开场本来就是从黑里亮起来，宁可晚一点亮，也不演到一半换字
+  const fontWait = parseFloat(Q.get('fontwait')) || 1600;
+  const fontsReady = cssReady.then(() => document.fonts.load(FONT(100), brand)).catch(() => {});
+  Promise.all([Promise.race([fontsReady, new Promise(r => setTimeout(r, fontWait))]), shadersReady]).then(() => {
+    try { glOK = glStarted && initGL(); } catch (err) { console.error(err); glOK = false; }
+    build(false);
+    if (glOK) warm();
+    started = true;
+    stage.classList.add('ready');
+    last = performance.now();
+    requestAnimationFrame(frame);
+  });
+  // 预热：每个程序先画一次，把驱动的二次编译挪到开场之前（这时画面还是黑的）
+  function warm() {
+    const f = S.fade; S.fade = 0;
+    render();
+    S.fade = f;
+    gl.finish();
+  }
+  let rt = 0, lastW = 0, lastH = 0;
+  addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      if (!started || (stage.clientWidth === lastW && Math.abs(stage.clientHeight - lastH) < 80)) return;
+      lastW = stage.clientWidth; lastH = stage.clientHeight;
+      build(true);
+    }, 250);
+  });
+  setTimeout(() => { lastW = stage.clientWidth; lastH = stage.clientHeight; }, 0);
+  window.__foundry = { S, seek: t => seek(t), get MD() { return MD; }, AU, LAY: () => LAY };
+</script>
+</body>
+</html>
