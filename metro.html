@@ -1,0 +1,1648 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地铁图 · 一千零一页</title>
+<meta name="description" content="品牌名自动画成一张专业的地铁线路图，有站名、换乘、列车和一天的运营时刻。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Overpass:wght@400;600;700;800&family=Overpass+Mono:wght@500;600&display=swap">
+<style>
+  :root {
+    --page: #ebe7de;
+    --paper: #f7f4ed;
+    --ink: #1b1b1e;
+    --muted: #6d6a62;
+    --faint: #a29e94;
+    --rule: #d9d4c8;
+    --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --grot: "Overpass", "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --mono: "Overpass Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    /* 页脚上半截是导视牌：黑底白字，到站屏的琥珀色 */
+    --band: #151517;
+    --band-text: #f1efe9;
+    --band-muted: #8f8c85;
+    --band-faint: #5c5a55;
+    --band-line: #2a2a2d;
+    --amber: #ffb21a;
+    --river: #d2e4ee;
+    --river-ink: #6f9bb8;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.7 var(--sans); }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  /* ---------- 页脚：导视牌 ---------- */
+  .foot { background: var(--paper); }
+  .band { background: var(--band); color: var(--band-text); }
+  .band-in {
+    display: grid; grid-template-columns: minmax(280px, 1.6fr) minmax(220px, 1.1fr) repeat(3, minmax(100px, .7fr)); gap: 36px 40px;
+    max-width: 1320px; margin: 0 auto; padding: 56px clamp(16px, 4vw, 48px) 44px;
+  }
+  .sign { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .sign .name { font: 800 40px/1 var(--grot); letter-spacing: -0.015em; }
+  .sign .sub { font: 500 15px/1 var(--sans); color: var(--band-muted); }
+  .stripe { display: flex; height: 5px; margin: 18px 0 18px; max-width: 300px; border-radius: 1px; overflow: hidden; }
+  .stripe i { flex: 1; }
+  .tag { margin: 0; color: var(--band-muted); font-size: 14px; max-width: 34ch; text-wrap: pretty; }
+  .board { border: 1px solid var(--band-line); border-radius: 10px; padding: 14px 16px 12px; align-self: start; font-variant-numeric: tabular-nums; }
+  .board .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .board .time { font: 600 34px/1 var(--mono); color: var(--amber); letter-spacing: .02em; }
+  .board .lamp { display: inline-flex; align-items: center; gap: 7px; font: 12px/1 var(--sans); color: var(--band-muted); white-space: nowrap; }
+  .board .lamp i { width: 7px; height: 7px; border-radius: 50%; background: var(--band-faint); transition: background .5s, box-shadow .5s; }
+  .board[data-on="run"] .lamp i { background: #39c46e; box-shadow: 0 0 8px rgb(57 196 110 / .7); }
+  .board[data-on="peak"] .lamp i { background: var(--amber); box-shadow: 0 0 8px rgb(255 178 26 / .7); }
+  .board .msg { margin-top: 10px; font: 13.5px/1.4 var(--sans); color: var(--band-text); min-height: 1.4em; }
+  .board .sub { margin-top: 4px; font: 11.5px/1.4 var(--grot); color: var(--band-faint); letter-spacing: .02em; }
+  .col h3 { margin: 4px 0 14px; font: 600 11.5px/1 var(--grot); letter-spacing: .16em; color: var(--band-faint); text-transform: uppercase; }
+  .col a { display: block; color: var(--band-text); opacity: .84; text-decoration: none; font-size: 14px; padding: 3px 0; }
+  .col a:hover { opacity: 1; }
+
+  /* ---------- 线路图 ---------- */
+  .scene { position: relative; overflow: hidden; background: var(--paper); touch-action: pan-y; user-select: none; -webkit-user-select: none; container-type: inline-size; }
+  /* 高度只按线路图的宽度算，样式一到就占好位置，不等字体和线网生成；脚本读这个高度来排版 */
+  .scene #map { display: block; width: 100%; height: clamp(400px, 40cqw, 680px); }
+  @container (max-width: 699.98px) { .scene #map { height: 480px; } }
+  .scene.pan { cursor: grab; }
+  .scene.pan.drag { cursor: grabbing; }
+  .cart { position: absolute; left: clamp(16px, 4vw, 48px); top: 18px; pointer-events: none; }
+  .cart .t1 { font: 700 15px/1.3 var(--sans); }
+  .cart .t2 { font: 600 10.5px/1.3 var(--grot); color: var(--muted); letter-spacing: .06em; margin-top: 3px; text-transform: uppercase; }
+  .key { position: absolute; right: clamp(16px, 4vw, 48px); top: 20px; display: flex; gap: 16px; font: 11.5px/1 var(--sans); color: var(--muted); pointer-events: none; }
+  .key span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .key svg { width: auto; }
+
+  .card {
+    position: absolute; z-index: 3; min-width: 176px; max-width: 250px; pointer-events: none;
+    background: #fff; color: var(--ink); border-radius: 8px; padding: 10px 12px 9px;
+    box-shadow: 0 1px 0 rgb(0 0 0 / .04), 0 8px 24px -6px rgb(40 30 10 / .22), 0 0 0 1px rgb(0 0 0 / .07);
+    font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(4px); transition: opacity .16s, transform .16s;
+  }
+  .card.on { opacity: 1; transform: none; }
+  .card .nm { font: 700 16px/1.25 var(--sans); }
+  .card .py { font: 600 10.5px/1.3 var(--grot); color: var(--muted); letter-spacing: .03em; }
+  .card .ls { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 6px; }
+  .bdg { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 5px; border-radius: 4px; color: #fff; font: 700 11px/1 var(--grot); }
+  .bdg.x { background: #fff !important; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .card .eta { display: grid; grid-template-columns: auto 1fr auto; gap: 3px 8px; align-items: center; font-size: 12.5px; line-height: 1.35; }
+  .card .eta i { width: 8px; height: 8px; border-radius: 2px; }
+  .card .eta b { font: 600 12.5px/1 var(--mono); text-align: right; }
+  .card .eta .dim { color: var(--faint); }
+  .card .note { margin-top: 7px; padding-top: 7px; border-top: 1px solid #eee9df; font-size: 11.5px; color: var(--muted); }
+
+  .plan {
+    position: absolute; z-index: 4; right: clamp(16px, 4vw, 48px); top: 56px; width: 268px;
+    background: #fff; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.45;
+    box-shadow: 0 10px 30px -8px rgb(40 30 10 / .25), 0 0 0 1px rgb(0 0 0 / .07);
+    opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; pointer-events: none;
+  }
+  .plan.on { opacity: 1; transform: none; pointer-events: auto; }
+  .plan .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .plan .hd b { font: 700 15px/1.3 var(--sans); }
+  .plan .hd span { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .plan ol { list-style: none; margin: 10px 0 0; padding: 0; }
+  .plan li { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
+  .plan li.xf { color: var(--muted); font-size: 12px; padding-left: 30px; }
+  .plan .close { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border: 0; background: transparent; color: var(--faint); font-size: 16px; cursor: pointer; border-radius: 6px; }
+  .plan .close:hover { background: #f3f0e9; color: var(--ink); }
+
+  .hint { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); font: 12px/1 var(--sans); color: var(--muted); background: rgb(247 244 237 / .9); padding: 7px 12px; border-radius: 999px; pointer-events: none; transition: opacity .4s; white-space: nowrap; }
+
+  .legend {
+    display: flex; align-items: center; gap: 10px 22px;
+    max-width: 1320px; margin: 0 auto; padding: 14px clamp(16px, 4vw, 48px) 16px;
+    border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--muted);
+  }
+  .legend .lines { display: flex; align-items: center; gap: 16px; flex: 1 1 0; min-width: 0; height: 24px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .legend .lines::-webkit-scrollbar { display: none; }
+  .legend .lines.more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
+  .legend .ln { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; cursor: default; transition: opacity .2s; }
+  .legend .ln:hover { color: var(--ink); }
+  .legend .ln i { width: 18px; height: 5px; border-radius: 1px; }
+  .legend .ln i.hollow { background: #fff !important; box-shadow: inset 0 0 0 1.5px var(--ink); height: 6px; }
+  .legend .compass { flex: none; display: flex; align-items: center; gap: 14px; margin-left: auto; color: var(--faint); font: 600 10.5px/1 var(--grot); letter-spacing: .04em; }
+  .legend .compass svg { display: block; }
+
+  .legal {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px;
+    max-width: 1320px; margin: 0 auto; padding: 16px clamp(16px, 4vw, 48px) 22px;
+    font-size: 12.5px; color: var(--faint); border-top: 1px solid var(--rule);
+  }
+  .legal a { color: var(--muted); text-decoration: none; }
+  .legal a:hover { color: var(--ink); }
+  .legal .ctl { margin-left: auto; display: flex; gap: 8px; }
+  .legal button {
+    font: 12.5px/1 var(--sans); color: var(--muted); cursor: pointer;
+    background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: 8px 12px;
+  }
+  .legal button:hover { color: var(--ink); border-color: #bdb7a9; }
+
+  /* 地图里的元素：悬停一条线时其他线淡下去 */
+  #map .ln, #map .st, #map .lb, #map .tr, #map .xc { transition: opacity .25s; }
+  #map.dim .ln:not(.hi), #map.dim .st:not(.hi), #map.dim .lb:not(.hi), #map.dim .tr:not(.hi), #map.dim .xc:not(.hi) { opacity: .13; }
+  #map .st, #map .lb { opacity: 0; }
+  #map .st { transform-box: fill-box; transform-origin: center; transform: scale(.2); transition: transform .38s cubic-bezier(.3, 1.7, .5, 1), opacity .2s; }
+  #map .st.on { transform: none; }
+  #map .st.on, #map .lb.on { opacity: 1; }
+  #map.dim .st.on:not(.hi), #map.dim .lb.on:not(.hi) { opacity: .13; }
+  #map .lines { transition: filter 1.2s, opacity 1.2s; }
+  #map.night .lines, #map.night .stations { filter: saturate(.18); opacity: .62; }
+  #map .st.hover .ring { stroke-width: 3.4; }
+
+  @media (max-width: 760px) {
+    .band-in { grid-template-columns: 1fr 1fr 1fr; padding-top: 44px; gap: 28px 20px; }
+    .band-in .brand, .band-in .board { grid-column: 1 / -1; }
+    .sign .name { font-size: 34px; }
+    .key { display: none; }
+    .hint { left: auto; right: 12px; top: 64px; transform: none; font-size: 11.5px; }
+    .plan { left: 12px; right: 12px; top: auto; bottom: 10px; width: auto; padding: 10px 12px; font-size: 12px; line-height: 1.35; max-height: 44%; overflow: auto; }
+    .plan .hd b { font-size: 14px; }
+    .plan ol { margin-top: 6px; }
+    .plan li { padding: 2px 0; }
+    .plan li.xf { padding-left: 30px; font-size: 11px; }
+    .legend .compass svg:first-child { display: none; }
+    .legal .ctl { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 004</a>
+
+<footer class="foot">
+  <div class="band">
+    <div class="band-in">
+      <div class="brand">
+        <div class="sign"><span class="name" id="f-name">Lumen</span><span class="sub">导视设计</span></div>
+        <div class="stripe" id="stripe"></div>
+        <p class="tag">我们给城市画地图：线路图、站内导视、实时到站屏。让第一次来的人，也能在三分钟内找到出口。</p>
+      </div>
+      <div class="board" id="board" data-on="off" aria-live="off">
+        <div class="row"><span class="time" id="clock">05:20</span><span class="lamp"><i></i><span id="lamp">未运营</span></span></div>
+        <div class="msg" id="msg">首班车 05:30 发出</div>
+        <div class="sub">首班 05:30 · 末班 23:30</div>
+      </div>
+      <nav class="col" aria-label="作品"><h3>作品</h3><a href="#">线路图</a><a href="#">站内导视</a><a href="#">到站屏</a><a href="#">无障碍地图</a></nav>
+      <nav class="col" aria-label="公司"><h3>公司</h3><a href="#">关于我们</a><a href="#">设计规范</a><a href="#">招聘</a><a href="#">媒体</a></nav>
+      <nav class="col" aria-label="联系"><h3>联系</h3><a href="#">项目合作</a><a href="#">邮件订阅</a><a href="#">Dribbble</a><a href="#">GitHub</a></nav>
+    </div>
+  </div>
+  <div class="scene" id="scene">
+    <svg id="map" role="img" aria-label="品牌名画成的地铁线路图"></svg>
+    <div class="cart"><div class="t1" id="cart-t1">Lumen 轨道交通线路图</div><div class="t2">Rail Transit Map · 2026.11</div></div>
+    <div class="key" aria-hidden="true">
+      <span><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="#fff" stroke="#1b1b1e" stroke-width="2.2"/></svg>换乘站</span>
+      <span><svg width="18" height="14" viewBox="0 0 18 14"><path d="M0 7H18M9 7V2" stroke="#5a5852" stroke-width="3.4" fill="none"/></svg>车站</span>
+      <span><svg width="18" height="14" viewBox="0 0 18 14"><path d="M0 7H12M12 1.5V12.5" stroke="#5a5852" stroke-width="3.4" fill="none"/></svg>终点站</span>
+      <span><svg width="16" height="14" viewBox="0 0 16 14"><circle cx="8" cy="7" r="5" fill="#fff" stroke="#8b877d" stroke-width="1.6" stroke-dasharray="2.4 2"/></svg>规划中</span>
+    </div>
+    <div class="card" id="card"></div>
+    <div class="plan" id="plan"></div>
+    <div class="hint" id="hint">点一座车站设为起点</div>
+  </div>
+  <div class="legend">
+    <div class="lines" id="legend"></div>
+    <div class="compass" aria-hidden="true">
+      <svg width="64" height="18" viewBox="0 0 64 18"><path d="M1 12V16H63V12M32 16V13" stroke="#a29e94" stroke-width="1.2" fill="none"/><text x="1" y="8" font-size="8" fill="#a29e94" font-family="Overpass">0</text><text x="63" y="8" font-size="8" fill="#a29e94" text-anchor="end" font-family="Overpass">2 KM</text></svg>
+      <svg width="18" height="26" viewBox="0 0 18 26"><path d="M9 7L13 20L9 17L5 20Z" fill="#a29e94"/><text x="9" y="6" font-size="7.5" fill="#a29e94" text-anchor="middle" font-family="Overpass" font-weight="700">N</text></svg>
+    </div>
+  </div>
+  <div class="legal">
+    <span>© 2026 <span class="bn">Lumen</span> 导视设计 · 线路图为示意，不代表真实线路与运营时刻</span>
+    <a href="#">隐私</a><a href="#">条款</a>
+    <div class="ctl"><button type="button" id="rename">换一套站名</button><button type="button" id="ffwd">快进一天</button></div>
+  </div>
+</footer>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const NS = 'http://www.w3.org/2000/svg';
+  const CJK = s => /[　-鿿가-힯豈-﫿]/.test(s);
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+
+  // 可复现的随机数：同一个种子每次出来的序列一样
+  function seeded(seed) {
+    let s = seed >>> 0 || 1;
+    return () => { s = Math.imul(s ^ (s >>> 15), 1 | s) + 0x6d2b79f5 | 0; return ((s ^ (s >>> 14)) >>> 0) / 4294967296; };
+  }
+  function node(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const f1 = v => Math.round(v * 10) / 10;
+  const polyLen = p => { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; };
+
+  /* ---------- 站名：前字 +（偶尔一个中字）+ 后字，拼音照站牌的写法连写 ---------- */
+  const parse = s => s.split(' ').map(w => { const i = w.search(/[a-z]/); return [w.slice(0, i), w.slice(i)]; });
+  const PRE = parse('金jin 银yin 青qing 白bai 东dong 西xi 南nan 北bei 长chang 新xin 古gu 石shi 云yun 星xing 月yue 花hua 松song 柳liu 梅mei 竹zhu 桃tao 兰lan 龙long 凤feng 鹿lu 鹤he 明ming 光guang 安an 平ping 和he 乐le 福fu 瑞rui 文wen 宝bao 玉yu 春chun 秋qiu 晴qing 雪xue 枫feng 樟zhang 榆yu 杏xing 槐huai 翠cui 锦jin 霞xia 虹hong 望wang 清qing 永yong 嘉jia 泰tai 丰feng 华hua 海hai 天tian 江jiang 湖hu 岚lan');
+  const MID = parse('水shui 阳yang 江jiang 河he 山shan 林lin 泉quan 沙sha 溪xi 塘tang 家jia 石shi');
+  const SUF = parse('门men 桥qiao 湖hu 港gang 湾wan 园yuan 路lu 街jie 坊fang 口kou 村cun 岭ling 洲zhou 台tai 苑yuan 城cheng 里li 庄zhuang 寺si 阁ge 岸an 渡du 堤di 坪ping 营ying 店dian 墩dun 屯tun 浦pu 汇hui 滩tan');
+  const BIG = [['广场', 'Guangchang'], ['公园', 'Gongyuan'], ['中心', 'Zhongxin'], ['大道', 'Dadao'], ['体育中心', 'Tiyu Zhongxin'], ['会展中心', 'Huizhan Zhongxin'], ['大学城', 'Daxuecheng'], ['老街', 'Laojie']];
+  const pinyin = syl => { const s = syl.map((p, i) => (i && /^[aoe]/.test(p) ? "'" : '') + p).join(''); return s[0].toUpperCase() + s.slice(1); };
+  function makeName(rng, big, used) {
+    for (let k = 0; k < 60; k++) {
+      const a = PRE[(rng() * PRE.length) | 0];
+      let cn = a[0], syl = [a[1]], tail = '';
+      if (big && rng() < 0.5) {
+        const b = BIG[(rng() * BIG.length) | 0];
+        cn += b[0];
+        tail = ' ' + b[1];
+      } else {
+        if (rng() < 0.3) { const m = MID[(rng() * MID.length) | 0]; cn += m[0]; syl.push(m[1]); }
+        const s = SUF[(rng() * SUF.length) | 0];
+        cn += s[0];
+        syl.push(s[1]);
+      }
+      if (cn[0] === cn[1] || used.has(cn)) continue;
+      used.add(cn);
+      return { cn, py: pinyin(syl) + tail };
+    }
+    return { cn: '新站', py: 'Xinzhan' };
+  }
+
+  /* ---------- 字 → 骨架 ---------- */
+  const FAM = '"Overpass", "Noto Sans SC", "Microsoft YaHei", sans-serif';
+  // 用偏细的字重画字（单线体的骨架最干净），字号按“大写字母高 = NC 格、每格 P 像素”定
+  function rasterize(text, P, scale = 1) {
+    const cjk = CJK(text), NC = Math.round((cjk ? 15 : 10) * scale), wgt = cjk ? 500 : 700;
+    const probe = canvas(8, 8).getContext('2d');
+    probe.font = `${wgt} 100px ${FAM}`;
+    const ref = probe.measureText(cjk ? '国' : 'H');
+    const capH = ref.actualBoundingBoxAscent + (cjk ? ref.actualBoundingBoxDescent : 0);
+    const size = 100 * NC * P / capH;
+    probe.font = `${wgt} ${size}px ${FAM}`;
+    const sp = (cjk ? 1.2 : 0.6) * P;   // 字距拉开一点，字和字之间要留地方写站名
+    probe.letterSpacing = sp + 'px';
+    const m = probe.measureText(text), pad = 4 * P;
+    const w = Math.ceil(m.width + sp + pad * 2 + size * 0.2), h = Math.ceil(size * 1.6 + pad * 2);
+    const c = canvas(w, h), o = c.getContext('2d', { willReadFrequently: true });
+    o.font = probe.font;
+    o.letterSpacing = sp + 'px';
+    o.filter = 'blur(0.5px)';
+    const base = pad + size * 1.1;
+    o.fillText(text, pad, base);
+    const d = o.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h);
+    for (let i = 0; i < g.length; i++) g[i] = d[i * 4 + 3] > 127 ? 1 : 0;
+    return { g, w, h, base, cap: NC * P, cjk };
+  }
+
+  // 8 个方向，顺时针从正上方开始
+  const DIRS = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+  // Zhang-Suen 细化成一格宽，再去掉阶梯拐角上多余的格子，让每个链上的格子正好两个邻居
+  function thin(src, w, h) {
+    const g = Uint8Array.from(src);
+    const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? 0 : g[y * w + x];
+    const nb = (x, y) => DIRS.map(([dx, dy]) => at(x + dx, y + dy));
+    const groups = r => {
+      const id = r.map((v, k) => (v ? k : -1));
+      const find = k => (id[k] === k ? k : (id[k] = find(id[k])));
+      for (let k = 0; k < 8; k++) {
+        if (!r[k]) continue;
+        const join = j => { if (r[j]) { const a = find(k), b = find(j); if (a !== b) id[a] = b; } };
+        join((k + 1) % 8);
+        if (k % 2 === 0) join((k + 2) % 8);
+      }
+      return new Set(r.map((v, k) => (v ? find(k) : -1)).filter(v => v >= 0)).size;
+    };
+    for (let changed = true; changed;) {
+      changed = false;
+      for (let pass = 0; pass < 2; pass++) {
+        const del = [];
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          if (!g[y * w + x]) continue;
+          const [p2, p3, p4, p5, p6, p7, p8, p9] = nb(x, y);
+          const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+          if (B < 2 || B > 6) continue;
+          const seq = [p2, p3, p4, p5, p6, p7, p8, p9, p2];
+          let A = 0;
+          for (let k = 0; k < 8; k++) if (!seq[k] && seq[k + 1]) A++;
+          if (A !== 1) continue;
+          if (pass === 0 ? (p2 && p4 && p6) || (p4 && p6 && p8) : (p2 && p4 && p8) || (p2 && p6 && p8)) continue;
+          del.push(y * w + x);
+        }
+        if (del.length) { changed = true; del.forEach(i => { g[i] = 0; }); }
+      }
+    }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!g[y * w + x]) continue;
+      const r = nb(x, y), o = [r[0], r[2], r[4], r[6]], no = o[0] + o[1] + o[2] + o[3];
+      if (no === 2 && !(o[0] && o[2]) && !(o[1] && o[3]) && groups(r) === 1) g[y * w + x] = 0;
+    }
+    return g;
+  }
+
+  // 骨架 → 图：相邻的分叉格并成一个节点，节点之间的像素链是一条边
+  function trace(sk, w, h) {
+    const N8 = i => { const x = i % w, y = (i / w) | 0, r = []; for (const [dx, dy] of DIRS) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < w && Y < h && sk[Y * w + X]) r.push(Y * w + X); } return r; };
+    const deg = new Uint8Array(w * h), nodeOf = new Int32Array(w * h).fill(-1), seen = new Uint8Array(w * h);
+    const on = [];
+    for (let i = 0; i < sk.length; i++) if (sk[i]) { on.push(i); deg[i] = N8(i).length; }
+    const nodes = [], edges = [], xy = i => [i % w, (i / w) | 0];
+    const mk = px => { const id = nodes.length; let sx = 0, sy = 0; px.forEach(i => { nodeOf[i] = id; sx += i % w; sy += (i / w) | 0; }); nodes.push({ x: sx / px.length, y: sy / px.length, px }); return id; };
+    for (const i of on) {
+      if (deg[i] === 2 || nodeOf[i] >= 0) continue;
+      if (deg[i] !== 1 && deg[i] !== 0) {   // 分叉格连成一团算一个节点
+        const px = [i], st = [i];
+        nodeOf[i] = -2;
+        while (st.length) for (const j of N8(st.pop())) if (deg[j] >= 3 && nodeOf[j] === -1) { nodeOf[j] = -2; px.push(j); st.push(j); }
+        mk(px);
+      } else mk([i]);
+    }
+    const pairs = new Set();
+    const walk = (n, p, q) => {
+      const pts = [[nodes[n].x, nodes[n].y]];
+      let prev = p, cur = q;
+      for (;;) {
+        seen[cur] = 1;
+        pts.push(xy(cur));
+        let nxt = -1, end = -1;
+        for (const r of N8(cur)) {
+          if (r === prev) continue;
+          if (nodeOf[r] >= 0) { if (nodeOf[r] !== n || pts.length > 2) end = nodeOf[r]; }
+          else if (!seen[r] && nxt < 0) nxt = r;
+        }
+        if (end >= 0) { pts.push([nodes[end].x, nodes[end].y]); edges.push({ a: n, b: end, pts }); return; }
+        if (nxt < 0) { edges.push({ a: n, b: n, pts, open: true }); return; }
+        prev = cur;
+        cur = nxt;
+      }
+    };
+    nodes.forEach((nd, n) => nd.px.forEach(p => N8(p).forEach(q => {
+      if (nodeOf[q] === n) return;
+      if (nodeOf[q] >= 0) {
+        const k = Math.min(n, nodeOf[q]) * 1e6 + Math.max(n, nodeOf[q]);
+        if (!pairs.has(k)) { pairs.add(k); edges.push({ a: n, b: nodeOf[q], pts: [[nd.x, nd.y], [nodes[nodeOf[q]].x, nodes[nodeOf[q]].y]] }); }
+        return;
+      }
+      if (!seen[q]) walk(n, p, q);
+    })));
+    // 没有节点的圈（o、0 这种）：随便挑一格当节点
+    for (const i of on) if (!seen[i] && nodeOf[i] < 0) {
+      const id = mk([i]), nb = N8(i);
+      seen[i] = 1;
+      if (nb.length) walk(id, i, nb[0]);
+    }
+    edges.forEach(e => { e.len = polyLen(e.pts); });
+    return { nodes, edges: edges.filter(e => !e.open) };
+  }
+
+  // 修剪：去掉短毛刺，挨得很近的分叉并成一个，只有两条边的节点把两条边接起来
+  function clean(G, spur, merge) {
+    const { nodes, edges } = G;
+    const degs = () => { const d = new Array(nodes.length).fill(0); edges.forEach(e => { if (!e.dead) { d[e.a]++; d[e.b]++; } }); return d; };
+    for (let it = 0; it < 40; it++) {
+      let changed = false, d = degs();
+      for (const e of edges) {
+        if (e.dead || e.a === e.b || e.len >= spur) continue;
+        if ((d[e.a] === 1 && d[e.b] >= 3) || (d[e.b] === 1 && d[e.a] >= 3)) { e.dead = true; nodes[d[e.a] === 1 ? e.a : e.b].dead = true; changed = true; d = degs(); }
+      }
+      for (const e of edges) {
+        if (e.dead || e.a === e.b || e.len >= merge || d[e.a] < 3 || d[e.b] < 3) continue;
+        const A = nodes[e.a], B = nodes[e.b];
+        A.x = (A.x + B.x) / 2;
+        A.y = (A.y + B.y) / 2;
+        B.dead = true;
+        e.dead = true;
+        edges.forEach(f => { if (!f.dead) { if (f.a === e.b) f.a = e.a; if (f.b === e.b) f.b = e.a; } });
+        changed = true;
+        d = degs();
+      }
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].dead || d[i] !== 2) continue;
+        const inc = edges.filter(f => !f.dead && (f.a === i || f.b === i));
+        if (inc.length !== 2) continue;
+        const [e1, e2] = inc;
+        const p1 = e1.b === i ? e1.pts : e1.pts.slice().reverse(), a1 = e1.b === i ? e1.a : e1.b;
+        const p2 = e2.a === i ? e2.pts : e2.pts.slice().reverse(), b2 = e2.a === i ? e2.b : e2.a;
+        e1.pts = p1.concat(p2.slice(1));
+        e1.a = a1;
+        e1.b = b2;
+        e1.len = polyLen(e1.pts);
+        e2.dead = true;
+        nodes[i].dead = true;
+        changed = true;
+        d = degs();
+      }
+      if (!changed) break;
+    }
+    const live = edges.filter(e => !e.dead);
+    live.forEach(e => { e.pts[0] = [nodes[e.a].x, nodes[e.a].y]; e.pts[e.pts.length - 1] = [nodes[e.b].x, nodes[e.b].y]; });
+    G.edges = live;
+    return G;
+  }
+
+  /* ---------- 图 → 只走八个方向的线路 ---------- */
+  // Douglas-Peucker 抽稀，返回留下的下标
+  function dpIdx(pts, eps) {
+    const keep = new Uint8Array(pts.length);
+    keep[0] = keep[pts.length - 1] = 1;
+    const st = [[0, pts.length - 1]];
+    while (st.length) {
+      const [a, b] = st.pop();
+      const [ax, ay] = pts[a], [bx, by] = pts[b], L = Math.hypot(bx - ax, by - ay);
+      let best = -1, bd = eps;
+      for (let i = a + 1; i < b; i++) {
+        const d = L ? Math.abs((bx - ax) * (ay - pts[i][1]) - (ax - pts[i][0]) * (by - ay)) / L : Math.hypot(pts[i][0] - ax, pts[i][1] - ay);
+        if (d > bd) { bd = d; best = i; }
+      }
+      if (best > 0) { keep[best] = 1; st.push([a, best], [best, b]); }
+    }
+    return [...keep.keys()].filter(i => keep[i]);
+  }
+  function segDist(px, py, ax, ay, bx, by) {
+    const vx = bx - ax, vy = by - ay, L2 = vx * vx + vy * vy || 1;
+    const t = clamp(((px - ax) * vx + (py - ay) * vy) / L2, 0, 1);
+    return Math.hypot(px - ax - vx * t, py - ay - vy * t);
+  }
+  const polyDist = (p, poly) => { let d = 1e9; for (let i = 1; i < poly.length; i++) d = Math.min(d, segDist(p[0], p[1], ...poly[i - 1], ...poly[i])); return poly.length === 1 ? Math.hypot(p[0] - poly[0][0], p[1] - poly[0][1]) : d; };
+  // 去掉重复点、共线的中间点和原地折返的尖刺
+  function tidy(pts) {
+    const r = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+      const p = pts[i];
+      let q = r[r.length - 1];
+      if (p[0] === q[0] && p[1] === q[1]) continue;
+      while (r.length > 1) {
+        const o = r[r.length - 2];
+        q = r[r.length - 1];
+        const ux = q[0] - o[0], uy = q[1] - o[1], vx = p[0] - q[0], vy = p[1] - q[1];
+        if (ux * vy - uy * vx !== 0) break;
+        r.pop();   // 共线：同向就并，反向就是尖刺，都去掉中间点
+      }
+      const z = r[r.length - 1];
+      if (z[0] !== p[0] || z[1] !== p[1]) r.push(p);
+    }
+    return r;
+  }
+  // 两个格点之间：正好横竖斜的直接连；不正的拆成“直的 + 45° 的”两段，拐点选离原来那段曲线近的
+  function octi(pts, refs) {
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+      const a = out[out.length - 1], b = pts[i];
+      const dx = b[0] - a[0], dy = b[1] - a[1], ax = Math.abs(dx), ay = Math.abs(dy);
+      if (ax && ay && ax !== ay) {
+        const sx = Math.sign(dx), sy = Math.sign(dy), m = Math.min(ax, ay);
+        const S = ax > ay ? [a[0] + sx * (ax - ay), a[1]] : [a[0], a[1] + sy * (ay - ax)];
+        const D = [a[0] + sx * m, a[1] + sy * m];
+        out.push(polyDist(S, refs[i - 1]) <= polyDist(D, refs[i - 1]) ? S : D);
+      }
+      out.push(b);
+    }
+    return tidy(out);
+  }
+
+  // 整条流水线：字 → 骨架 → 图 → 八方向折线 → 线路。单位是“格”
+  function network(text, scale) {
+    const P = 8;
+    const R = rasterize(text, P, scale);
+    const G = clean(trace(thin(R.g, R.w, R.h), R.w, R.h), R.cap * 0.12, P * 1.25);
+    const U = ([x, y]) => [x / P, y / P];
+    const live = G.nodes.map((n, i) => ({ i, n })).filter(o => !o.n.dead);
+    // 节点吸到格点上；吸到同一格的并成一个
+    const grid = new Map(), alias = new Map();
+    live.forEach(({ i, n }) => {
+      const g = [Math.round(n.x / P), Math.round(n.y / P)], k = g.join();
+      if (grid.has(k)) alias.set(i, grid.get(k)); else { grid.set(k, i); alias.set(i, i); n.g = g; }
+    });
+    const nid = i => alias.get(i);
+    const dots = [], edges = [];
+    const ndeg = new Map();
+    G.edges.forEach(e => { [e.a, e.b].forEach(n => ndeg.set(nid(n), (ndeg.get(nid(n)) || 0) + 1)); });
+    G.edges.forEach(e => {
+      const a = nid(e.a), b = nid(e.b), raw = e.pts.map(U);
+      // 一小截孤零零的（i 上的点、汉字的点）：当成规划中的车站
+      if (ndeg.get(a) === 1 && ndeg.get(b) === 1 && e.len < P * 1.3) {
+        const m = raw[(raw.length / 2) | 0];
+        dots.push([Math.round(m[0]), Math.round(m[1])]);
+        return;
+      }
+      const keep = dpIdx(raw, 0.45);
+      const pts = keep.map(i => [Math.round(raw[i][0]), Math.round(raw[i][1])]);
+      pts[0] = G.nodes[a].g;
+      pts[pts.length - 1] = G.nodes[b].g;
+      const refs = keep.slice(1).map((k, j) => raw.slice(keep[j], k + 1));
+      const poly = octi(pts, refs);
+      if (poly.length < 2 || (a === b && polyLen(poly) < 3)) return;
+      edges.push({ a, b, poly });
+    });
+    G.nodes.forEach((n, i) => { if (!n.dead && alias.get(i) === i && !ndeg.get(i)) dots.push(n.g); });
+    // i、j 上的圆点细化以后常常整个消失：直接在栅格里找小团块
+    const seenPx = new Uint8Array(R.w * R.h);
+    for (let i = 0; i < R.g.length; i++) {
+      if (!R.g[i] || seenPx[i]) continue;
+      const st = [i];
+      let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, sx = 0, sy = 0, n = 0;
+      seenPx[i] = 1;
+      while (st.length) {
+        const j = st.pop(), x = j % R.w, y = (j / R.w) | 0;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+        sx += x; sy += y; n++;
+        for (const [dx, dy] of DIRS) { const k = (y + dy) * R.w + x + dx; if (x + dx >= 0 && x + dx < R.w && y + dy >= 0 && y + dy < R.h && R.g[k] && !seenPx[k]) { seenPx[k] = 1; st.push(k); } }
+      }
+      if (Math.max(x1 - x0, y1 - y0) < P * 2.6 && n > P * P * 0.5) {
+        const d = [Math.round(sx / n / P), Math.round(sy / n / P)];
+        if (!dots.some(q => Math.hypot(q[0] - d[0], q[1] - d[1]) < 1.5)) dots.push(d);
+      }
+    }
+    // 吸格以后两条边压在同一段上，说明格子太粗，要加密重来
+    const steps = new Map();
+    let clash = 0;
+    edges.forEach((e, k) => {
+      for (let i = 1; i < e.poly.length; i++) {
+        const [ax, ay] = e.poly[i - 1], [bx, by] = e.poly[i], n = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
+        for (let j = 0; j < n; j++) {
+          const x0 = ax + (bx - ax) / n * j, y0 = ay + (by - ay) / n * j, x1 = x0 + (bx - ax) / n, y1 = y0 + (by - ay) / n;
+          const key = x0 < x1 || (x0 === x1 && y0 < y1) ? `${x0},${y0},${x1},${y1}` : `${x1},${y1},${x0},${y0}`;
+          if (steps.has(key) && steps.get(key) !== k) clash++;
+          steps.set(key, k);
+        }
+      }
+    });
+    return { edges, dots, nodes: G.nodes, clash, cjk: R.cjk };
+  }
+
+  // 把边串成线路：在分叉处挑最顺的一条接着走（偏转不超过 45°），岔出去的另起一条
+  function assemble(N) {
+    const { edges } = N, inc = new Map(), deg = new Map();
+    edges.forEach((e, k) => [e.a, e.b].forEach(n => { if (!inc.has(n)) inc.set(n, []); inc.get(n).push(k); deg.set(n, (deg.get(n) || 0) + 1); }));
+    const used = new Array(edges.length).fill(false);
+    const unit = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
+    const extend = rt => {
+      for (;;) {
+        const end = rt.nodes[rt.nodes.length - 1].id, p = rt.poly, h = unit(p[p.length - 2], p[p.length - 1]);
+        let best = -1, bd = 0.68, flip = false;
+        (inc.get(end) || []).forEach(k => {
+          if (used[k]) return;
+          const e = edges[k];
+          [[e.a === end, false], [e.b === end, true]].forEach(([ok, fl]) => {
+            if (!ok) return;
+            const q = fl ? unit(e.poly[e.poly.length - 1], e.poly[e.poly.length - 2]) : unit(e.poly[0], e.poly[1]);
+            const d = h[0] * q[0] + h[1] * q[1];
+            if (d > bd) { bd = d; best = k; flip = fl; }
+          });
+        });
+        if (best < 0) return;
+        used[best] = true;
+        const e = edges[best], q = flip ? e.poly.slice().reverse() : e.poly;
+        rt.poly.push(...q.slice(1));
+        rt.nodes.push({ id: flip ? e.a : e.b, i: rt.poly.length - 1 });
+      }
+    };
+    const order = edges.map((e, k) => k).sort((a, b) => {
+      const ta = Math.min(deg.get(edges[a].a), deg.get(edges[a].b)) === 1 ? 0 : 1;
+      const tb = Math.min(deg.get(edges[b].a), deg.get(edges[b].b)) === 1 ? 0 : 1;
+      return ta - tb || polyLen(edges[b].poly) - polyLen(edges[a].poly);
+    });
+    const routes = [];
+    for (const k of order) {
+      if (used[k]) continue;
+      used[k] = true;
+      const e = edges[k], fl = deg.get(e.b) === 1 && deg.get(e.a) !== 1;
+      const rt = { poly: (fl ? e.poly.slice().reverse() : e.poly.slice()), nodes: [{ id: fl ? e.b : e.a, i: 0 }, { id: fl ? e.a : e.b, i: e.poly.length - 1 }] };
+      extend(rt);
+      rt.poly.reverse();
+      const n = rt.poly.length;
+      rt.nodes = rt.nodes.reverse().map(o => ({ id: o.id, i: n - 1 - o.i }));
+      extend(rt);
+      // 串完以后共线的接头去掉，节点下标跟着挪
+      const ids = new Map(rt.nodes.map(o => [o.i, o.id]));
+      const pts = [], map = [];
+      rt.poly.forEach((p, i) => {
+        const q = pts[pts.length - 1], o = pts[pts.length - 2];
+        if (q && q[0] === p[0] && q[1] === p[1]) { map[i] = pts.length - 1; return; }
+        if (o && !ids.has(i - 1) && (q[0] - o[0]) * (p[1] - q[1]) === (q[1] - o[1]) * (p[0] - q[0]) && (q[0] - o[0]) * (p[0] - q[0]) + (q[1] - o[1]) * (p[1] - q[1]) > 0) { pts[pts.length - 1] = p; map[i] = pts.length - 1; return; }
+        pts.push(p);
+        map[i] = pts.length - 1;
+      });
+      rt.nodes = rt.nodes.map(o => ({ id: o.id, i: map[o.i] }));
+      rt.poly = pts;
+      rt.closed = rt.nodes[0].id === rt.nodes[rt.nodes.length - 1].id && pts.length > 3;
+      rt.deg = deg;
+      routes.push(rt);
+    }
+    return routes;
+  }
+
+  /* ---------- 线路图的几何：版式、圆角、车站、机场快线 ---------- */
+  const scene = $('#scene'), map = $('#map');
+  const PALETTE = ['#e03c31', '#0b62b0', '#00965e', '#f2a900', '#8b4ea6', '#0099a8', '#ee7a2f', '#9a6a3a', '#d5568e', '#6c8f2b', '#4656b8', '#b02f2a'];
+  const INK = '#1b1b1e', PAPER = '#f7f4ed';
+  let W, H, WW, mobile, pan, g, lw, TOP, routes, stations, exp, comps, dots, river, labels, obst, yE;
+
+  // 折线倒圆角：每个拐角同一个半径，边太短就缩小。返回 SVG 路径、沿线采样点和累计长度
+  function roundGeom(pts, closed, rad) {
+    const n = pts.length, segs = [];
+    for (let i = 0; i < n - 1; i++) {
+      const dx = pts[i + 1][0] - pts[i][0], dy = pts[i + 1][1] - pts[i][1], l = Math.hypot(dx, dy) || 1;
+      segs.push({ l, u: [dx / l, dy / l] });
+    }
+    const m = segs.length, t = new Array(n).fill(0), th = new Array(n).fill(0), cr = new Array(n).fill(0);
+    const corner = (i, a, b) => {
+      const u1 = segs[a].u, u2 = segs[b].u, c = clamp(u1[0] * u2[0] + u1[1] * u2[1], -1, 1), ang = Math.acos(c);
+      if (ang < 1e-3) return;
+      th[i] = ang;
+      cr[i] = Math.sign(u1[0] * u2[1] - u1[1] * u2[0]);
+      t[i] = Math.min(rad * Math.tan(ang / 2), segs[a].l / 2, segs[b].l / 2);
+    };
+    for (let i = 1; i < n - 1; i++) corner(i, i - 1, i);
+    if (closed) { corner(0, m - 1, 0); t[n - 1] = t[0]; th[n - 1] = th[0]; cr[n - 1] = cr[0]; }
+    const samp = [];
+    const arc = (i, a, b, out) => {
+      const u1 = segs[a].u, u2 = segs[b].u, P = pts[i], r = t[i] / Math.tan(th[i] / 2);
+      const A = [P[0] - u1[0] * t[i], P[1] - u1[1] * t[i]], B = [P[0] + u2[0] * t[i], P[1] + u2[1] * t[i]];
+      const nr = cr[i] > 0 ? [-u1[1], u1[0]] : [u1[1], -u1[0]], C = [A[0] + nr[0] * r, A[1] + nr[1] * r];
+      const a0 = Math.atan2(A[1] - C[1], A[0] - C[0]), K = Math.max(3, Math.ceil(th[i] * r / 3));
+      out.push(A);
+      for (let k = 1; k < K; k++) { const q = a0 + cr[i] * th[i] * k / K; out.push([C[0] + Math.cos(q) * r, C[1] + Math.sin(q) * r]); }
+      out.push(B);
+      return `L${f1(A[0])} ${f1(A[1])}A${f1(r)} ${f1(r)} 0 0 ${cr[i] > 0 ? 1 : 0} ${f1(B[0])} ${f1(B[1])}`;
+    };
+    let d;
+    if (closed && t[0] > 0) {
+      const s = [pts[0][0] + segs[0].u[0] * t[0], pts[0][1] + segs[0].u[1] * t[0]];
+      d = `M${f1(s[0])} ${f1(s[1])}`;
+      samp.push(s);
+    } else { d = `M${f1(pts[0][0])} ${f1(pts[0][1])}`; samp.push(pts[0]); }
+    for (let i = 1; i < n - 1; i++) d += t[i] > 0 ? arc(i, i - 1, i, samp) : (samp.push(pts[i]), `L${f1(pts[i][0])} ${f1(pts[i][1])}`);
+    if (closed && t[0] > 0) { d += arc(0, m - 1, 0, samp) + 'Z'; }
+    else { d += `L${f1(pts[n - 1][0])} ${f1(pts[n - 1][1])}`; samp.push(pts[n - 1]); if (closed) d += 'Z'; }
+    const cum = [0];
+    for (let i = 1; i < samp.length; i++) cum.push(cum[i - 1] + Math.hypot(samp[i][0] - samp[i - 1][0], samp[i][1] - samp[i - 1][1]));
+    return { d, samp, cum, total: cum[cum.length - 1], t, segs };
+  }
+  // 沿采样折线走到里程 s 处：坐标和朝向
+  function at(G, s) {
+    const { samp, cum } = G;
+    let lo = 0, hi = cum.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (cum[mid] <= s) lo = mid; else hi = mid; }
+    const k = clamp((s - cum[lo]) / ((cum[hi] - cum[lo]) || 1), 0, 1), a = samp[lo], b = samp[hi];
+    return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, Math.atan2(b[1] - a[1], b[0] - a[0])];
+  }
+  function project(G, x, y) {
+    let best = 1e9, bs = 0;
+    for (let i = 1; i < G.samp.length; i++) {
+      const [ax, ay] = G.samp[i - 1], [bx, by] = G.samp[i], L2 = (bx - ax) ** 2 + (by - ay) ** 2 || 1;
+      const k = clamp(((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / L2, 0, 1);
+      const d = Math.hypot(x - ax - (bx - ax) * k, y - ay - (by - ay) * k);
+      if (d < best) { best = d; bs = G.cum[i - 1] + Math.sqrt(L2) * k; }
+    }
+    return [best, bs];
+  }
+  // 两条线段是否相交（端点碰到不算）
+  function cross(a, b, c, d) {
+    const o = (p, q, r) => (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+    const d1 = o(c, d, a), d2 = o(c, d, b), d3 = o(a, b, c), d4 = o(a, b, d);
+    return ((d1 > 1e-6 && d2 < -1e-6) || (d1 < -1e-6 && d2 > 1e-6)) && ((d3 > 1e-6 && d4 < -1e-6) || (d3 < -1e-6 && d4 > 1e-6));
+  }
+
+  // 格子大小：桌面先按宽度定；名字太长、格子会小到站名排不下时，改成比屏幕宽、左右平移着看。手机高度固定，一直平移
+  const EXG = 1.9, BOT = 70, MX = w => (w < 700 ? 70 : Math.max(64, w * 0.05));
+  function fitG(w, bw, bh, h) {
+    const mob = w < 700, gH = ((h || (mob ? 480 : 680)) - (mob ? 96 : 100) - BOT) / (bh + EXG);
+    let k = mob ? gH : Math.max(Math.min(gH, (w - MX(w) * 2) / bw), Math.min(gH, 24));
+    k = clamp(k, 18, 48);
+    return h ? Math.min(k, gH) : k;
+  }
+  // 线路图的高度由 CSS 按宽度占好（.scene #map），这里只读出来，在这个高度里排
+  const reservedH = () => map.getBoundingClientRect().height;
+  function layout(N, R0) {
+    W = scene.clientWidth;
+    mobile = W < 700;
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    const grow = ([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+    R0.forEach(r => r.poly.forEach(grow));
+    N.dots.forEach(grow);
+    const bw = x1 - x0, bh = y1 - y0;
+    TOP = mobile ? 96 : 100;
+    // 高度用 CSS 占好的那个，这里只在这个高度里定格子大小，页面不会再变高
+    H = reservedH();
+    g = fitG(W, bw, bh, H);
+    WW = Math.max(W, Math.round(bw * g + MX(W) * 2));
+    pan = WW > W + 1;
+    lw = clamp(g * 0.24, 4.5, 8.5);
+    const ox = (WW - bw * g) / 2, oy = TOP + (H - TOP - BOT - (bh + EXG) * g) / 2;
+    yE = Math.round(oy + (bh + EXG) * g);
+    return ([x, y]) => [ox + (x - x0) * g, oy + (y - y0) * g];
+  }
+
+  function build(seed) {
+    const rng = seeded(seed);
+    // 1. 线网：吸格以后有线压在一起就把格子加密
+    let N = null;
+    for (let k = 0, sc = 1; k < 3; k++, sc *= 1.25) { N = network(brand, sc); if (!N.clash) break; }
+    const R0 = assemble(N);
+    const toW = layout(N, R0), rad = g * 0.8;
+    R0.forEach(r => { r.pts = r.poly.map(toW); r.len = polyLen(r.poly); });
+    // 短的一截：挂在别的线上就是支线，自己孤零零的一小段就当一条穿梭线
+    R0.forEach(r => { r.main = r.closed || r.len >= 2.5 || !R0.some(o => o !== r && o.nodes.some(a => r.nodes.some(b => b.id === a.id))); });
+    // 2. 线号从左往右编；太短的一截算旁边那条线的支线
+    const mains = R0.filter(r => r.main).sort((a, b) => Math.min(...a.poly.map(p => p[0])) - Math.min(...b.poly.map(p => p[0])) || Math.min(...a.poly.map(p => p[1])) - Math.min(...b.poly.map(p => p[1])));
+    mains.forEach((r, k) => { r.no = k + 1; r.color = PALETTE[k % PALETTE.length]; });
+    R0.filter(r => !r.main).forEach(r => {
+      const ids = new Set(r.nodes.map(o => o.id));
+      const host = mains.filter(m => m.nodes.some(o => ids.has(o.id))).sort((a, b) => b.len - a.len)[0] || mains[0] || r;
+      r.no = host.no || 1;
+      r.color = host.color || PALETTE[0];
+      r.host = host;
+    });
+    routes = R0;
+    routes.forEach((r, k) => { r.k = k; r.G = roundGeom(r.pts, r.closed, rad); });
+    routes.slice().sort((a, b) => a.no - b.no || b.main - a.main).forEach((r, k) => { r.ord = k; });
+
+    // 3. 车站：分叉点是换乘站，线路两头是终点站，中间的直段上按间距放小站
+    stations = [];
+    const add = st => { st.id = stations.length; st.on = []; stations.push(st); return st; };
+    const byNode = new Map();
+    routes.forEach(r => r.nodes.forEach(o => {
+      if (r.deg.get(o.id) >= 3 && !byNode.has(o.id)) byNode.set(o.id, add({ kind: 'xfer', x: r.pts[o.i][0], y: r.pts[o.i][1] }));
+    }));
+    const S = Math.max(g * 2.35, 62), minGap = Math.max(g * 1.45, 40);
+    routes.forEach(r => {
+      const anchors = [], P = r.pts, cum = [0];
+      for (let i = 1; i < P.length; i++) cum.push(cum[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+      r.nodes.forEach(o => { if (byNode.has(o.id)) anchors.push(cum[o.i]); });
+      if (!r.closed) [0, P.length - 1].forEach(i => {
+        const o = r.nodes.find(q => q.i === i);
+        if (o && byNode.has(o.id)) return;
+        const j = i ? i - 1 : 1, u = [(P[i][0] - P[j][0]) / (Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]) || 1), (P[i][1] - P[j][1]) / (Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]) || 1)];
+        add({ kind: 'term', x: P[i][0], y: P[i][1], dir: u, r });
+        anchors.push(cum[i]);
+      });
+      // 每个直段去掉两头圆角占的长度，能放几个放几个；长的直段优先
+      const cand = [];
+      for (let i = 0; i < P.length - 1; i++) {
+        const a = cum[i] + r.G.t[i] + g * 0.3, b = cum[i + 1] - r.G.t[i + 1] - g * 0.3;
+        if (b < a) continue;
+        const k = Math.max(1, Math.round((b - a) / S));
+        for (let j = 0; j < k; j++) cand.push({ s: k === 1 ? (a + b) / 2 : a + (b - a) * j / (k - 1), i, w: b - a });
+      }
+      cand.sort((p, q) => q.w - p.w);
+      const taken = anchors.slice();
+      cand.forEach(c => {
+        if (taken.some(s => Math.abs(s - c.s) < minGap)) return;
+        if (r.closed && taken.some(s => Math.abs(Math.abs(s - c.s) - cum[cum.length - 1]) < minGap)) return;
+        const k = (c.s - cum[c.i]) / ((cum[c.i + 1] - cum[c.i]) || 1), A = P[c.i], B = P[c.i + 1];
+        const x = A[0] + (B[0] - A[0]) * k, y = A[1] + (B[1] - A[1]) * k;
+        if (stations.some(o => Math.hypot(o.x - x, o.y - y) < Math.max(g * 1.15, 34))) return;
+        const l = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
+        taken.push(c.s);
+        add({ kind: 'stop', x, y, dir: [(B[0] - A[0]) / l, (B[1] - A[1]) / l], r });
+      });
+    });
+    // 每座站在哪几条线上、在线上的里程
+    stations.forEach(st => {
+      routes.forEach(r => { const [d, s] = project(r.G, st.x, st.y); if (d < lw * 0.6) st.on.push({ r, s }); });
+      st.lines = [...new Set(st.on.map(o => o.r.no))].sort((a, b) => a - b);
+    });
+    // 孤零零的小点：规划中的车站
+    dots = N.dots.map(toW).filter(([x, y]) => !stations.some(o => Math.hypot(o.x - x, o.y - y) < g * 0.7)).map(([x, y]) => add({ kind: 'dot', x, y, lines: [] }));
+
+    // 4. 机场快线：从字底下横穿，每个字挑最靠下、往下看得见快线的那座站，用虚线换乘通道连过去
+    const parent = routes.map((r, k) => k), find = k => (parent[k] === k ? k : (parent[k] = find(parent[k])));
+    routes.forEach((r, k) => routes.forEach((o, j) => { if (j > k && r.nodes.some(a => o.nodes.some(b => b.id === a.id))) parent[find(j)] = find(k); }));
+    comps = new Map();
+    routes.forEach((r, k) => { const c = find(k); if (!comps.has(c)) comps.set(c, []); comps.get(c).push(r); });
+    const allSegs = [];
+    routes.forEach(r => { for (let i = 1; i < r.pts.length; i++) allSegs.push([r.pts[i - 1], r.pts[i], r]); });
+    exp = { y: yE, list: [], links: [] };
+    const ex0 = Math.round(pan ? 34 : WW * 0.035 + 10), ex1 = Math.round(WW - ex0);
+    [...comps.values()].map(rs => {
+      const own = stations.filter(st => st.on.some(o => rs.includes(o.r)));
+      return own.sort((a, b) => b.y - a.y || a.x - b.x);
+    }).sort((a, b) => (a[0]?.x ?? 0) - (b[0]?.x ?? 0)).forEach(own => {
+      for (const st of own.slice(0, 4)) {
+        if (yE - st.y > g * 4.5) break;
+        const A = [st.x, st.y + lw], B = [st.x, yE];
+        if (allSegs.some(([p, q]) => cross(A, B, p, q))) continue;
+        if (stations.some(o => o !== st && Math.abs(o.x - st.x) < g * 0.6 && o.y > st.y && o.y < yE)) continue;
+        if (exp.list.some(e => Math.abs(e.x - st.x) < g * 2.4) || st.x < ex0 + g * 1.6 || st.x > ex1 - g * 1.6) continue;
+        const es = add({ kind: 'exp', x: st.x, y: yE, lines: ['E'] });
+        exp.list.push(es);
+        exp.links.push([st, es]);
+        st.link = es;
+        es.link = st;
+        if (st.kind === 'stop' || st.kind === 'term') st.kind = 'xfer';
+        break;
+      }
+    });
+    // 两头出图：左边火车站，右边机场
+    const ends = [add({ kind: 'exp', x: ex0, y: yE, lines: ['E'], fixed: { cn: '火车站', py: 'Railway Station' } }),
+                  add({ kind: 'exp', x: ex1, y: yE, lines: ['E'], fixed: { cn: '国际机场', py: 'Airport' } })];
+    exp.list = [ends[0], ...exp.list.sort((a, b) => a.x - b.x), ends[1]];
+    exp.pts = [[ends[0].x, yE], [ends[1].x, yE]];
+    exp.G = roundGeom(exp.pts, false, rad);
+    exp.list.forEach(e => { e.on = [{ r: exp, s: e.x - ends[0].x }]; });
+    exp.no = 'E';
+    exp.color = INK;
+    // 没接上快线的字块（比如“河”里悬着的“口”）：找离已连通部分最近、中间不隔线的两座站，修一条步行换乘通道
+    const compOf = st => (st.kind === 'exp' ? -1 : st.on.length ? find(st.on[0].r.k) : null);
+    const joined = new Set([-1]);
+    exp.links.forEach(([st]) => joined.add(compOf(st)));
+    if (joined.size === 1 && routes.length) joined.add(find(0));
+    for (let pass = 0; pass < comps.size; pass++) {
+      let best = null;
+      stations.forEach(a => {
+        const ca = compOf(a);
+        if (ca === null || joined.has(ca) || a.kind === 'dot') return;
+        stations.forEach(b => {
+          const cb = compOf(b);
+          if (cb === null || !joined.has(cb) || b.kind === 'dot') return;
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d > g * 3.6 || (best && d >= best.d)) return;
+          const A = [a.x, a.y], B = [b.x, b.y];
+          if (allSegs.some(([p, q]) => cross(A, B, p, q))) return;
+          if (stations.some(o => o !== a && o !== b && segDist(o.x, o.y, a.x, a.y, b.x, b.y) < g * 0.6)) return;
+          if (exp.links.some(([p, q]) => cross(A, B, [p.x, p.y], [q.x, q.y]))) return;
+          best = { a, b, d, ca };
+        });
+      });
+      if (!best) break;
+      exp.links.push([best.a, best.b, true]);
+      [best.a, best.b].forEach(o => { if (o.kind === 'stop' || o.kind === 'term') o.kind = 'xfer'; });
+      (best.a.walk = best.a.walk || []).push(best.b);
+      (best.b.walk = best.b.walk || []).push(best.a);
+      joined.add(best.ca);
+    }
+
+    // 5. 站名
+    const used = new Set();
+    stations.forEach(st => { const nm = st.fixed || makeName(rng, st.kind === 'xfer' || st.kind === 'exp', used); st.cn = nm.cn; st.py = nm.py; });
+    routes.forEach(r => {
+      const ends = r.closed ? null : [0, r.G.total].map(s => stations.filter(st => st.on.some(o => o.r === r && Math.abs(o.s - s) < lw)).sort((a, b) => b.on.length - a.on.length)[0]);
+      r.ends = ends;
+    });
+  }
+
+  /* ---------- 河：只走横和 45°，少和线路并行，过河尽量垂直 ---------- */
+  function planRiver(rng) {
+    const st = g, C = Math.ceil(WW / st) + 3, y0 = TOP + g * 0.4, y1 = yE - g * 1.4;
+    const rows = Math.max(2, Math.floor((y1 - y0) / st));
+    const segs = [];
+    routes.forEach(r => { for (let i = 1; i < r.pts.length; i++) segs.push([r.pts[i - 1], r.pts[i]]); });
+    const X = c => (c - 1) * st, Y = j => y0 + j * st;
+    const memo = new Map();
+    const stepCost = (c, j, d) => {
+      const key = c * 4096 + j * 4 + d + 1;
+      if (memo.has(key)) return memo.get(key);
+      const a = [X(c), Y(j)], b = [X(c + 1), Y(j + d)], ux = b[0] - a[0], uy = b[1] - a[1], l = Math.hypot(ux, uy);
+      const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      let pen = 0;
+      for (const [p, q] of segs) {
+        const vx = q[0] - p[0], vy = q[1] - p[1], m = Math.hypot(vx, vy) || 1, c2 = Math.abs(ux * vx + uy * vy) / (l * m);
+        const dd = Math.min(segDist(mid[0], mid[1], ...p, ...q), segDist(a[0], a[1], ...p, ...q), segDist(b[0], b[1], ...p, ...q));
+        if (c2 > 0.95 && dd < g * 1.05) pen += 9;
+        else if (cross(a, b, p, q)) pen += c2 < 0.2 ? 0.35 : 1.1;
+        else if (dd < g * 0.45) pen += 2.5;
+      }
+      stations.forEach(o => { if (segDist(o.x, o.y, ...a, ...b) < g * 0.6) pen += 4; });
+      memo.set(key, pen);
+      return pen;
+    };
+    // 河从左上斜着流到右下，中间拐几道弯
+    const ph = rng() * 6, target = c => rows * (0.12 + 0.76 * c / C) + Math.sin(c * 0.22 + ph) * rows * 0.12;
+    const pref = (c, j) => 0.05 * (j - target(c)) ** 2;
+    // 动态规划：状态是（列，行，上一步方向）
+    let cost = [];
+    for (let j = 0; j <= rows; j++) for (let d = -1; d <= 1; d++) cost[j * 3 + d + 1] = pref(0, j);
+    const back = [];
+    for (let c = 0; c < C; c++) {
+      const nc = new Array((rows + 1) * 3).fill(1e18), nb = new Array((rows + 1) * 3).fill(-1);
+      for (let j = 0; j <= rows; j++) for (let pd = -1; pd <= 1; pd++) {
+        const cur = cost[j * 3 + pd + 1];
+        if (cur >= 1e17) continue;
+        for (let d = -1; d <= 1; d++) {
+          const jj = j + d;
+          if (jj < 0 || jj > rows) continue;
+          const v = cur + stepCost(c, j, d) + (d !== pd ? 1.8 : 0) + (d ? 0.3 : 0) + pref(c + 1, jj);
+          if (v < nc[jj * 3 + d + 1]) { nc[jj * 3 + d + 1] = v; nb[jj * 3 + d + 1] = j * 3 + pd + 1; }
+        }
+      }
+      back.push(nb);
+      cost = nc;
+    }
+    let best = 0;
+    cost.forEach((v, k) => { if (v < cost[best]) best = k; });
+    const pts = [];
+    for (let c = C; c >= 0; c--) {
+      const j = Math.floor(best / 3);
+      pts.push([X(c), Y(j)]);
+      if (c > 0) best = back[c - 1][best];
+    }
+    pts.reverse();
+    const P = tidy(pts.map(p => [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100]));
+    const a = PRE[(rng() * PRE.length) | 0];
+    return { pts: P, G: roundGeom(P, false, g * 2.4), cn: a[0] + '江', py: (a[1] + ' jiang').toUpperCase() };
+  }
+
+  /* ---------- 站名排版：候选位置里挑第一个不压线、不压字、不出界的 ---------- */
+  const FN = b => `${b ? 700 : 500} 12.5px "Noto Sans SC", "Microsoft YaHei", sans-serif`;
+  const FP = '600 9px Overpass, "Segoe UI", sans-serif';
+  const mctx = canvas(4, 4).getContext('2d');
+  const tw = (t, f) => { mctx.font = f; return mctx.measureText(t).width; };
+  const ptRect = (x, y, R) => Math.hypot(Math.max(R.x - x, 0, x - R.x - R.w), Math.max(R.y - y, 0, y - R.y - R.h));
+  function segRect(a, b, R) {
+    if (!ptRect(a[0], a[1], R) || !ptRect(b[0], b[1], R)) return 0;
+    const C = [[R.x, R.y], [R.x + R.w, R.y], [R.x + R.w, R.y + R.h], [R.x, R.y + R.h]];
+    for (let i = 0; i < 4; i++) if (cross(a, b, C[i], C[(i + 1) % 4])) return 0;
+    return Math.min(ptRect(a[0], a[1], R), ptRect(b[0], b[1], R), ...C.map(c => segDist(c[0], c[1], a[0], a[1], b[0], b[1])));
+  }
+  const overlap = (A, B, m = 0) => A.x < B.x + B.w + m && B.x < A.x + A.w + m && A.y < B.y + B.h + m && B.y < A.y + A.h + m;
+
+  // 所有不能压的东西：线（按画出来的圆角走）、刻度、换乘圈、快线、通道、界面上的图名
+  function obstacles() {
+    const segs = [], circ = [], rects = [];
+    const addPath = (samp, half) => { for (let i = 1; i < samp.length; i++) segs.push({ a: samp[i - 1], b: samp[i], h: half }); };
+    routes.forEach(r => addPath(r.G.samp, lw / 2 + 2.5));
+    addPath(exp.G.samp, lw * 0.6 + 2.5);
+    exp.links.forEach(([s, e]) => segs.push({ a: [s.x, s.y], b: [e.x, e.y], h: 3 }));
+    stations.forEach(st => {
+      if (st.kind === 'xfer' || st.kind === 'dot' || st.kind === 'exp') circ.push({ x: st.x, y: st.y, r: lw * 1.3 + 2.5 });
+      if (st.kind === 'term') { const n = [-st.dir[1], st.dir[0]], L = lw * 1.15; segs.push({ a: [st.x - n[0] * L, st.y - n[1] * L], b: [st.x + n[0] * L, st.y + n[1] * L], h: lw * 0.32 + 2.5 }); }
+    });
+    if (!pan) {
+      const sr = scene.getBoundingClientRect();
+      ['.cart', '.key'].forEach(s => { const r = $(s).getBoundingClientRect(); if (r.width) rects.push({ x: r.left - sr.left - 6, y: r.top - sr.top - 4, w: r.width + 12, h: r.height + 8 }); });
+    } else rects.push({ x: -1e4, y: -1e4, w: 3e4, h: 1e4 + 70 });
+    return { segs, circ, rects };
+  }
+  function free(R, O) {
+    if (R.x < 6 || R.y < 6 || R.x + R.w > WW - 6 || R.y + R.h > H - 6) return false;
+    for (const q of O.rects) if (overlap(R, q, 3)) return false;
+    for (const c of O.circ) if (ptRect(c.x, c.y, R) < c.r) return false;
+    for (const s of O.segs) {
+      if (Math.max(s.a[0], s.b[0]) < R.x - 12 || Math.min(s.a[0], s.b[0]) > R.x + R.w + 12 || Math.max(s.a[1], s.b[1]) < R.y - 12 || Math.min(s.a[1], s.b[1]) > R.y + R.h + 12) continue;
+      if (segRect(s.a, s.b, R) < s.h) return false;
+    }
+    return true;
+  }
+  function candidates(st, w, h, box) {
+    const out = [], gap = 4;
+    const put = (px, py, nx, ny, cost, side) => {
+      let x, y, align;
+      if (Math.abs(nx) > 0.9) { x = nx > 0 ? px : px - w; y = py - h / 2; align = nx > 0 ? 'start' : 'end'; }
+      else if (Math.abs(ny) > 0.9) { x = px - w / 2; y = ny > 0 ? py : py - h; align = 'middle'; }
+      else { x = nx > 0 ? px : px - w; y = ny > 0 ? py : py - h; align = nx > 0 ? 'start' : 'end'; }
+      // 站名落在字的肚子里不好看，尽量往字外面放
+      if (box) { const cx = x + w / 2, cy = y + h / 2; if (cx > box.x0 && cx < box.x1 && cy > box.y0 && cy < box.y1) cost += 0.9; }
+      out.push({ x, y, w, h, align, cost, side });
+    };
+    if (st.kind === 'stop') {
+      const [dx, dy] = st.dir, L = lw * 1.05 + gap;
+      for (const s of [1, -1]) {
+        const nx = -dy * s, ny = dx * s;
+        put(st.x + nx * L, st.y + ny * L, nx, ny, 0, [nx, ny]);
+        if (Math.abs(ny) > 0.9) {   // 横线上的站：站名也可以左对齐或右对齐着站
+          const y = ny > 0 ? st.y + L : st.y - L - h;
+          out.push({ x: st.x - 6, y, w, h, align: 'start', cost: 0.35, side: [nx, ny] }, { x: st.x + 6 - w, y, w, h, align: 'end', cost: 0.4, side: [nx, ny] });
+        }
+      }
+    } else if (st.kind === 'term') {
+      const [dx, dy] = st.dir, n = [-dy, dx];
+      put(st.x + dx * (lw * 0.5 + gap), st.y + dy * (lw * 0.5 + gap), dx, dy, 0);
+      for (const s of [1, -1]) {
+        const nx = n[0] * s, ny = n[1] * s;
+        put(st.x + nx * (lw * 1.2 + gap), st.y + ny * (lw * 1.2 + gap), nx, ny, 0.25);
+        const q = [(dx + nx) / Math.SQRT2, (dy + ny) / Math.SQRT2];
+        put(st.x + q[0] * (lw * 1.2 + gap), st.y + q[1] * (lw * 1.2 + gap), q[0], q[1], 0.45);
+      }
+    } else if (st.kind === 'exp') {
+      put(st.x, st.y + lw * 1.25 + gap, 0, 1, 0);
+      put(st.x, st.y - lw * 1.25 - gap, 0, -1, 0.6);
+    } else {
+      const L = lw * 1.3 + gap, D = Math.SQRT1_2;
+      [[1, 0, 0], [-1, 0, 0.1], [0, 1, 0.2], [0, -1, 0.2], [D, D, 0.35], [-D, D, 0.4], [D, -D, 0.35], [-D, -D, 0.4]].forEach(([nx, ny, c]) => put(st.x + nx * L, st.y + ny * L, nx, ny, c));
+    }
+    return out.sort((a, b) => a.cost - b.cost);
+  }
+  function placeLabels() {
+    obst = obstacles();
+    labels = [];
+    const boxes = new Map();
+    comps.forEach(rs => {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      rs.forEach(r => r.pts.forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }));
+      const b = { x0: x0 + g * 0.3, y0: y0 + g * 0.3, x1: x1 - g * 0.3, y1: y1 - g * 0.3 };
+      rs.forEach(r => boxes.set(r, b));
+    });
+    // 字框按字体的行高算（和 SVG 量出来的一致），比字面大一圈，排出来才不会贴线
+    const fm = f => { mctx.font = f; const m = mctx.measureText('站A'); return [m.fontBoundingBoxAscent, m.fontBoundingBoxDescent]; };
+    const [pA, pD] = fm(FP), LH = 11.5;
+    const rank = { xfer: 0, exp: 1, term: 2, stop: 3, dot: 4 };
+    stations.slice().sort((a, b) => rank[a.kind] - rank[b.kind] || a.x - b.x).forEach(st => {
+      const big = st.kind === 'xfer' || st.kind === 'exp' || st.kind === 'term';
+      const wn = tw(st.cn, FN(big)), wp = tw(st.py, FP) + st.py.length * 0.2, box = st.on[0] ? boxes.get(st.on[0].r) : null, [nA, nD] = fm(FN(big));
+      for (const [w, h, two] of [[Math.max(wn, wp), nA + LH + Math.max(pD, nD - LH), true], [wn, nA + nD, false]]) {
+        const c = candidates(st, w, h, box).find(c => free(c, obst));
+        if (!c) continue;
+        st.label = { ...c, two, big, b1: c.y + nA, b2: c.y + nA + LH };
+        obst.rects.push({ x: c.x, y: c.y, w: c.w, h: c.h });
+        labels.push(st);
+        if (st.kind === 'stop') st.side = c.side;
+        return;
+      }
+      st.label = null;
+    });
+    // 排不下站名的普通小站干脆不设，真地图上每个站都有名字
+    stations = stations.filter(st => st.label || st.kind !== 'stop');
+    stations.forEach((st, i) => { st.id = i; });
+    // 河名：找一段够长的横直段，放在河中间
+    river.label = null;
+    const P = river.pts, tw0 = tw(river.cn, '500 11px "Noto Sans SC"') + 10 + tw(river.py, 'italic 600 9px Overpass') + river.py.length * 1.6;
+    const runs = [];
+    for (let i = 1; i < P.length; i++) if (P[i][1] === P[i - 1][1]) runs.push([P[i - 1], P[i]]);
+    runs.sort((a, b) => (b[1][0] - b[0][0]) - (a[1][0] - a[0][0]));
+    for (const [a, b] of runs) {
+      const lo = Math.max(a[0] + g * 1.2, 20), hi = Math.min(b[0] - g * 1.2, WW - 20) - tw0;
+      for (let x = lo; x <= hi; x += 8) {
+        const R = { x, y: a[1] - 7, w: tw0, h: 14 };
+        const hit = obst.rects.some(q => overlap(R, q, 2)) || obst.segs.some(s => segRect(s.a, s.b, R) < s.h - 1) || obst.circ.some(c => ptRect(c.x, c.y, R) < c.r);
+        if (!hit) { river.label = R; return; }
+      }
+    }
+  }
+
+  /* ---------- 画成 SVG ---------- */
+  let L = {};
+  function render() {
+    map.innerHTML = '';
+    map.setAttribute('viewBox', `0 0 ${pan ? W : WW} ${H}`);
+    map.classList.remove('dim', 'night');
+    const layer = c => node('g', { class: c }, map);
+    L = { base: layer('base'), lines: layer('lines'), links: layer('links'), stations: layer('stations'), labels: layer('labels'), trains: layer('trains'), hl: layer('hl') };
+    // 河和河名
+    node('path', { d: river.G.d, fill: 'none', stroke: 'var(--river)', 'stroke-width': f1(g * 0.8), 'stroke-linejoin': 'round' }, L.base);
+    if (river.label) {
+      const t = node('text', { x: f1(river.label.x + 5), y: f1(river.label.y + 11), fill: 'var(--river-ink)', 'font-size': 11, 'font-family': '"Noto Sans SC", sans-serif', 'font-weight': 500 }, L.base);
+      t.textContent = river.cn;
+      const p = node('tspan', { dx: 8, 'font-size': 9, 'font-family': 'Overpass, sans-serif', 'font-style': 'italic', 'font-weight': 600, 'letter-spacing': 1.6 }, t);
+      p.textContent = river.py;
+    }
+    // 线路：每条先描一圈纸色当隔离带，后画的线从先画的线上面跨过去时会留一道白缝
+    routes.forEach(r => {
+      r.grp = node('g', { class: 'ln', 'data-no': r.no }, L.lines);
+      const attrs = { d: r.G.d, fill: 'none', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': '0 2' };
+      r.cs = node('path', { ...attrs, stroke: PAPER, 'stroke-width': f1(lw + 3.6) }, r.grp);
+      r.el = node('path', { ...attrs, stroke: r.color, 'stroke-width': f1(lw) }, r.grp);
+    });
+    routes.forEach(r => { r.pen = node('circle', { r: f1(lw * 0.85), fill: r.color, stroke: '#fff', 'stroke-width': 2, opacity: 0 }, L.trains); });
+    // 机场快线：空心的双线；换乘通道是虚线
+    exp.grp = node('g', { class: 'ln', 'data-no': 'E' }, L.links);
+    const ea = { d: exp.G.d, fill: 'none', pathLength: 1, 'stroke-dasharray': '0 2' };
+    exp.cs = node('path', { ...ea, stroke: INK, 'stroke-width': f1(lw * 1.15) }, exp.grp);
+    exp.el = node('path', { ...ea, stroke: '#fff', 'stroke-width': f1(lw * 0.5) }, exp.grp);
+    exp.links.forEach(([s, e, walk]) => {
+      const el = node('path', { class: 'xc', d: `M${f1(s.x)} ${f1(s.y)}L${f1(e.x)} ${f1(e.y)}`, stroke: INK, 'stroke-width': 1.6, 'stroke-dasharray': '2.4 2.6', fill: 'none', opacity: 0 }, L.links);
+      if (walk) s.xw = el; else s.xc = el;
+    });
+    // 挨得很近的两座换乘站连成一个胶囊，表示站内换乘
+    stations.forEach((a, i) => stations.slice(i + 1).forEach(b => {
+      if (a.kind !== 'xfer' || b.kind !== 'xfer' || Math.hypot(a.x - b.x, a.y - b.y) > g * 1.75) return;
+      const gr = node('g', { class: 'st cap' }, L.stations);
+      a.caps = (a.caps || []).concat(gr);
+      b.caps = (b.caps || []).concat(gr);
+      gr.ends = [a, b];
+      const d = `M${f1(a.x)} ${f1(a.y)}L${f1(b.x)} ${f1(b.y)}`;
+      node('path', { d, stroke: INK, 'stroke-width': f1(lw * 2.4), 'stroke-linecap': 'round' }, gr);
+      node('path', { d, stroke: '#fff', 'stroke-width': f1(lw * 1.68), 'stroke-linecap': 'round' }, gr);
+    }));
+    // 快线两头的小图标：火车、飞机，放在线头外侧
+    const icon = (x, y, d) => {
+      const gr = node('g', { class: 'ic', transform: `translate(${f1(x)} ${f1(y)})` }, L.stations);
+      node('rect', { width: 15, height: 15, rx: 3.5, fill: INK }, gr);
+      node('path', { d, fill: '#fff', transform: 'translate(1.5 1.5)' }, gr);
+    };
+    const [e0, e1] = [exp.list[0], exp.list[exp.list.length - 1]];
+    icon(e0.x - lw - 19, yE - 7.5, 'M3.4 1.2h5.2a2 2 0 0 1 2 2v4.6a2 2 0 0 1-2 2H3.4a2 2 0 0 1-2-2V3.2a2 2 0 0 1 2-2zM3 3.4v2.4h6V3.4zM3.6 7.4a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6zm4.8 0a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6zM3.2 10.4h1.4l-1 1.6H2.2zm4.2 0h1.4l1.4 1.6H8.8z');
+    icon(e1.x + lw + 4, yE - 7.5, 'M6 .6c.5 0 .8.6.8 1.4v3l4.6 2.6v1.3L6.8 7.5v2.6l1.5 1.1v1L6 11.6l-2.3.6v-1l1.5-1.1V7.5L.6 8.9V7.6l4.6-2.6V2c0-.8.3-1.4.8-1.4z');
+    // 车站
+    stations.forEach(st => {
+      const gr = node('g', { class: 'st' }, L.stations);
+      st.el = gr;
+      if (st.kind === 'stop') {
+        const c = st.on[0].r.color, n = st.side;
+        node('path', { d: `M${f1(st.x)} ${f1(st.y)}l${f1(n[0] * lw * 1.08)} ${f1(n[1] * lw * 1.08)}`, stroke: c, 'stroke-width': f1(lw * 0.62), fill: 'none' }, gr);
+      } else if (st.kind === 'term') {
+        const c = st.on[0].r.color, n = [-st.dir[1], st.dir[0]], k = lw * 1.15;
+        node('path', { d: `M${f1(st.x - n[0] * k)} ${f1(st.y - n[1] * k)}L${f1(st.x + n[0] * k)} ${f1(st.y + n[1] * k)}`, stroke: c, 'stroke-width': f1(lw * 0.62), fill: 'none' }, gr);
+      } else if (st.kind === 'dot') {
+        node('circle', { class: 'ring', cx: f1(st.x), cy: f1(st.y), r: f1(lw * 0.95), fill: '#fff', stroke: '#8b877d', 'stroke-width': 1.6, 'stroke-dasharray': '2.6 2.2' }, gr);
+      } else {
+        const big = st.kind === 'xfer';
+        node('circle', { class: 'ring', cx: f1(st.x), cy: f1(st.y), r: f1(lw * (big ? 1.02 : 0.82)), fill: '#fff', stroke: INK, 'stroke-width': f1(lw * (big ? 0.36 : 0.3)) }, gr);
+      }
+      if (!st.label) return;
+      const c = st.label, lb = node('g', { class: 'lb' }, L.labels);
+      st.lb = lb;
+      const ax = c.align === 'start' ? c.x : c.align === 'end' ? c.x + c.w : c.x + c.w / 2;
+      const t = node('text', { x: f1(ax), y: f1(c.b1), 'text-anchor': c.align, 'font-size': 12.5, 'font-weight': c.big ? 700 : 500, 'font-family': '"Noto Sans SC", "Microsoft YaHei", sans-serif', fill: st.kind === 'dot' ? '#8b877d' : INK }, lb);
+      t.textContent = st.cn;
+      if (c.two) {
+        const p = node('text', { x: f1(ax), y: f1(c.b2), 'text-anchor': c.align, 'font-size': 9, 'font-weight': 600, 'font-family': 'Overpass, "Segoe UI", sans-serif', fill: '#7d796f', 'letter-spacing': 0.2 }, lb);
+        p.textContent = st.py;
+      }
+    });
+    // 图例和页脚上的色条
+    const mains = routes.filter(r => r.main).sort((a, b) => a.no - b.no);
+    $('#legend').innerHTML = mains.map(r => `<span class="ln" data-no="${r.no}"><i style="background:${r.color}"></i>${r.no}号线 ${r.ends ? `${r.ends[0]?.cn || ''}—${r.ends[1]?.cn || ''}` : '环线'}</span>`).join('') +
+      `<span class="ln" data-no="E"><i class="hollow"></i>机场快线</span>`;
+    requestAnimationFrame(() => { const el = $('#legend'); el.classList.toggle('more', el.scrollWidth > el.clientWidth + 1); });
+    $('#stripe').innerHTML = mains.slice(0, 10).map(r => `<i style="background:${r.color}"></i>`).join('');
+    $('#cart-t1').textContent = `${brand} 轨道交通线路图`;
+  }
+
+  /* ---------- 运营：时钟、发车、列车 ---------- */
+  const OPEN = 330, CLOSE = 1410;   // 05:30 首班，23:30 末班
+  const S = { started: false, t0: 0, drawEnd: 0, drawn: false, clk: 320, ffwd: 0, trains: [], panX: 0, panDir: 1, panHold: 1.5, drag: null, origin: null, plan: null, hover: null, line: null, cardT: 0, touched: false };
+  const allLines = () => [...routes, exp];
+  const peak = t => (t >= 420 && t < 570) || (t >= 1020 && t < 1170);
+  function want(r, t) {
+    if (t < OPEN || t >= CLOSE || r.stops.length < 2 || r.G.total < g * 3) return 0;
+    const base = clamp(Math.round(r.G.total / (g * (r === exp ? 16 : 11))), 1, 3);
+    if (peak(t)) return base + 1;
+    return t >= 1290 ? 1 : base;
+  }
+  function trainEl(r, tr) {
+    // 墨色胶囊、白描边，车头一盏小白灯；快线的车长一截
+    const k = r === exp, len = lw * (k ? 3.6 : 2.8), h = lw * 1.3;
+    const gr = node('g', { class: 'tr' + (S.line && S.line.has(r.no) ? ' hi' : '') }, L.trains);
+    node('rect', { x: f1(-len / 2), y: f1(-h / 2), width: f1(len), height: f1(h), rx: f1(h / 2), fill: INK, stroke: '#fff', 'stroke-width': 1.3 }, gr);
+    tr.lamp = node('circle', { cx: f1(len / 2 - h * 0.45), cy: 0, r: f1(h * 0.17), fill: '#fff' }, gr);
+    if (!k) node('rect', { x: f1(-len * 0.3), y: f1(-h * 0.1), width: f1(len * 0.42), height: f1(h * 0.2), rx: f1(h * 0.1), fill: r.color }, gr);
+    return gr;
+  }
+  function spawn(r, i, dir, tm = 1.2) {
+    const tr = { r, i, dir, s: r.stops[i].s, phase: 'dwell', tm, a: 0 };
+    tr.el = trainEl(r, tr);
+    S.trains.push(tr);
+    return tr;
+  }
+  function dispatch(dt) {
+    allLines().forEach(r => {
+      r.cool = (r.cool || 0) - dt;
+      const n = r.stops.length, live = S.trains.filter(t => t.r === r && !t.gone).length;
+      if (live >= want(r, S.clk) || r.cool > 0) return;
+      let i, dir;
+      if (r.closed) { i = (Math.random() * n) | 0; dir = (r.alt = !r.alt) ? 1 : -1; }
+      else { r.alt = !r.alt; i = r.alt ? 0 : n - 1; dir = r.alt ? 1 : -1; }
+      // 站台上还停着车就晚一点再发
+      if (S.trains.some(t => t.r === r && Math.abs(t.s - r.stops[i].s) < g * 1.5)) { r.alt = !r.alt; r.cool = 0.4; return; }
+      spawn(r, i, dir);
+      r.cool = peak(S.clk) ? 2.4 : 4.2;
+    });
+  }
+  const mod = (a, n) => ((a % n) + n) % n;
+  function moveTrain(tr, dt) {
+    const r = tr.r, n = r.stops.length, v = g * 3.4;
+    if (tr.gone) { tr.gone += dt; return; }
+    if (tr.phase === 'run') {
+      tr.u += dt;
+      tr.s = tr.s0 + (tr.s1 - tr.s0) * smooth(tr.u / tr.T);
+      if (tr.u < tr.T) return;
+      tr.i = tr.j;
+      tr.s = r.closed ? mod(tr.s1, r.G.total) : tr.s1;
+      tr.phase = 'dwell';
+      tr.tm = 1.0;
+      // 车多了就收车：白天只在终点站收，末班以后和环线到哪站收哪站
+      const extra = S.trains.filter(t => t.r === r && !t.gone).length > want(r, S.clk);
+      const end = !r.closed && (tr.i === 0 || tr.i === n - 1);
+      if (extra && (end || r.closed || S.clk >= CLOSE || S.clk < OPEN)) tr.gone = 1e-4;
+      else if (end) { tr.dir = tr.i === 0 ? 1 : -1; tr.tm = 1.8; }
+      return;
+    }
+    tr.tm -= dt;
+    if (tr.tm > 0) return;
+    if (!r.closed && (tr.i + tr.dir < 0 || tr.i + tr.dir >= n)) tr.dir = -tr.dir;
+    let j = tr.i + tr.dir, s1;
+    if (r.closed) {
+      j = mod(j, n);
+      s1 = r.stops[j].s;
+      while (tr.dir > 0 && s1 <= tr.s) s1 += r.G.total;
+      while (tr.dir < 0 && s1 >= tr.s) s1 -= r.G.total;
+    } else s1 = r.stops[j].s;
+    Object.assign(tr, { j, s0: tr.s, s1, u: 0, T: 1.5 * Math.abs(s1 - tr.s) / v + 0.3, phase: 'run' });
+  }
+  function drawTrain(tr) {
+    const [x, y, a] = at(tr.r.G, tr.r.closed ? mod(tr.s, tr.r.G.total) : tr.s);
+    const op = tr.gone ? Math.max(0, 1 - tr.gone / 0.6) : Math.min(1, (tr.a += 1 / 20));
+    // 车头朝行进方向：往回走的车转半圈
+    const back = tr.dir < 0;
+    tr.el.setAttribute('transform', `translate(${f1(x)} ${f1(y)}) rotate(${f1(a * 180 / Math.PI + (back ? 180 : 0))})`);
+    tr.el.setAttribute('opacity', f1(op));
+  }
+
+  /* ---------- 开场：线路一条条铺出来，车站依次亮起 ---------- */
+  function drawIn(T) {
+    let end = 0;
+    const dash = (r, p) => { if (r.p !== p) { r.p = p; const v = p >= 1 ? 'none' : `${p} 2`; r.cs.setAttribute('stroke-dasharray', v); r.el.setAttribute('stroke-dasharray', v); } };
+    // 按线号从左往右一条条铺，支线跟着它的主线
+    const gap = Math.min(0.42, 3.4 / Math.max(1, routes.length - 1));
+    routes.forEach(r => {
+      const k = r.ord, d = clamp(r.G.total / (g * 10), 0.7, 1.9), t0 = 0.3 + k * gap;
+      dash(r, REDUCED ? 1 : smooth((T - t0) / d));
+      end = Math.max(end, t0 + d);
+      // 笔头：正在铺的那一截前面有个小圆点
+      if (r.pen) {
+        const on = r.p > 0 && r.p < 1;
+        r.pen.setAttribute('opacity', on ? 1 : 0);
+        if (on) { const [x, y] = at(r.G, r.p * r.G.total); r.pen.setAttribute('cx', f1(x)); r.pen.setAttribute('cy', f1(y)); }
+      }
+    });
+    dash(exp, REDUCED ? 1 : smooth((T - end + 0.2) / 1.3));
+    exp.links.forEach(([s, e, walk]) => { if (walk ? s.onAt && e.onAt : exp.p * exp.G.total >= e.x - exp.list[0].x) (walk ? s.xw : s.xc).setAttribute('opacity', 1); });
+    stations.forEach(st => {
+      if (!st.onAt && (REDUCED || st.kind === 'dot' ? routes.every(r => r.p >= 1) : st.on.some(o => o.r.p > 0 && o.r.p * o.r.G.total >= o.s - 2))) { st.onAt = T; st.el.classList.add('on'); }
+      if (st.onAt && st.caps) st.caps.forEach(c => c.classList.add('on'));
+      if (st.onAt && st.lb && !st.lbOn && (REDUCED || T - st.onAt > 0.14)) { st.lbOn = true; st.lb.classList.add('on'); }
+    });
+    S.drawEnd = end + 1.2;
+    if (!S.drawn) S.clk = 320 + 8 * clamp(T / S.drawEnd, 0, 1);
+    if (exp.p >= 1 && stations.every(st => st.lbOn || !st.lb)) S.drawn = true;
+  }
+
+  /* ---------- 时钟和到站屏 ---------- */
+  const hhmm = t => { t = mod(Math.floor(t), 1440); return `${String((t / 60) | 0).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
+  function tick(dt) {
+    if (!S.drawn) return;
+    // 白天一秒十二分钟；夜里没车了就快进到天亮，五点二十以后放慢等首班车
+    // 末班车开出以后，等最后几列车跑回来再进夜里
+    const late = S.clk >= CLOSE && S.trains.length;
+    let rate = S.clk < 318 ? 45 : S.clk < OPEN ? 3 : S.clk < CLOSE ? 12 : late ? 4 : 45;
+    if (S.ffwd > 0) { rate *= 6; S.ffwd -= rate * dt; }
+    S.clk += rate * dt;
+    if (late) S.clk = Math.min(S.clk, 1439);
+    if (S.clk >= 1440) S.clk -= 1440;
+  }
+  let lastBoard = '';
+  function board() {
+    const t = S.clk, live = S.trains.some(tr => !tr.gone);
+    let on, lamp, msg;
+    if (S.drawn && !live && (t >= CLOSE || t < 270)) [on, lamp, msg] = ['off', '停运', '全线停运，夜间检修'];
+    else if (!S.drawn || t < OPEN) [on, lamp, msg] = ['off', '未运营', '首班车 05:30 发出'];
+    else if (t < 420) [on, lamp, msg] = ['run', '运营中', '首班车已发出'];
+    else if (t < 570) [on, lamp, msg] = ['peak', '早高峰', '行车间隔约 2 分钟，请先下后上'];
+    else if (t < 1020) [on, lamp, msg] = ['run', '平峰', '行车间隔约 5 分钟'];
+    else if (t < 1170) [on, lamp, msg] = ['peak', '晚高峰', '行车间隔约 2 分钟，换乘请预留时间'];
+    else if (t < 1290) [on, lamp, msg] = ['run', '运营中', '行车间隔约 6 分钟'];
+    else if (t < CLOSE) [on, lamp, msg] = ['run', '运营中', '末班车 23:30 发出，请留意时间'];
+    else if (live) [on, lamp, msg] = ['run', '末班车', '末班车已发出，开往终点站'];
+    else [on, lamp, msg] = ['off', '停运', '全线停运，夜间检修'];
+    const key = hhmm(t) + on + msg;
+    if (key === lastBoard) return;
+    lastBoard = key;
+    $('#clock').textContent = hhmm(t);
+    $('#board').dataset.on = on;
+    $('#lamp').textContent = lamp;
+    $('#msg').textContent = msg;
+    map.classList.toggle('night', S.drawn && !live && (t >= CLOSE || t < 318));
+  }
+
+  /* ---------- 看一条线：这条亮，别的淡 ---------- */
+  function focus(nos, extra) {
+    S.line = nos;
+    map.classList.toggle('dim', !!nos);
+    const hit = st => !!nos && (st.lines.some(n => nos.has(n)) || !!(extra && extra.has(st)));
+    allLines().forEach(r => r.grp.classList.toggle('hi', !!nos && nos.has(r.no)));
+    stations.forEach(st => { const h = hit(st); st.el.classList.toggle('hi', h); if (st.lb) st.lb.classList.toggle('hi', h); });
+    map.querySelectorAll('.cap').forEach(c => c.classList.toggle('hi', c.ends.some(hit)));
+    exp.links.forEach(([s, e, walk]) => (walk ? s.xw : s.xc).classList.toggle('hi', !!nos && (nos.has('E') || hit(s)) && (hit(s) || hit(e))));
+    S.trains.forEach(tr => tr.el.classList.toggle('hi', !!nos && nos.has(tr.r.no)));
+    document.querySelectorAll('#legend .ln').forEach(el => { el.style.opacity = !nos || nos.has(el.dataset.no === 'E' ? 'E' : +el.dataset.no) ? 1 : 0.35; });
+  }
+
+  /* ---------- 站卡：两个方向的下一班车，按图上真在跑的车算 ---------- */
+  function eta(r, s, dir) {
+    const total = r.G.total, n = r.stops.length, gap = total / Math.max(1, n - 1);
+    let best = Infinity, here = false;
+    S.trains.forEach(tr => {
+      if (tr.r !== r || tr.gone) return;
+      let ds, turn = 0;
+      if (r.closed) { if (tr.dir !== dir) return; ds = mod((s - tr.s) * dir, total); }
+      else if (tr.dir === dir) {
+        ds = (s - tr.s) * dir;
+        if (ds < -1) { ds = (dir > 0 ? total - tr.s + total + s : tr.s + total + total - s); turn = 3.6; }   // 刚开过去：跑到头、折返两次再回来
+      }
+      else { const e = dir > 0 ? 0 : total; ds = Math.abs(tr.s - e) + Math.abs(s - e); turn = 1.8; }
+      if (Math.abs(ds) < 2 && tr.phase === 'dwell') here = true;
+      best = Math.min(best, Math.max(0, ds) / (g * 2.2) + Math.round(Math.max(0, ds) / gap) * 1.0 + turn);
+    });
+    return { sec: best, here };
+  }
+  function cardHTML(st) {
+    const bd = n => n === 'E' ? '<span class="bdg x">快线</span>' : `<span class="bdg" style="background:${routes.find(r => r.no === n).color}">${n}</span>`;
+    const lines = [...st.lines];
+    [st.link, ...(st.walk || [])].forEach(o => { if (o) lines.push(...o.lines.filter(n => !lines.includes(n))); });
+    let rows = '';
+    const seen = new Set();
+    st.on.forEach(({ r, s }) => {
+      if (seen.has(r)) return;
+      seen.add(r);
+      [1, -1].forEach(dir => {
+        if (!r.closed && ((dir > 0 && s > r.G.total - 2) || (dir < 0 && s < 2))) return;
+        let to;
+        if (r.closed) { const i = r.stops.findIndex(o => o.st === st); to = r.stops[mod(i + dir, r.stops.length)].st.cn + '方向'; }
+        else to = (dir > 0 ? r.ends[1] : r.ends[0])?.cn || '终点';
+        const e = eta(r, s, dir), sv = S.clk < OPEN || !S.drawn ? '首班 05:30' : S.clk >= CLOSE && !isFinite(e.sec) ? '已停运' : e.here ? '正在停靠' : !isFinite(e.sec) ? '—' : e.sec < 2.2 ? '即将进站' : `${Math.max(1, Math.round(e.sec / 2))} 分`;
+        rows += `<i style="background:${r === exp ? INK : r.color}"></i><span>往 ${to}</span><b class="${/[分]/.test(sv) ? '' : 'dim'}">${sv}</b>`;
+      });
+    });
+    const note = S.origin === st ? '已设为起点，再点一座站' : S.origin ? '点一下设为终点' : st.kind === 'dot' ? '规划中，尚未开通' : '点一下设为起点';
+    const kind = st.kind === 'dot' ? '规划中车站' : lines.length > 1 ? '换乘站' : st.kind === 'term' ? '终点站' : '';
+    return `<div class="nm">${st.cn}</div><div class="py">${st.py}</div>` +
+      (lines.length ? `<div class="ls">${lines.map(bd).join('')}${kind ? `<span style="font-size:11.5px;color:var(--muted);align-self:center;margin-left:4px">${kind}</span>` : ''}</div>` : '') +
+      (rows ? `<div class="eta">${rows}</div>` : '') + `<div class="note">${note}</div>`;
+  }
+  function showCard(st) {
+    const card = $('#card');
+    S.hover = st;
+    stations.forEach(o => o.el.classList.toggle('hover', o === st));
+    if (!st) { card.classList.remove('on'); return; }
+    $('#hint').style.opacity = 0;
+    card.innerHTML = cardHTML(st);
+    const cw = card.offsetWidth, ch = card.offsetHeight, x = st.x - (pan ? S.panX : 0);
+    let left = x + 18, top = st.y - ch - 14;
+    if (left + cw > W - 8) left = x - cw - 18;
+    if (top < 8) top = st.y + 18;
+    card.style.left = clamp(left, 8, W - cw - 8) + 'px';
+    card.style.top = clamp(top, 8, H - ch - 8) + 'px';
+    card.classList.add('on');
+  }
+
+  /* ---------- 规划路线：按站换乘的最短时间，换一次线多算三分钟 ---------- */
+  function graph() {
+    const adj = stations.map(() => []);
+    const link = (a, b, r, w) => { adj[a.st.id].push({ to: b.st.id, r, w, s0: a.s, s1: b.s }); adj[b.st.id].push({ to: a.st.id, r, w, s0: b.s, s1: a.s }); };
+    allLines().forEach(r => {
+      const o = r.stops;
+      const k = r === exp ? 0.3 : 0.5;   // 每格几分钟，快线快一些
+      for (let i = 1; i < o.length; i++) link(o[i - 1], o[i], r, (o[i].s - o[i - 1].s) / g * k + 1);
+      if (r.closed && o.length > 2) link(o[o.length - 1], { st: o[0].st, s: o[0].s + r.G.total }, r, (o[0].s + r.G.total - o[o.length - 1].s) / g * k + 1);
+    });
+    exp.links.forEach(([s, e]) => { adj[s.id].push({ to: e.id, r: null, w: 3 }); adj[e.id].push({ to: s.id, r: null, w: 3 }); });
+    return adj;
+  }
+  let ADJ = [];
+  function shortest(a, b) {
+    const key = (id, r) => id + '|' + (r ? (r === exp ? 'E' : r.k) : '-');
+    const dist = new Map([[key(a.id, null), 0]]), prev = new Map(), done = new Set(), q = [[0, a.id, null]];
+    while (q.length) {
+      q.sort((x, y) => x[0] - y[0]);
+      const [d, u, ru] = q.shift(), ku = key(u, ru);
+      if (done.has(ku)) continue;
+      done.add(ku);
+      if (u === b.id) {
+        const steps = [];
+        for (let k = ku; prev.has(k);) { const p = prev.get(k); steps.unshift(p.e); k = p.k; }
+        return { min: d, steps };
+      }
+      for (const e of ADJ[u]) {
+        const nd = d + e.w + (ru && e.r && e.r !== ru ? 3 : 0), kv = key(e.to, e.r);
+        if (nd < (dist.get(kv) ?? Infinity)) { dist.set(kv, nd); prev.set(kv, { k: ku, e: { ...e, from: u } }); q.push([nd, e.to, e.r]); }
+      }
+    }
+    return null;
+  }
+  function showPlan(a, b) {
+    L.hl.innerHTML = '';
+    const box = $('#plan');
+    if (!a || !b) { box.classList.remove('on'); S.plan = null; focus(null); return; }
+    const res = shortest(a, b);
+    S.plan = res;
+    const legs = [];
+    (res ? res.steps : []).forEach(e => { const last = legs[legs.length - 1]; if (last && last.r === e.r) last.steps.push(e); else legs.push({ r: e.r, steps: [e] }); });
+    const used = new Set(legs.filter(l => l.r).map(l => l.r.no)), on = new Set([a, b]);
+    // 路线画在最上面：先一圈纸色，再粗一号的线色
+    legs.forEach(l => {
+      let d = '';
+      l.steps.forEach(e => {
+        on.add(stations[e.to]);
+        on.add(stations[e.from]);
+        if (!l.r) { const p = stations[e.from], q = stations[e.to]; d += `M${f1(p.x)} ${f1(p.y)}L${f1(q.x)} ${f1(q.y)}`; return; }
+        const n = Math.max(2, Math.ceil(Math.abs(e.s1 - e.s0) / 4));
+        for (let k = 0; k <= n; k++) {
+          const s = e.s0 + (e.s1 - e.s0) * k / n, [x, y] = at(l.r.G, l.r.closed ? mod(s, l.r.G.total) : s);
+          d += `${k ? 'L' : 'M'}${f1(x)} ${f1(y)}`;
+        }
+      });
+      if (!l.r) { node('path', { d, stroke: INK, 'stroke-width': 2.6, 'stroke-dasharray': '3 3', fill: 'none' }, L.hl); return; }
+      node('path', { d, stroke: PAPER, 'stroke-width': f1(lw * 1.5 + 4), fill: 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, L.hl);
+      node('path', { d, stroke: l.r === exp ? INK : l.r.color, 'stroke-width': f1(lw * 1.5), fill: 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, L.hl);
+    });
+    [[a, '起'], [b, '终']].forEach(([st, t]) => {
+      node('circle', { cx: f1(st.x), cy: f1(st.y), r: f1(lw * 1.45), fill: INK, stroke: '#fff', 'stroke-width': 2 }, L.hl);
+      const tx = node('text', { x: f1(st.x), y: f1(st.y + lw * 0.52), 'text-anchor': 'middle', 'font-size': f1(lw * 1.45), 'font-weight': 700, fill: '#fff', 'font-family': '"Noto Sans SC", sans-serif' }, L.hl);
+      tx.textContent = t;
+    });
+    focus(used.size ? used : new Set(['?']), on);
+    const bd = r => r === exp ? '<span class="bdg x">快线</span>' : `<span class="bdg" style="background:${r.color}">${r.no}</span>`;
+    let html = `<button class="close" type="button" aria-label="清除路线">×</button><div class="hd"><b>${a.cn} → ${b.cn}</b></div>`;
+    if (!res) html += `<p style="margin:8px 0 0;color:var(--muted)">这两站之间还没有轨道连通。</p>`;
+    else {
+      // 换乘次数：每走一次步行通道算一次，两段车在同一站接上也算一次
+      const walks = legs.filter(l => !l.r).reduce((n, l) => n + l.steps.length, 0);
+      const xf = walks + legs.filter((l, k) => l.r && k && legs[k - 1].r).length;
+      html += `<div class="hd" style="margin-top:2px"><span>约 ${Math.max(2, Math.round(res.min))} 分钟 · ${!xf ? '不用换乘' : walks ? `换乘 ${xf} 次，其中步行 ${walks} 次` : `换乘 ${xf} 次`}</span></div><ol>`;
+      legs.forEach((l, k) => {
+        if (!l.r) { l.steps.forEach(e => { html += `<li class="xf">从 ${stations[e.from].cn} 步行到 ${stations[e.to].cn}，约 3 分钟</li>`; }); return; }
+        const last = stations[l.steps[l.steps.length - 1].to], dir = l.steps[0].s1 > l.steps[0].s0 ? 1 : -1;
+        const to = l.r.closed ? `${stations[l.steps[0].to].cn}方向` : (dir > 0 ? l.r.ends[1] : l.r.ends[0])?.cn || last.cn;
+        if (k && legs[k - 1].r) html += `<li class="xf">在 ${stations[l.steps[0].from].cn} 换乘</li>`;
+        html += `<li>${bd(l.r)}<span>${to === last.cn ? `坐 ${l.steps.length} 站到终点 <b>${last.cn}</b>` : `往 ${to}，坐 ${l.steps.length} 站到 <b>${last.cn}</b>`}</span></li>`;
+      });
+      html += '</ol>';
+    }
+    box.innerHTML = html;
+    // 手机：把镜头挪到路线中间，停一会儿别自己平移
+    if (pan && res) {
+      const xs = [...on].map(st => st.x);
+      S.panX = clamp((Math.min(...xs) + Math.max(...xs)) / 2 - W / 2, 0, WW - W);
+      S.panHold = 10;
+    }
+    // 路线卡放在左、中、右三处里压住路线上车站最少的那处（同样少就靠右）
+    if (!mobile) {
+      const vx = st => st.x - (pan ? S.panX : 0), bw = box.offsetWidth, bh = box.offsetHeight, m = clamp(W * 0.04, 16, 48);
+      const xs = [W - m - bw, (W - bw) / 2, m];
+      const cost = x => [...on].filter(st => st.y > 40 && st.y < 56 + bh + 16 && vx(st) > x - 16 && vx(st) < x + bw + 16).length;
+      const x = xs.reduce((p, q) => (cost(q) < cost(p) ? q : p));
+      box.style.left = x + 'px';
+      box.style.right = 'auto';
+    }
+    box.classList.add('on');
+    box.querySelector('.close').addEventListener('click', () => { S.origin = null; showPlan(null); });
+  }
+  function choose(st) {
+    if (!st || st.kind === 'dot') { S.origin = null; showPlan(null); showCard(st); return; }
+    if (!S.origin || S.plan) { S.origin = st; showPlan(null); focus(new Set(st.lines.length ? st.lines : ['E']), new Set([st])); }
+    else if (st === S.origin) { S.origin = null; focus(null); }
+    else showPlan(S.origin, st);
+    if (S.plan) { S.mute = st; showCard(null); }
+    else showCard(st);
+  }
+
+  /* ---------- 指针：悬停、点击；手机上左右拖着看 ---------- */
+  const world = e => { const r = scene.getBoundingClientRect(); return [e.clientX - r.left + (pan ? S.panX : 0), e.clientY - r.top]; };
+  function pickStation(x, y) {
+    let best = null, bd = Math.max(13, lw * 1.9);
+    stations.forEach(st => { const d = Math.hypot(st.x - x, st.y - y); if (d < bd) { bd = d; best = st; } });
+    if (!best) best = stations.find(st => st.label && ptRect(x, y, st.label) < 1) || null;
+    return best;
+  }
+  function pickLine(x, y) {
+    let best = null, bd = lw / 2 + 6;
+    allLines().forEach(r => { const [d] = project(r.G, x, y); if (d < bd) { bd = d; best = r; } });
+    return best;
+  }
+  scene.addEventListener('pointermove', e => {
+    if (S.drag) {
+      const dx = e.clientX - S.drag.x;
+      if (Math.abs(dx) > 6) S.drag.moved = true;
+      if (S.drag.moved) { S.panX = clamp(S.drag.pan - dx, 0, WW - W); S.panHold = 5; showCard(null); }
+      return;
+    }
+    if (e.pointerType !== 'mouse' || !S.drawn) return;
+    const [x, y] = world(e), st = pickStation(x, y);
+    scene.style.cursor = st ? 'pointer' : '';
+    if (st !== S.mute) S.mute = null;
+    if (st !== S.hover && !S.mute) showCard(st);
+    if (S.plan || S.origin) return;
+    const ln = st ? null : pickLine(x, y);
+    const key = ln ? String(ln.no) : '';
+    if (key !== (S.lineKey || '')) { S.lineKey = key; focus(ln ? new Set([ln.no]) : null); }
+  });
+  scene.addEventListener('pointerleave', () => { if (S.drag) return; S.mute = null; showCard(null); if (!S.plan && !S.origin) { S.lineKey = ''; focus(null); } });
+  scene.addEventListener('pointerdown', e => {
+    S.touched = true;
+    $('#hint').style.opacity = 0;
+    S.drag = { x: e.clientX, pan: S.panX, moved: false };
+    if (pan) { scene.classList.add('drag'); scene.setPointerCapture(e.pointerId); }
+  });
+  const release = e => {
+    if (!S.drag) return;
+    const moved = S.drag.moved;
+    S.drag = null;
+    scene.classList.remove('drag');
+    if (moved || !S.drawn || e.type === 'pointercancel') return;
+    if (e.target.closest && e.target.closest('.plan')) return;
+    const [x, y] = world(e);
+    choose(pickStation(x, y));
+  };
+  scene.addEventListener('pointerup', release);
+  scene.addEventListener('pointercancel', release);
+  addEventListener('keydown', e => { if (e.key === 'Escape') { S.origin = null; showPlan(null); showCard(null); } });
+  $('#legend').addEventListener('pointerover', e => {
+    const el = e.target.closest('.ln');
+    if (!el || S.plan || S.origin) return;
+    focus(new Set([el.dataset.no === 'E' ? 'E' : +el.dataset.no]));
+  });
+  $('#legend').addEventListener('pointerleave', () => { if (!S.plan && !S.origin) focus(null); });
+
+  /* ---------- 主循环 ---------- */
+  let seed = 7, visible = false, last = performance.now(), ready = false;
+  function setup(replay) {
+    build(seed);
+    river = planRiver(seeded(seed * 31 + 5));
+    placeLabels();
+    render();
+    allLines().forEach(r => {
+      r.stops = stations.filter(st => st.on.some(o => o.r === r)).map(st => ({ st, s: st.on.find(o => o.r === r).s })).sort((a, b) => a.s - b.s);
+      r.cool = 0;
+      r.p = -1;
+    });
+    exp.ends = [exp.list[0], exp.list[exp.list.length - 1]];
+    exp.k = 'E';
+    ADJ = graph();
+    S.trains = [];
+    S.origin = S.plan = S.hover = S.line = null;
+    S.panX = 0;
+    S.panDir = 1;
+    S.panHold = 1.5;
+    $('#plan').classList.remove('on');
+    showCard(null);
+    scene.classList.toggle('pan', pan);
+    $('#hint').textContent = pan ? '左右拖动看全图 · 点两座车站规划路线' : '点两座车站，看怎么换乘';
+    $('#hint').style.opacity = 0;
+    if (replay && S.started) { S.t0 = performance.now(); S.drawn = false; }
+    else if (S.started && !REDUCED) drawIn(1e3);   // 改窗口大小：直接画完，时钟接着走
+    if (REDUCED) {   // 不放动画：直接是上午八点，每条线停着一列车
+      S.started = true;
+      S.t0 = -1e6;
+      drawIn(1e3);
+      S.drawn = true;
+      S.clk = 480;
+      allLines().forEach(r => { if (want(r, 480)) { const t = spawn(r, (r.stops.length / 2) | 0, 1, 1e9); t.a = 1; drawTrain(t); } });
+      board();
+    }
+    window.__metro = { S, stations, routes, exp, river, obst, g, lw, W, H, WW, mobile, pan, labels };
+    ready = true;
+  }
+  new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; })).observe(scene);
+  function loop(now) {
+    requestAnimationFrame(loop);
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (!visible || !ready || REDUCED) return;
+    const r = scene.getBoundingClientRect();
+    if (!S.started && (r.top < innerHeight * 0.75 || r.bottom <= innerHeight + 4)) { S.started = true; S.t0 = now; }
+    if (!S.started) return;
+    if (!S.drawn) {
+      drawIn((now - S.t0) / 1000);
+      if (S.drawn && !S.touched) $('#hint').style.opacity = 1;
+    }
+    tick(dt);
+    if (S.drawn) dispatch(dt);
+    S.trains.forEach(tr => { moveTrain(tr, dt * (S.ffwd > 0 ? 2.2 : 1)); drawTrain(tr); });
+    S.trains = S.trains.filter(tr => { if (tr.gone > 0.6) { tr.el.remove(); return false; } return true; });
+    // 手机：画面比屏幕宽，慢慢左右平移；手指拖过以后停一会儿再接着走
+    if (pan && !S.drag && !S.drawn && !S.touched) {   // 开场：镜头跟着铺线从左往右走
+      S.panX = (WW - W) * smooth((now - S.t0) / 1000 / Math.max(1, S.drawEnd - 0.8));
+      S.panDir = -1;
+      S.panHold = 2.5;
+    } else if (pan && !S.drag) {
+      S.panHold -= dt;
+      if (S.panHold <= 0 && WW > W) {
+        const max = WW - W, edge = Math.min(S.panX, max - S.panX);
+        S.panX = clamp(S.panX + S.panDir * dt * (8 + Math.min(1, edge / 60) * 16), 0, max);
+        if (S.panX <= 0 || S.panX >= max) { S.panDir *= -1; S.panHold = 2.5; }
+      }
+    }
+    if (pan) map.setAttribute('viewBox', `${f1(S.panX)} 0 ${W} ${H}`);
+    S.cardT -= dt;
+    if (S.hover && S.cardT <= 0) { S.cardT = 0.5; showCard(S.hover); }
+    board();
+  }
+
+  const fontsReady = () => Promise.all([
+    document.fonts.load(`700 100px Overpass`, brand), document.fonts.load(`500 100px "Noto Sans SC"`, brand),
+    document.fonts.load('500 12.5px "Noto Sans SC"', '金银青白东西南北站换乘'), document.fonts.load('700 12.5px "Noto Sans SC"', '金银青白东西南北站换乘'),
+    document.fonts.load('600 9px Overpass'), document.fonts.load('600 34px "Overpass Mono"'),
+  ]).catch(() => {});
+  fontsReady().then(() => { setup(false); requestAnimationFrame(loop); });
+  let tmr, lastW = innerWidth;
+  $('#rename').addEventListener('click', () => { seed++; setup(true); });
+  $('#ffwd').addEventListener('click', () => { if (S.drawn) S.ffwd = 1440; });
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(tmr);
+    tmr = setTimeout(() => setup(false), 250);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>暗房 · 一千零一页</title>
+<meta name="description" content="红灯下的暗房，品牌名作为一张黑白照片在药水里显影、定影，最后开灯。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fraunces:opsz,wght@9..144,400..900&family=Noto+Serif+SC:wght@900&display=swap">
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --line: #26262b;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --serif: Fraunces, "Noto Serif SC", Georgia, "Songti SC", serif;
+    /* 页脚自己的一套颜色：暖一点的白、安全灯红 */
+    --f-bg: #0d0c0c;
+    --f-text: #e8e3dc;
+    --f-muted: #8d867e;
+    --f-faint: #5d5853;
+    --f-line: #221f1d;
+    --safe: #d2452f;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  /* ---------- 页脚 ---------- */
+  .foot { background: var(--f-bg); color: var(--f-text); border-top: 1px solid var(--f-line); }
+  .foot-top {
+    display: grid; grid-template-columns: minmax(260px, 1.5fr) repeat(3, minmax(120px, 1fr)); gap: 40px 48px;
+    max-width: 1320px; margin: 0 auto; padding: 64px clamp(16px, 4vw, 48px) 44px;
+  }
+  .brand .name { font: 600 40px/1 var(--serif); letter-spacing: -0.015em; }
+  .brand .tag { margin: 14px 0 22px; color: var(--f-muted); font-size: 14px; max-width: 32ch; text-wrap: pretty; }
+  .status { display: inline-flex; align-items: center; gap: 9px; font: 12.5px/1 var(--sans); color: var(--f-muted); padding: 8px 12px 8px 10px; border: 1px solid var(--f-line); border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--f-faint); flex: none; transition: background .4s, box-shadow .4s; }
+  .status[data-on="safe"] i { background: var(--safe); box-shadow: 0 0 10px 1px rgb(210 69 47 / .65); }
+  .status[data-on="room"] i { background: #f3eee4; box-shadow: 0 0 10px 1px rgb(243 238 228 / .45); }
+  .status[data-on="bad"] i { background: #6b6560; }
+  .col h3 { margin: 4px 0 14px; font: 600 12px/1 var(--sans); letter-spacing: .12em; color: var(--f-faint); }
+  .col a { display: block; color: var(--f-text); opacity: .84; text-decoration: none; font-size: 14.5px; padding: 3px 0; }
+  .col a:hover { opacity: 1; }
+
+  .scene { position: relative; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .scene canvas { display: block; width: 100%; }
+  .scene .over { position: absolute; inset: 0; height: 100%; }
+  .scene .fallback { display: none; }
+
+  .foot-legal {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px;
+    max-width: 1320px; margin: 0 auto; padding: 18px clamp(16px, 4vw, 48px) 22px;
+    font-size: 12.5px; color: var(--f-faint);
+  }
+  .foot-legal a { color: var(--f-muted); text-decoration: none; }
+  .foot-legal a:hover { color: var(--f-text); }
+  .foot-legal .ctl { margin-left: auto; display: flex; gap: 8px; }
+  .foot-legal button {
+    font: 12.5px/1 var(--sans); color: var(--f-muted); cursor: pointer;
+    background: transparent; border: 1px solid var(--f-line); border-radius: 999px; padding: 8px 12px;
+  }
+  .foot-legal button:hover { color: var(--f-text); border-color: #3a3530; }
+
+  @media (max-width: 760px) {
+    .foot-top { grid-template-columns: 1fr 1fr; padding-top: 48px; gap: 32px 24px; }
+    .brand { grid-column: 1 / -1; }
+    .brand .name { font-size: 34px; }
+    .foot-legal .ctl { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 001</a>
+
+<footer class="foot">
+  <div class="foot-top">
+    <div class="brand">
+      <div class="name" id="f-name">Lumen</div>
+      <p class="tag">胶片冲洗、银盐放大和暗房工作坊。我们相信，有些光要等一等才看得见。</p>
+      <div class="status" id="status" data-on="off"><i></i><span id="status-text">暗房准备中</span></div>
+    </div>
+    <nav class="col" aria-label="工作室"><h3>工作室</h3><a href="#">关于我们</a><a href="#">作品</a><a href="#">驻留计划</a><a href="#">招聘</a></nav>
+    <nav class="col" aria-label="服务"><h3>服务</h3><a href="#">胶片冲扫</a><a href="#">银盐放大</a><a href="#">暗房租用</a><a href="#">工作坊</a></nav>
+    <nav class="col" aria-label="联系"><h3>联系</h3><a href="#">预约</a><a href="#">邮件订阅</a><a href="#">小红书</a><a href="#">Instagram</a></nav>
+  </div>
+  <div class="scene" id="scene">
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <canvas id="over" class="over" aria-label="暗房：鼠标划过药水会起波纹，右上角的灯绳是电灯开关"></canvas>
+  </div>
+  <div class="foot-legal">
+    <span>© 2026 <span class="bn">Lumen</span> 暗房工作室</span>
+    <a href="#">隐私</a><a href="#">条款</a>
+    <div class="ctl"><button type="button" id="again">↺ 重新冲一张</button><button type="button" id="sound">声音：关</button></div>
+  </div>
+</footer>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const ease = x => { x = clamp(x, 0, 1); return x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2; };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+
+  // 噪声：整数格点哈希 + 平滑插值
+  function hash(x, y) {
+    let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  }
+  function noise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  const fbm = (x, y) => noise(x, y) * 0.5 + noise(x * 2.03 + 17, y * 2.03 + 9) * 0.28 + noise(x * 4.1 + 41, y * 4.1 + 23) * 0.14 + noise(x * 8.3 + 7, y * 8.3 + 61) * 0.08;
+  // 固定种子的随机数，叶子每次长得一样
+  function seeded(s) { return () => { s |= 0; s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  const scene = $('#scene'), glc = $('#gl'), ovc = $('#over'), octx = ovc.getContext('2d');
+  const statusEl = $('#status'), statusText = $('#status-text');
+  const SAFE = [1, 0.13, 0.06], ROOM = [1, 0.985, 0.96];
+
+  /* ---------- 布局：两只盘子并排放在水池台上，镜头一次看一只 ---------- */
+  let W, H, DPR, WW, mobile, T1, T2, L1, L2, LR, P1, P2, PW, PH, timer, cordX, cordLen, lamp, room;
+  function layout() {
+    W = scene.clientWidth;
+    DPR = Math.min(devicePixelRatio || 1, 2);
+    mobile = W < 680;
+    const tw = Math.round(mobile ? W * 0.93 : W * 0.8), th = Math.round(tw / (mobile ? 1.62 : 2.05));
+    H = Math.round(th + (mobile ? 34 : clamp(W * 0.06, 44, 90)));
+    const tx = Math.round(mobile ? (W - tw) / 2 : W * 0.035), ty = Math.round((H - th) / 2);
+    T1 = { x: tx, y: ty, w: tw, h: th };
+    T2 = { x: tx + W, y: ty, w: tw, h: th };
+    WW = W * 2;
+    const inset = clamp(tw * 0.03, 12, 26);
+    L1 = { x: T1.x + inset, y: T1.y + inset, w: tw - inset * 2, h: th - inset * 2 };
+    L2 = { x: T2.x + inset, y: T2.y + inset, w: L1.w, h: L1.h };
+    LR = clamp(tw * 0.012, 6, 12);   // 液面圆角
+    PW = Math.round(L1.w * 0.88);
+    PH = Math.round(Math.min(L1.h * 0.84, PW / 1.9));
+    P1 = { x: L1.x + L1.w / 2 - L1.w * 0.01, y: L1.y + L1.h / 2 + L1.h * 0.015 };
+    P2 = { x: L2.x + L2.w / 2 + L2.w * 0.008, y: L2.y + L2.h / 2 - L2.h * 0.01 };
+    const gap = W - (tx + tw);
+    timer = mobile ? null : { x: tx + tw + gap * 0.5, y: ty + th * 0.7, r: Math.min(gap * 0.36, th * 0.17) };
+    cordX = mobile ? W - 18 : tx + tw + gap * 0.5;
+    cordLen = H * (mobile ? 0.3 : 0.33);
+    // 灯的位置倒着算：俯拍时，平静水面上的倒影落在相机和灯的连线上、按两者高度分比例的那一点
+    // 让安全灯灯泡的倒影落在显影盘液面左上角，日光灯管的倒影落在定影盘液面上沿，都在相纸外面
+    const camZ = H * 3.2, lz = H * 1.5, rz = H * 2.2, spot = (cam, want, z) => (want * (z + camZ) - cam * z) / camZ;
+    lamp = [spot(W / 2, L1.x + L1.w * 0.07, lz), spot(H / 2, L1.y + L1.h * 0.06, lz), lz];
+    room = [W, spot(H / 2, L2.y + L2.h * 0.05, rz), rz];
+    glc.style.height = ovc.style.height = H + 'px';
+    glc.width = ovc.width = Math.round(W * DPR);
+    glc.height = ovc.height = Math.round(H * DPR);
+  }
+
+  /* ---------- 水池台、盘子和小道具：只画固有色，光照在着色器里算 ---------- */
+  let benchCv, benchScale;
+  function rrect(o, x, y, w, h, r) {
+    o.beginPath();
+    o.moveTo(x + r, y);
+    o.arcTo(x + w, y, x + w, y + h, r);
+    o.arcTo(x + w, y + h, x, y + h, r);
+    o.arcTo(x, y + h, x, y, r);
+    o.arcTo(x, y, x + w, y, r);
+    o.closePath();
+  }
+  function renderBench(maxTex) {
+    benchScale = Math.min(DPR, maxTex / WW, maxTex / H);
+    benchCv = canvas(WW * benchScale, H * benchScale);
+    const o = benchCv.getContext('2d');
+    o.scale(benchScale, benchScale);
+    // 台面：黑色玻璃钢水池，带一点大块的明暗和水渍
+    const w = Math.ceil(WW / 3), h = Math.ceil(H / 3), img = new ImageData(w, h), d = img.data;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const n = fbm(x * 0.02, y * 0.02), streak = Math.max(0, noise(x * 0.006 + 3, y * 0.09) - 0.62) * 0.5;
+      const k = 0.17 + n * 0.06 + streak * 0.12, i = (y * w + x) * 4;
+      d[i] = 255 * k; d[i + 1] = 255 * k * 0.99; d[i + 2] = 255 * k * 1.03; d[i + 3] = 255;
+    }
+    const base = canvas(w, h);
+    base.getContext('2d').putImageData(img, 0, 0);
+    o.imageSmoothingQuality = 'high';
+    o.drawImage(base, 0, 0, WW, H);
+    for (let i = 0; i < WW * H / 260; i++) {
+      o.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,.035)' : 'rgba(0,0,0,.12)';
+      o.fillRect(Math.random() * WW, Math.random() * H, 1, 1);
+    }
+    tray(o, T1, [74, 76, 82], 'DEV · 显影');
+    tray(o, T2, [196, 199, 204], 'FIX · 定影');
+    // 台面上的水珠
+    const rnd = seeded(7);
+    for (let i = 0; i < (mobile ? 18 : 46); i++) {
+      const x = rnd() * WW, y = rnd() * H;
+      if ([T1, T2].some(t => x > t.x - 8 && x < t.x + t.w + 8 && y > t.y - 8 && y < t.y + t.h + 8)) continue;
+      const r = 1.2 + rnd() ** 2 * 5;
+      o.fillStyle = 'rgba(0,0,0,.28)';
+      o.beginPath(); o.ellipse(x + 0.6, y + 0.8, r, r * 0.85, 0, 0, 7); o.fill();
+      o.fillStyle = 'rgba(255,255,255,.08)';
+      o.beginPath(); o.ellipse(x, y, r, r * 0.85, 0, 0, 7); o.fill();
+      o.fillStyle = 'rgba(255,255,255,.55)';
+      o.beginPath(); o.arc(x - r * 0.35, y - r * 0.35, Math.max(0.6, r * 0.22), 0, 7); o.fill();
+    }
+    if (timer) timerBody(o, timer);
+    if (!mobile) paperBox(o, T2.x + T2.w + (W - T1.x - T1.w) * 0.5, T2.y + T2.h * 0.7);
+  }
+  // 盘子：外沿、往里收的斜壁、带加强筋的底，角上一个倒液嘴，边上贴一条手写的美纹纸
+  function tray(o, t, c, label) {
+    const col = (k, a = 1) => `rgba(${Math.round(c[0] * k)},${Math.round(c[1] * k)},${Math.round(c[2] * k)},${a})`;
+    const R = clamp(t.w * 0.03, 12, 24), rim = clamp(t.w * 0.016, 7, 14), inset = clamp(t.w * 0.03, 12, 26);
+    o.save();
+    o.shadowColor = 'rgba(0,0,0,.6)';
+    o.shadowBlur = 22;
+    o.shadowOffsetY = 10;
+    o.fillStyle = col(0.8);
+    rrect(o, t.x, t.y, t.w, t.h, R);
+    o.fill();
+    o.restore();
+    const g = o.createLinearGradient(t.x, t.y, t.x + t.w * 0.3, t.y + t.h);
+    g.addColorStop(0, col(1.02));
+    g.addColorStop(1, col(0.9));
+    o.fillStyle = g;
+    rrect(o, t.x, t.y, t.w, t.h, R);
+    o.fill();
+    o.strokeStyle = col(1.08, 0.9);
+    o.lineWidth = 1.2;
+    rrect(o, t.x + 1.5, t.y + 1.5, t.w - 3, t.h - 3, R - 1.5);
+    o.stroke();
+    // 斜壁：从外沿到底，越往里越暗
+    const wx = t.x + rim, wy = t.y + rim, ww = t.w - rim * 2, wh = t.h - rim * 2;
+    o.fillStyle = col(0.72);
+    rrect(o, wx, wy, ww, wh, R * 0.75);
+    o.fill();
+    const fx = t.x + inset, fy = t.y + inset, fw = t.w - inset * 2, fh = t.h - inset * 2;
+    for (let k = 0; k < 6; k++) {
+      o.fillStyle = col(0.74 + k * 0.035);
+      rrect(o, lerp(wx, fx, k / 6), lerp(wy, fy, k / 6), lerp(ww, fw, k / 6), lerp(wh, fh, k / 6), lerp(R * 0.75, R * 0.45, k / 6));
+      o.fill();
+    }
+    o.fillStyle = col(0.93);
+    rrect(o, fx, fy, fw, fh, R * 0.45);
+    o.fill();
+    // 底上的加强筋：沿长边几道凸起，一边亮一边暗
+    o.save();
+    rrect(o, fx, fy, fw, fh, R * 0.45);
+    o.clip();
+    const n = Math.max(4, Math.round(fh / 26));
+    for (let k = 1; k < n; k++) {
+      const y = fy + fh * k / n;
+      o.fillStyle = col(1.02, 0.9);
+      o.fillRect(fx, y - 1.6, fw, 1.4);
+      o.fillStyle = col(0.8, 0.9);
+      o.fillRect(fx, y, fw, 1.4);
+    }
+    // 底角的暗部
+    const ao = o.createRadialGradient(fx + fw / 2, fy + fh / 2, Math.min(fw, fh) * 0.3, fx + fw / 2, fy + fh / 2, Math.hypot(fw, fh) * 0.55);
+    ao.addColorStop(0, 'rgba(0,0,0,0)');
+    ao.addColorStop(1, 'rgba(0,0,0,.16)');
+    o.fillStyle = ao;
+    o.fillRect(fx, fy, fw, fh);
+    o.restore();
+    // 倒液嘴
+    o.fillStyle = col(0.6);
+    o.beginPath();
+    o.arc(t.x + R * 0.55, t.y + R * 0.55, R * 0.42, 0, 7);
+    o.fill();
+    // 美纹纸标签
+    o.save();
+    o.translate(t.x + t.w * 0.08, t.y + t.h - rim * 0.55);
+    o.rotate(-0.025);
+    const lw = clamp(t.w * 0.15, 66, 130), lh = clamp(t.h * 0.075, 15, 24);
+    o.fillStyle = 'rgba(232,216,176,.94)';
+    o.beginPath();
+    o.moveTo(0, -lh / 2);
+    for (let x = 0; x <= lw; x += 4) o.lineTo(x, -lh / 2 + (hash(x, 3) - 0.5) * 1.6);
+    for (let x = lw; x >= 0; x -= 4) o.lineTo(x, lh / 2 + (hash(x, 9) - 0.5) * 1.6);
+    o.closePath();
+    o.fill();
+    o.fillStyle = 'rgba(30,30,34,.9)';
+    o.font = `600 ${lh * 0.82}px Caveat, "Segoe Print", "KaiTi", cursive`;
+    o.textBaseline = 'middle';
+    o.fillText(label, lh * 0.35, lh * 0.04);
+    o.restore();
+  }
+  // 计时器：黑色胶木外壳、白色刻度，夜光部分在叠加层里画
+  function timerBody(o, t) {
+    o.save();
+    o.shadowColor = 'rgba(0,0,0,.6)';
+    o.shadowBlur = 16;
+    o.shadowOffsetY = 8;
+    o.fillStyle = '#1a1a1c';
+    o.beginPath(); o.arc(t.x, t.y, t.r * 1.12, 0, 7); o.fill();
+    o.restore();
+    const g = o.createRadialGradient(t.x - t.r * 0.3, t.y - t.r * 0.4, 0, t.x, t.y, t.r * 1.12);
+    g.addColorStop(0, '#3a3a3e');
+    g.addColorStop(1, '#141416');
+    o.fillStyle = g;
+    o.beginPath(); o.arc(t.x, t.y, t.r * 1.12, 0, 7); o.fill();
+    o.fillStyle = '#0b0b0c';
+    o.beginPath(); o.arc(t.x, t.y, t.r, 0, 7); o.fill();
+    o.strokeStyle = '#d8d6d0';
+    for (let k = 0; k < 60; k++) {
+      const a = k / 60 * Math.PI * 2 - Math.PI / 2, l = k % 5 ? 0.06 : 0.13;
+      o.lineWidth = k % 5 ? 0.7 : 1.4;
+      o.beginPath();
+      o.moveTo(t.x + Math.cos(a) * t.r * 0.94, t.y + Math.sin(a) * t.r * 0.94);
+      o.lineTo(t.x + Math.cos(a) * t.r * (0.94 - l), t.y + Math.sin(a) * t.r * (0.94 - l));
+      o.stroke();
+    }
+    o.fillStyle = '#d8d6d0';
+    o.font = `600 ${t.r * 0.16}px "Segoe UI", sans-serif`;
+    o.textAlign = 'center';
+    o.textBaseline = 'middle';
+    for (let k = 0; k < 12; k++) {
+      const a = k / 12 * Math.PI * 2 - Math.PI / 2;
+      o.fillText(String(k * 5), t.x + Math.cos(a) * t.r * 0.66, t.y + Math.sin(a) * t.r * 0.66);
+    }
+    o.font = `600 ${t.r * 0.11}px "Segoe UI", sans-serif`;
+    o.fillStyle = '#8a8884';
+    o.fillText('SECONDS', t.x, t.y + t.r * 0.32);
+  }
+  // 相纸盒：黑盒子，盖子歪着搭在上面
+  function paperBox(o, x, y) {
+    const w = (W - T1.x - T1.w) * 0.7, h = w * 1.25;
+    o.save();
+    o.translate(x, y);
+    o.rotate(0.06);
+    o.shadowColor = 'rgba(0,0,0,.6)';
+    o.shadowBlur = 16;
+    o.shadowOffsetY = 8;
+    o.fillStyle = '#121214';
+    o.fillRect(-w / 2, -h / 2, w, h);
+    o.shadowColor = 'transparent';
+    o.fillStyle = '#1d1d20';
+    o.save();
+    o.rotate(-0.1);
+    o.fillRect(-w / 2 - 4, -h / 2 - 6, w + 6, h * 0.62);
+    o.fillStyle = '#d9d4ca';
+    o.font = `700 ${w * 0.13}px "Segoe UI", sans-serif`;
+    o.textAlign = 'center';
+    o.fillText('相纸', 0, -h * 0.24);
+    o.font = `${w * 0.09}px "Segoe UI", sans-serif`;
+    o.fillStyle = '#8f8a82';
+    o.fillText('纤维基 · 光面', 0, -h * 0.12);
+    o.fillStyle = '#b8402d';
+    o.fillRect(-w * 0.32, -h * 0.05, w * 0.64, 2);
+    o.restore();
+    o.restore();
+  }
+
+  /* ---------- 照片：一束光透过镂空的字投在灰泥墙上，叶影掠过 ---------- */
+  let printTex = null, printW = 0, printH = 0;
+  function renderPrint() {
+    printW = Math.round(PW * DPR);
+    printH = Math.round(PH * DPR);
+    const mb = Math.round(Math.min(printW, printH) * 0.055), fb = Math.max(3, Math.round(printW * 0.009));
+    const ix = mb + fb, iy = mb + fb, iw = printW - ix * 2, ih = printH - iy * 2;
+    // 环境光：墙本来的明暗，左上亮一点，右下暗下去
+    const A = canvas(iw, ih), ac = A.getContext('2d');
+    const sw = Math.ceil(iw / 4), shh = Math.ceil(ih / 4), small = new ImageData(sw, shh), sd = small.data;
+    for (let y = 0; y < shh; y++) for (let x = 0; x < sw; x++) {
+      const n = fbm(x * 0.03 + 11, y * 0.03 + 5), u = x / sw, v = y / shh;
+      const L = 0.05 + n * 0.06 + (1 - u) * 0.03 + (1 - v) * 0.025, i = (y * sw + x) * 4;
+      sd[i] = sd[i + 1] = sd[i + 2] = clamp(L, 0, 1) * 255; sd[i + 3] = 255;
+    }
+    const sc = canvas(sw, shh);
+    sc.getContext('2d').putImageData(small, 0, 0);
+    ac.imageSmoothingQuality = 'high';
+    ac.drawImage(sc, 0, 0, iw, ih);
+    // 直射光：一圈柔和的光斑 + 透过镂空字的光，叶影只挡这一层
+    const D = canvas(iw, ih), dc = D.getContext('2d');
+    const pool = dc.createRadialGradient(iw * 0.47, ih * 0.52, 0, iw * 0.47, ih * 0.52, iw * 0.55);
+    pool.addColorStop(0, 'rgba(255,255,255,.12)');
+    pool.addColorStop(0.6, 'rgba(255,255,255,.045)');
+    pool.addColorStop(1, 'rgba(255,255,255,0)');
+    dc.fillStyle = pool;
+    dc.fillRect(0, 0, iw, ih);
+    const M = canvas(iw, ih), mc = M.getContext('2d');
+    const font = sz => `800 ${sz}px Fraunces, "Noto Serif SC", Georgia, "Songti SC", serif`;
+    mc.font = font(100);
+    const m = mc.measureText(brand);
+    const tw = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) || 1, th = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || 1;
+    const size = Math.min(100 * iw * 0.78 / tw, 100 * ih * 0.52 / th), kk = size / 100;
+    mc.font = font(size);
+    mc.fillStyle = '#fff';
+    mc.setTransform(1, -0.028, 0.018, 1, 0, iw * 0.014);   // 投影机在左边一点，字带一点梯形
+    mc.fillText(brand, (iw - tw * kk) / 2 + m.actualBoundingBoxLeft * kk, (ih - th * kk) / 2 + m.actualBoundingBoxAscent * kk + ih * 0.03);
+    dc.globalCompositeOperation = 'lighter';
+    dc.filter = `blur(${Math.max(2, iw * 0.016)}px)`;   // 光晕
+    dc.globalAlpha = 0.16;
+    dc.drawImage(M, 0, 0);
+    dc.filter = `blur(${Math.max(0.6, iw * 0.0008)}px)`;   // 对得很准的焦，边只虚一点点
+    dc.globalAlpha = 0.86;
+    dc.drawImage(M, 0, 0);
+    dc.globalAlpha = 1;
+    dc.filter = 'none';
+    // 叶影：右上角伸进来的一枝，叶子少而分明
+    const Lv = canvas(iw, ih), lc = Lv.getContext('2d'), rnd = seeded(20261102);
+    lc.fillStyle = lc.strokeStyle = '#000';
+    lc.lineCap = 'round';
+    const S = Math.min(iw, ih * 2.2);
+    const branch = (x0, y0, ang, len, n, ls, bend) => {
+      let x = x0, y = y0, a = ang;
+      const pts = [];
+      lc.lineWidth = ls * 0.05;
+      lc.beginPath();
+      lc.moveTo(x, y);
+      for (let k = 0; k < 30; k++) {
+        a += bend + (rnd() - 0.5) * 0.04;
+        x += Math.cos(a) * len / 30;
+        y += Math.sin(a) * len / 30;
+        lc.lineTo(x, y);
+        pts.push([x, y, a]);
+      }
+      lc.stroke();
+      for (let k = 0; k < n; k++) {
+        const [px, py, pa] = pts[Math.min(29, Math.floor(4 + (k / n) * 25))], side = k % 2 ? 1 : -1, tip = k === n - 1;
+        const la = tip ? pa : pa + side * (0.75 + rnd() * 0.35), ll = ls * (tip ? 0.9 : 0.62 + rnd() * 0.38), lw = ll * (0.27 + rnd() * 0.07);
+        lc.save();
+        lc.translate(px, py);
+        lc.rotate(la);
+        lc.lineWidth = ls * 0.025;
+        lc.beginPath(); lc.moveTo(0, 0); lc.lineTo(ll * 0.12, 0); lc.stroke();   // 叶柄
+        lc.beginPath();
+        lc.moveTo(ll * 0.1, 0);
+        lc.bezierCurveTo(ll * 0.3, -lw * 1.05, ll * 0.75, -lw * 0.8, ll, 0);
+        lc.bezierCurveTo(ll * 0.75, lw * 0.8, ll * 0.3, lw * 1.05, ll * 0.1, 0);
+        lc.fill();
+        lc.restore();
+      }
+    };
+    branch(iw * 1.03, -ih * 0.04, Math.PI * 0.8, iw * 0.4, 9, S * 0.12, 0.012);
+    branch(iw * 1.02, ih * 0.5, Math.PI * 0.97, iw * 0.2, 5, S * 0.095, -0.01);
+    dc.globalCompositeOperation = 'destination-out';
+    dc.filter = `blur(${Math.max(1, iw * 0.0028)}px)`;
+    dc.globalAlpha = 0.84;
+    dc.drawImage(Lv, 0, 0);
+    dc.filter = 'none';
+    dc.globalAlpha = 1;
+    // 合成：亮度 = 环境光 + 直射光 × 灰泥的凹凸（斜着打的光最显墙面纹理），再转成密度
+    const amb = ac.getImageData(0, 0, iw, ih).data, dir = dc.getImageData(0, 0, iw, ih).data, out = new Uint8Array(printW * printH);
+    const holeEdge = (x, y) => {   // 锉过的底片夹：黑边内沿不规则
+      const ex = Math.min(x - ix, ix + iw - 1 - x), ey = Math.min(y - iy, iy + ih - 1 - y);
+      return Math.min(ex, ey) - (hash(Math.floor(x / 3), 7) + hash(Math.floor(y / 3), 13)) * 1.7;
+    };
+    const cx = iw / 2, cy = ih / 2, R = Math.hypot(iw, ih) / 2;
+    for (let y = 0; y < printH; y++) for (let x = 0; x < printW; x++) {
+      let dns;
+      if (x < mb || y < mb || x >= printW - mb || y >= printH - mb) dns = 0;
+      else if (x < ix || y < iy || x >= ix + iw || y >= iy + ih || holeEdge(x, y) < 0) dns = 0.975;
+      else {
+        const qx = x - ix, qy = y - iy, j = (qy * iw + qx) * 4;
+        const lift = dir[j + 3] / 255, bump = 1 + (0.24 * (noise(qx * 0.11, qy * 0.11) - 0.5) + 0.1 * (noise(qx * 0.4 + 9, qy * 0.4) - 0.5)) * (1.4 - lift) - 0.07 * Math.max(0, noise(qx * 0.02 + 3, qy * 0.2) - 0.6);   // 光越弱的地方墙面纹理越显，字面上只留一点
+        let L = amb[j] / 255 * (0.9 + 0.2 * noise(qx * 0.3, qy * 0.3)) + dir[j + 3] / 255 * bump;   // 直射光那层是带透明度的白，亮度在 alpha 里
+        const r = Math.hypot(qx - cx, (qy - cy) * 1.6) / R;
+        L *= 1 - 0.38 * smooth((r - 0.45) / 0.75);   // 暗角
+        const Lc = clamp(L, 0, 1), sc2 = Lc * Lc * (3 - 2 * Lc);   // 3 号相纸：中间调反差拉开一点
+        dns = clamp(1 - (Lc * 0.45 + sc2 * 0.55) * 1.04, 0.025, 0.965);
+        dns += (hash(x, y) - 0.5) * 0.075 * (1 - Math.abs(dns * 2 - 1) * 0.55);   // 颗粒在中间调最明显
+      }
+      out[y * printW + x] = clamp(dns, 0, 1) * 255;
+    }
+    printTex = out;
+  }
+
+  /* ---------- 药水：每只盘子一张高度场，二维波动方程 ---------- */
+  function liquid(nx, ny) { return { nx, ny, h: new Float32Array(nx * ny), v: new Float32Array(nx * ny), px: new Float32Array(nx * ny * 4), e: 0 }; }
+  let Q1, Q2, dev, DX, DY;
+  const GAIN = 18;   // 实测晃盘时斜率均值约 0.02、点水处约 0.05，放大到折射偏移 5～12 像素
+  function makeLiquids() {
+    const nx = mobile ? 96 : 150, ny = Math.round(nx * L1.h / L1.w);
+    Q1 = liquid(nx, ny);
+    Q2 = liquid(nx, ny);
+    DX = 96;
+    DY = Math.max(8, Math.round(DX * PH / PW));
+    dev = { p: new Float32Array(DX * DY), px: new Uint8Array(DX * DY) };
+  }
+  function stepLiquid(q, dt) {
+    const { nx, ny, h, v } = q, c = nx / 1.25, sub = Math.max(1, Math.ceil(dt * c / 0.6)), s = dt / sub, k = c * c * s, damp = Math.exp(-0.7 * s);
+    for (let it = 0; it < sub; it++) {
+      for (let y = 0; y < ny; y++) {
+        const up = y > 0 ? -nx : 0, dn = y < ny - 1 ? nx : 0;
+        for (let x = 0; x < nx; x++) {
+          const i = y * nx + x, l = x > 0 ? h[i - 1] : h[i], r = x < nx - 1 ? h[i + 1] : h[i];
+          v[i] = (v[i] + k * (l + r + h[i + up] + h[i + dn] - 4 * h[i])) * damp;
+        }
+      }
+      for (let i = 0; i < h.length; i++) h[i] += v[i] * s;
+    }
+    let e = 0;
+    for (let i = 0; i < v.length; i += 3) e += Math.abs(v[i]);
+    q.e = e * 3 / v.length;
+  }
+  // 打包成半精度浮点纹理：R/G 是斜率，B 是曲率（焦散用），A 是高度；8 位精度不够，高光会碎成方块
+  function packLiquid(q) {
+    const { nx, ny, h, px } = q;
+    for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
+      const i = y * nx + x, l = h[x > 0 ? i - 1 : i], r = h[x < nx - 1 ? i + 1 : i], u = h[y > 0 ? i - nx : i], d = h[y < ny - 1 ? i + nx : i], o = i * 4;
+      px[o] = (r - l) * 0.5;
+      px[o + 1] = (d - u) * 0.5;
+      const xl = h[y * nx + Math.max(0, x - 2)], xr = h[y * nx + Math.min(nx - 1, x + 2)], yu = h[Math.max(0, y - 2) * nx + x], yd = h[Math.min(ny - 1, y + 2) * nx + x];
+      px[o + 2] = -(xl + xr + yu + yd - 4 * h[i]) / 4;   // 曲率隔一格取，网格尺度的噪声就不会变成一道道竖纹
+      px[o + 3] = h[i];
+    }
+  }
+  const poke = (q, L, wx, wy, r, a) => {   // 世界坐标里一点往下按
+    const gx = (wx - L.x) / L.w * q.nx, gy = (wy - L.y) / L.h * q.ny, R = r / L.w * q.nx;
+    for (let y = Math.max(0, Math.floor(gy - R * 2)); y <= Math.min(q.ny - 1, gy + R * 2); y++)
+      for (let x = Math.max(0, Math.floor(gx - R * 2)); x <= Math.min(q.nx - 1, gx + R * 2); x++)
+        q.v[y * q.nx + x] -= a * Math.exp(-((x - gx) ** 2 + (y - gy) ** 2) / (R * R));
+  };
+  const slosh = (q, ax, ay) => {   // 摇盘子：给长短两个方向最低阶的晃荡模态各一个冲量
+    for (let y = 0; y < q.ny; y++) for (let x = 0; x < q.nx; x++)
+      q.v[y * q.nx + x] += ax * Math.cos(Math.PI * x / (q.nx - 1)) + ay * Math.cos(Math.PI * y / (q.ny - 1));
+  };
+  // 相纸一边沉下去，四条边一起推开一圈波
+  function splashOutline(q, L, P, k) {
+    const hw = PW / 2, hh = PH / 2;
+    for (let t = 0; t <= 1; t += 0.02) {
+      poke(q, L, P.x - hw + PW * t, P.y - hh, 7, k);
+      poke(q, L, P.x - hw + PW * t, P.y + hh, 7, k);
+      poke(q, L, P.x - hw, P.y - hh + PH * t, 7, k);
+      poke(q, L, P.x + hw, P.y - hh + PH * t, 7, k);
+    }
+  }
+
+  /* ---------- WebGL ---------- */
+  const VS = `#version 300 es
+in vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }`;
+  const FS = `#version 300 es
+precision highp float;
+uniform vec2 uRes, uWorld, uPrintPx;
+uniform float uDpr, uCam, uTime;
+uniform sampler2D uBench, uPrint, uDev, uLiq0, uLiq1;
+uniform vec4 uL0, uL1, uPaper;
+uniform float uR, uRot, uLift, uWhere, uFog, uWet, uLight, uSafe, uFade, uGain;
+uniform vec3 uLamp, uRoom;
+out vec4 o;
+
+float hash(vec2 p) { p = fract(p * vec2(443.8975, 397.2973)); p += dot(p, p.yx + 19.19); return fract(p.x * p.y); }
+float rbox(vec2 p, vec4 r, float rad) {
+  vec2 c = r.xy + r.zw * .5, q = abs(p - c) - (r.zw * .5 - rad);
+  return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - rad;
+}
+vec2 puv(vec2 P, float grow) {
+  vec2 d = P - uPaper.xy;
+  float c = cos(uRot), s = sin(uRot);
+  d = vec2(c * d.x + s * d.y, -s * d.x + c * d.y);
+  return d / (2. * uPaper.zw * grow) + .5;
+}
+float pedge(vec2 uv, vec2 px) { vec2 q = min(uv, 1. - uv) * px; return min(q.x, q.y); }   // 到纸边的距离（像素）
+// 相纸：目标密度 × 显影程度（显影越久、越黑的地方走得越快），曝光了就整张变黑
+vec3 paper(vec2 uv) {
+  float tgt = texture(uPrint, uv).r;
+  float p = texture(uDev, uv).r * 4.;
+  float d = tgt * (1. - exp(-p * (.35 + 2. * tgt)));
+  d = mix(d, .985, uFog);
+  vec3 white = vec3(.955, .948, .925) * (.988 + .024 * hash(floor(uv * uPrintPx * .5)));
+  return mix(white, vec3(.034, .035, .039), d);
+}
+// 光：左上的安全灯（平方衰减）和屋顶的日光灯
+vec3 light(vec3 P) {
+  vec3 dl = uLamp - P;
+  float fs = uLamp.z * uLamp.z / dot(dl, dl);
+  vec3 dr = uRoom - P;
+  float fr = .72 + .28 * uRoom.z * uRoom.z / dot(dr, dr);
+  return mix(vec3(1., .13, .06) * 1.05 * uSafe * fs, vec3(1., .985, .96) * 1.12 * fr, uLight);
+}
+void main() {
+  vec2 S = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr;
+  vec2 P = S + vec2(uCam, 0.);
+  vec3 alb = texture(uBench, P / uWorld).rgb;
+  vec3 N = vec3(0., 0., 1.);
+  vec2 Q = P;
+  float wet = 0., caus = 0., edge = 0.;
+  int tray = rbox(P, uL0, uR) < 0. ? 0 : rbox(P, uL1, uR) < 0. ? 1 : -1;
+  if (tray >= 0) {
+    vec4 lr = tray == 0 ? uL0 : uL1;
+    vec2 tuv = (P - lr.xy) / lr.zw;
+    vec4 t = tray == 0 ? texture(uLiq0, tuv) : texture(uLiq1, tuv);
+    vec2 g = t.rg * uGain;
+    N = normalize(vec3(-g * .35, 1.));
+    Q = P - g * 14.;
+    alb = texture(uBench, Q / uWorld).rgb;
+    if (abs(uWhere - float(tray)) < .1) {
+      vec2 uv = puv(Q, 1.);
+      float e = pedge(uv, uPaper.zw * 2.);
+      if (e > 0.) alb = paper(uv) * (1. - .25 * (1. - smoothstep(0., 1.4, e)));
+      else alb *= 1. - .3 * (1. - smoothstep(0., 5., -e));   // 纸边在盘底投的一点暗
+    }
+    alb *= tray == 0 ? vec3(.99, .955, .87) : vec3(.97, .985, 1.);
+    caus = clamp(t.b * uGain * 1.6, -1., 1.);
+    wet = 1.;
+    edge = -rbox(P, lr, uR);
+  }
+  // 提起来的相纸在台面和液面上投的软影子
+  float sh = 0.;
+  if (uWhere < -.5 && uWhere > -1.5) {
+    vec2 uv = puv(P - vec2(16., 26.) * uLift, 1. + .02 * uLift);
+    float e = pedge(uv, uPaper.zw * 2.), soft = 4. + 22. * uLift;
+    sh = smoothstep(-soft, soft, e) * .55 * smoothstep(0., .25, uLift);
+  }
+  vec3 L = light(vec3(Q, 0.));
+  vec3 col = alb * L * (1. - sh);
+  if (wet > 0.) {
+    col *= 1. + caus * .42;
+    vec3 V = normalize(vec3(uCam + uRes.x / uDpr * .5, uWorld.y * .5, uWorld.y * 3.2) - vec3(P, 0.));
+    vec3 Hs = normalize(V + normalize(uLamp - vec3(P, 0.)));
+    float ds = max(dot(N, Hs), 0.);
+    // 灯泡离得远、角度变化很慢，指数要非常大，平静时才是一个小亮点；水一晃就碎成一片闪光
+    col += vec3(1., .3, .16) * (exp(-(1. - ds) * 40000.) * 3.2 + exp(-(1. - ds) * 900.) * .035) * uSafe * (1. - uLight);
+    // 日光灯管是一长条：半程向量横向放得很宽、纵向很窄，倒影就是一道横的亮带
+    vec3 Hr = normalize(V + normalize(uRoom - vec3(P, 0.)));
+    vec3 Ht = Hr - N * dot(Hr, N);
+    col += vec3(1., .99, .97) * (exp(-(Ht.x * Ht.x) / .03 - (Ht.y * Ht.y) / .00012) * 1.3 + exp(-dot(Ht, Ht) / .015) * .016) * uLight;
+    col += L * .3 * (1. - smoothstep(0., 2.5, edge));   // 弯月面的一道亮边
+  }
+  // 提起来的相纸：在最上面，湿的，水膜往下淌
+  if (uWhere < -.5 && uWhere > -1.5) {
+    vec2 uv = puv(P, 1. + .035 * uLift);
+    float e = pedge(uv, uPaper.zw * 2.);
+    if (e > 0.) {
+      vec3 pc = paper(uv) * light(vec3(P, 60. * uLift));
+      float film = smoothstep(.3, 1., sin(uv.x * 23. + uv.y * 3. + sin(uv.x * 7.) * 2.) * .5 + .5) * smoothstep(.2, 1., uv.y + uTime * .0 - .3);
+      pc += light(vec3(P, 0.)) * film * .1 * uWet;
+      pc *= 1. - .3 * (1. - smoothstep(0., 1.5, e));
+      col = mix(col, pc, smoothstep(0., 1., e));
+    }
+  }
+  vec2 sv = S / (uRes / uDpr) - .5;
+  col *= 1. - .3 * pow(length(sv * vec2(1., 1.6)), 2.4);
+  col = (col * (2.51 * col + .03)) / (col * (2.43 * col + .59) + .14);   // ACES 色调映射：高光压下来，不会一片死红
+  col *= uFade;
+  o = vec4(col, 1.);
+}`;
+  let gl = null, prog, U = {}, tex = {}, glOK = false;
+  function initGL() {
+    gl = glc.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false, preserveDrawingBuffer: false });
+    if (!gl) return false;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'a');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    ['uRes', 'uWorld', 'uPrintPx', 'uDpr', 'uCam', 'uTime', 'uBench', 'uPrint', 'uDev', 'uLiq0', 'uLiq1', 'uL0', 'uL1', 'uPaper', 'uR', 'uRot', 'uLift', 'uWhere', 'uFog', 'uWet', 'uLight', 'uSafe', 'uFade', 'uLamp', 'uRoom', 'uGain']
+      .forEach(n => { U[n] = gl.getUniformLocation(prog, n); });
+    ['bench', 'print', 'dev', 'liq0', 'liq1'].forEach((n, i) => {
+      tex[n] = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0 + i);
+      gl.bindTexture(gl.TEXTURE_2D, tex[n]);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.uniform1i(U['u' + n[0].toUpperCase() + n.slice(1)], i);
+    });
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    return true;
+  }
+  const upload = (n, i, fmt, w, h, data) => {
+    gl.activeTexture(gl.TEXTURE0 + i);
+    gl.bindTexture(gl.TEXTURE_2D, tex[n]);
+    if (data instanceof HTMLCanvasElement) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    else if (fmt === 'r') gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, w, h, 0, gl.RED, gl.UNSIGNED_BYTE, data);
+    else if (fmt === 'f') gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.FLOAT, data);
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  };
+
+  /* ---------- 剧情：进纸 → 显影 → 夹起沥水 → 镜头移到定影盘 → 定影 → 开灯 ---------- */
+  const st = {
+    phase: 'idle', t: 0, cam: 0, safe: 0.18, light: 0, lightTo: 0, flick: 0, fog: 0, fixed: false, ruined: false,
+    where: -2, px: 0, py: 0, rot: 0, lift: 0, wet: 0, devT: 0, fade: 1, rockT: 0, tongs: null, cord: { a: 0, va: 0, pull: 0 }, hover: false, hintT: 0, drips: [],
+  };
+  let started = false, dirty = true;
+  function begin() {
+    Object.assign(st, { phase: 'warm', t: 0, cam: 0, safe: st.safe, light: 0, lightTo: 0, fog: 0, fixed: false, ruined: false, where: -2, lift: 1, wet: 0, devT: 0, rockT: 0, drips: [] });
+    dev.p.fill(0);
+    st.tongs = rest(1);
+    started = true;
+  }
+  const rest = k => {   // 夹子搭在盘子右下角：头浸在药水里，柄朝盘子外面
+    const t = k === 1 ? T1 : T2;
+    return { x: t.x + t.w * 0.935, y: t.y + t.h * 0.8, a: 0.38, open: 0.5 };
+  };
+  const grip = () => ({ x: st.px - PW * 0.47, y: st.py - PH * 0.4, a: -2.45, open: 0 });   // 夹住相纸左上角
+  function finish() {   // 直接跳到冲好、开灯的样子
+    Object.assign(st, { phase: 'done', t: 0, cam: W, safe: 1, light: 1, lightTo: 1, fixed: true, ruined: false, fog: 0, where: 1, px: P2.x, py: P2.y, rot: -0.006, lift: 0, wet: 0, devT: 30 });
+    dev.p.fill(4);
+    st.tongs = rest(2);
+    started = true;
+  }
+  function setStatus() {
+    const on = st.ruined ? 'bad' : st.light > 0.5 ? 'room' : st.safe > 0.5 ? 'safe' : 'off';
+    const s = Math.floor(st.devT * 6);   // 计时器按六倍速走：页面上的十秒是暗房里的一分钟
+    const txt = st.ruined ? '曝光了，这张废了' : st.phase === 'idle' ? '暗房准备中'
+      : st.phase === 'warm' || st.phase === 'insert' ? '安全灯已亮，放入相纸'
+      : st.phase === 'develop' ? `正在显影 ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+      : st.phase === 'lift' ? '显影完成，沥水' : st.phase === 'pan' || st.phase === 'lower' ? '移到定影盘'
+      : st.phase === 'fix' ? '正在定影' : st.light > 0.5 ? '已定影 · 灯亮着' : '已定影 · 可以开灯了';
+    if (statusText.textContent !== txt) statusText.textContent = txt;
+    if (statusEl.dataset.on !== on) statusEl.dataset.on = on;
+  }
+
+  function update(dt) {
+    const s = dt / 1000;
+    st.t += s;
+    const T = st.t;
+    if (st.phase === 'warm') {   // 安全灯慢慢亮起来
+      st.safe = lerp(0.18, 1, smooth(T / 1.1));
+      if (T > 0.55) { st.phase = 'insert'; st.t = 0; st.where = -1; st.px = P1.x; st.py = -PH; st.lift = 1; st.rot = 0.02; }
+    } else if (st.phase === 'insert') {   // 相纸从上面滑进显影盘，落下去
+      st.safe = lerp(st.safe, 1, 0.1);
+      const e = ease(T / 1.15);
+      st.py = lerp(-PH * 0.6, P1.y, e);
+      st.rot = lerp(0.03, -0.008, e);
+      st.lift = T < 1.15 ? 1 : 1 - smooth((T - 1.15) / 0.4);
+      if (T > 1.15 && st.where !== 0 && st.lift < 0.2) { st.where = 0; splashOutline(Q1, L1, { x: st.px, y: st.py }, 1.6); sfx.splash(); }
+      if (T > 1.6) { st.phase = 'develop'; st.t = 0; st.lift = 0; st.rockT = 0.6; }
+    } else if (st.phase === 'develop') {
+      st.devT += s;
+      st.rockT -= s;
+      if (st.rockT <= 0) { slosh(Q1, (st.devT % 5.6 < 2.8 ? 1 : -1) * 6, (Math.random() - 0.5) * 3); st.rockT = 2.8; sfx.rock(); }
+      if (T > 9.5 && !st.ruined) { st.phase = 'lift'; st.t = 0; sfx.ding(); }
+    } else if (st.phase === 'lift') {   // 夹子过去夹住、提起、沥水
+      const g = grip(), r = rest(1), e = ease(T / 0.6);
+      st.tongs = { x: lerp(r.x, g.x, e), y: lerp(r.y, g.y, e), a: lerp(r.a, g.a, e), open: lerp(0.5, 0, e) };
+      if (T > 0.6) {
+        if (st.where === 0) { st.where = -1; sfx.clack(); }
+        st.lift = smooth((T - 0.6) / 0.7);
+        st.wet = 1;
+        st.rot = lerp(-0.008, 0.035, smooth((T - 0.6) / 1));
+        if (Math.random() < s * 14) drip(Q1, L1);
+      }
+      if (T > 2.3) { st.phase = 'pan'; st.t = 0; }
+    } else if (st.phase === 'pan') {   // 镜头和相纸一起移到定影盘
+      const e = ease(T / 1.7);
+      st.cam = W * e;
+      st.px = lerp(P1.x, P2.x, e);
+      st.py = lerp(P1.y, P2.y, e) - Math.sin(Math.PI * e) * PH * 0.06;
+      st.wet = Math.max(0.3, 1 - e);
+      st.tongs = grip();
+      if (Math.random() < s * 5 * (1 - e)) drip(Q1, L1);
+      if (T > 1.7) { st.phase = 'lower'; st.t = 0; }
+    } else if (st.phase === 'lower') {
+      st.lift = 1 - smooth(T / 0.55);
+      st.rot = lerp(0.035, -0.006, smooth(T / 0.55));
+      st.tongs = grip();
+      if (st.where !== 1 && st.lift < 0.18) { st.where = 1; st.fixed = true; st.wet = 0; splashOutline(Q2, L2, { x: st.px, y: st.py }, 1.3); sfx.splash(); }
+      if (T > 0.6) { st.phase = 'fix'; st.t = 0; st.rocked = false; }
+    } else if (st.phase === 'fix') {
+      const g = grip(), r = rest(2), e = ease(T / 0.7);
+      st.tongs = { x: lerp(g.x, r.x, e), y: lerp(g.y, r.y, e), a: lerp(g.a, r.a, e), open: lerp(0, 0.5, e) };
+      if (T > 0.9 && !st.rocked) { st.rocked = true; slosh(Q2, -5, 2); sfx.rock(); }
+      if (T > 2.4) { st.phase = 'lights'; st.t = 0; pullCord(true); }
+    } else if (st.phase === 'lights') {
+      if (T > 1.2) { st.phase = 'done'; st.t = 0; }
+    }
+    // 开灯：日光灯启辉时闪两下
+    if (st.lightTo && st.light < 1) {
+      st.flick += s;
+      const f = st.flick;
+      st.light = f < 0.08 ? 0.7 : f < 0.16 ? 0.05 : f < 0.24 ? 0.85 : f < 0.34 ? 0.25 : Math.min(1, 0.6 + (f - 0.34) * 2.5);
+    } else if (!st.lightTo && st.light > 0) st.light = Math.max(0, st.light - s / 0.25);
+    // 没定影就开灯：相纸曝光发黑
+    if (st.light > 0.5 && !st.fixed && st.where > -2) { st.fog = Math.min(1, st.fog + s / 1.4); if (st.fog > 0.25) st.ruined = true; }
+    // 显影：药水晃得厉害的地方走得快
+    if (st.where === 0 && !st.fixed && st.phase === 'develop' && st.devT > 1) {
+      const rate = 0.3;
+      for (let y = 0; y < DY; y++) for (let x = 0; x < DX; x++) {
+        const wx = st.px - PW / 2 + (x + 0.5) / DX * PW, wy = st.py - PH / 2 + (y + 0.5) / DY * PH;
+        const gx = clamp(Math.floor((wx - L1.x) / L1.w * Q1.nx), 0, Q1.nx - 1), gy = clamp(Math.floor((wy - L1.y) / L1.h * Q1.ny), 0, Q1.ny - 1);
+        const a = Math.min(1, Math.abs(Q1.v[gy * Q1.nx + gx]) / 6);
+        dev.p[y * DX + x] += s * rate * (0.55 + 1.6 * a);
+      }
+    }
+    // 灯绳：摆
+    const c = st.cord;
+    c.va += (-c.a * 40 - c.va * 2.2) * s;
+    c.a += c.va * s;
+    c.pull = Math.max(0, c.pull - s * 3);
+    st.drips = st.drips.filter(d => (d.t += s) < 0.25 || (d.landed ? false : (land(d), false)));
+    stepLiquid(Q1, s);
+    stepLiquid(Q2, s);
+    sfx.water((Q1.e + Q2.e) * (st.cam < W / 2 ? 1 : 1));
+  }
+  function drip(q, L) {   // 从提起的相纸下沿滴下一滴，过一小会儿落进盘里
+    const x = st.px - PW / 2 + PW * (0.05 + Math.random() * 0.9), y = st.py + PH / 2 - 2;
+    st.drips.push({ x, y, t: 0, q, L, landed: false });
+  }
+  function land(d) {
+    d.landed = true;
+    poke(d.q, d.L, d.x + 16 * st.lift, d.y + 26 * st.lift, 4, 3.2);
+    sfx.drip();
+  }
+  function pullCord(auto) {
+    st.cord.pull = 1;
+    st.cord.va += 3;
+    st.lightTo = st.lightTo ? 0 : 1;
+    st.flick = 0;
+    sfx.cord(st.lightTo);
+    if (!auto && st.phase === 'lights') st.phase = 'done';
+  }
+
+  /* ---------- 叠加层：夹子、计时器的夜光、灯绳、水滴 ---------- */
+  function lightJS(wx, wy, z = 0) {
+    const dl = (lamp[0] - wx) ** 2 + (lamp[1] - wy) ** 2 + (lamp[2] - z) ** 2, fs = lamp[2] ** 2 / dl;
+    const dr = (room[0] - wx) ** 2 + (room[1] - wy) ** 2 + (room[2] - z) ** 2, fr = 0.72 + 0.28 * room[2] ** 2 / dr;
+    return [0, 1, 2].map(i => lerp(SAFE[i] * 1.05 * st.safe * fs, ROOM[i] * 1.12 * fr, st.light));
+  }
+  const aces = v => clamp((v * (2.51 * v + 0.03)) / (v * (2.43 * v + 0.59) + 0.14), 0, 1);
+  const lit = (rgb, L, a = 1) => `rgba(${rgb.map((c, i) => Math.round(aces(c / 255 * L[i]) * 255 * st.fade)).join(',')},${a})`;
+  const UIFONT = '12px "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+  function drawOverlay() {
+    const o = octx;
+    o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    o.clearRect(0, 0, W, H);
+    const cam = st.cam;
+    // 计时器的夜光刻点和指针
+    if (timer) {
+      const x = timer.x - cam, y = timer.y, r = timer.r;
+      if (x > -r * 2 && x < W + r * 2) {
+        const glow = (1 - st.light * 0.75) * st.fade, gc = `rgba(150,255,170,${0.85 * glow})`;
+        o.save();
+        o.shadowColor = `rgba(120,255,150,${0.9 * glow})`;
+        o.shadowBlur = 8;
+        o.fillStyle = gc;
+        for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2 - Math.PI / 2; o.beginPath(); o.arc(x + Math.cos(a) * r * 0.86, y + Math.sin(a) * r * 0.86, r * 0.035, 0, 7); o.fill(); }
+        const sec = (st.devT * 6) % 60, min = st.devT * 6 / 60;
+        const hand = (ang, len, w2) => { o.lineWidth = w2; o.lineCap = 'round'; o.strokeStyle = gc; o.beginPath(); o.moveTo(x - Math.cos(ang) * len * 0.15, y - Math.sin(ang) * len * 0.15); o.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len); o.stroke(); };
+        hand(min / 60 * Math.PI * 2 - Math.PI / 2, r * 0.55, r * 0.06);
+        hand(sec / 60 * Math.PI * 2 - Math.PI / 2, r * 0.82, r * 0.03);
+        o.restore();
+        o.fillStyle = lit([200, 200, 200], lightJS(timer.x, timer.y, 10));
+        o.beginPath(); o.arc(x, y, r * 0.06, 0, 7); o.fill();
+      }
+    }
+    // 提起来的相纸下沿挂着的水珠
+    st.drips.forEach(d => {
+      const L = lightJS(d.x, d.y, 30);
+      o.fillStyle = lit([255, 255, 255], L, 0.7 * (1 - d.t / 0.25));
+      o.beginPath(); o.arc(d.x - cam, d.y + d.t * 30, 1.4, 0, 7); o.fill();
+    });
+    drawTongs(o);
+    drawCord(o);
+    if (!mobile && (!started || st.hintT < 1)) {   // 一行很淡的提示，摇过一次盘子就消失；手机上画面太矮，会压到标签，不画
+      o.font = UIFONT;
+      o.fillStyle = `rgba(232,227,220,${0.42 * (1 - st.hintT) * st.fade})`;
+      o.textBaseline = 'bottom';
+      o.fillText('鼠标在药水上划过会起波纹 · 右上角是灯绳', Math.max(12, T1.x + 6 - cam), H - 8);
+    }
+  }
+  // 竹夹子：两根竹片，横截面是圆的（横向渐变 + 一道高光 + 几条竹纹），后头一个铆钉，前头套着橡胶头
+  function drawTongs(o) {
+    const t = st.tongs;
+    if (!t) return;
+    const lift = st.where === -1 ? st.lift : 0, len = clamp(T1.h * 0.5, 90, 190), wdt = clamp(len * 0.055, 5, 9);
+    const x = t.x - st.cam + 16 * lift * 0.3, y = t.y - 6 * lift;
+    if (x < -len * 1.5 || x > W + len * 1.5) return;
+    const L = lightJS(t.x, t.y, 40);
+    const strip = side => {   // 一根竹片的四个角：头在 x=0，尾在 x=len
+      const tipY = side * (wdt * 0.6 + t.open * wdt * 2.2), endY = side * wdt * 0.55;
+      return { tipY, endY, pts: [[0, tipY - wdt / 2], [len, endY - wdt / 2], [len, endY + wdt / 2], [0, tipY + wdt / 2]] };
+    };
+    const path = pts => { o.beginPath(); pts.forEach(([px, py], i) => (i ? o.lineTo(px, py) : o.moveTo(px, py))); o.closePath(); };
+    // 影子
+    o.save();
+    o.translate(x + 5 + 10 * lift, y + 8 + 16 * lift);
+    o.rotate(t.a);
+    o.fillStyle = 'rgba(0,0,0,.32)';
+    for (const side of [-1, 1]) { path(strip(side).pts); o.fill(); }
+    o.restore();
+    o.save();
+    o.translate(x, y);
+    o.rotate(t.a);
+    for (const side of [-1, 1]) {
+      const { tipY, endY, pts } = strip(side), mid = (tipY + endY) / 2;
+      path(pts);
+      const g = o.createLinearGradient(0, mid - wdt / 2, 0, mid + wdt / 2);
+      g.addColorStop(0, lit([132, 96, 54], L));
+      g.addColorStop(0.32, lit([232, 196, 136], L));
+      g.addColorStop(0.55, lit([206, 166, 106], L));
+      g.addColorStop(1, lit([118, 84, 46], L));
+      o.fillStyle = g;
+      o.fill();
+      o.save();
+      o.clip();
+      o.strokeStyle = lit([110, 78, 40], L, 0.35);   // 竹纹
+      o.lineWidth = 0.6;
+      for (let k = -2; k <= 2; k++) {
+        o.beginPath();
+        o.moveTo(len * 0.18, tipY + (endY - tipY) * 0.18 + k * wdt * 0.17);
+        o.lineTo(len, endY + k * wdt * 0.17);
+        o.stroke();
+      }
+      o.strokeStyle = lit([255, 236, 200], L, 0.5);   // 高光
+      o.lineWidth = wdt * 0.12;
+      o.beginPath();
+      o.moveTo(len * 0.18, tipY + (endY - tipY) * 0.18 - wdt * 0.18);
+      o.lineTo(len * 0.95, endY - wdt * 0.18);
+      o.stroke();
+      o.restore();
+      // 橡胶头：圆头，深色带一点反光
+      const rl = len * 0.17;
+      o.fillStyle = lit([30, 29, 28], L);
+      o.beginPath();
+      o.moveTo(rl, tipY - wdt / 2 - 0.6);
+      o.lineTo(wdt * 0.5, tipY - wdt / 2 - 0.6);
+      o.arc(wdt * 0.5, tipY, wdt / 2 + 0.6, -Math.PI / 2, Math.PI / 2, true);
+      o.lineTo(rl, tipY + wdt / 2 + 0.6);
+      o.closePath();
+      o.fill();
+      o.fillStyle = lit([200, 200, 205], L, 0.22);
+      o.fillRect(wdt * 0.5, tipY - wdt * 0.32, rl - wdt * 0.6, wdt * 0.16);
+    }
+    // 铆钉
+    const rg = o.createRadialGradient(len * 0.97 - wdt * 0.15, -wdt * 0.15, 0, len * 0.97, 0, wdt * 0.45);
+    rg.addColorStop(0, lit([250, 250, 252], L));
+    rg.addColorStop(1, lit([120, 122, 128], L));
+    o.fillStyle = rg;
+    o.beginPath(); o.arc(len * 0.97, 0, wdt * 0.45, 0, 7); o.fill();
+    o.restore();
+  }
+  // 灯绳：从天花板垂下来，下头一个木头拉手，鼠标靠近时轻轻发亮
+  function drawCord(o) {
+    const c = st.cord, x0 = cordX, len = cordLen + c.pull * 14;
+    const x1 = x0 + Math.sin(c.a) * len, y1 = Math.cos(c.a) * len;
+    const L = lightJS(x0 + st.cam, y1, 200);
+    o.strokeStyle = lit([200, 196, 188], L, 0.9);
+    o.lineWidth = 1.2;
+    o.beginPath(); o.moveTo(x0, -2); o.quadraticCurveTo(x0 + Math.sin(c.a) * len * 0.5, len * 0.5, x1, y1); o.stroke();
+    o.save();
+    o.translate(x1, y1);
+    o.rotate(-c.a);
+    if (st.hover) { o.shadowColor = 'rgba(255,240,220,.55)'; o.shadowBlur = 12; }
+    o.fillStyle = lit([150, 104, 62], L);
+    o.beginPath(); o.ellipse(0, 9, 5.2, 9.5, 0, 0, 7); o.fill();
+    o.shadowBlur = 0;
+    o.fillStyle = lit([230, 200, 150], L, 0.5);
+    o.beginPath(); o.ellipse(-1.6, 6, 1.4, 4.5, 0, 0, 7); o.fill();
+    o.fillStyle = lit([200, 200, 205], L);
+    o.fillRect(-2.2, -1, 4.4, 3);
+    o.restore();
+    if (st.hover) {
+      o.font = UIFONT;
+      o.textAlign = 'right';
+      o.textBaseline = 'middle';
+      o.fillStyle = 'rgba(232,227,220,.75)';
+      o.fillText(st.lightTo ? '关灯' : st.fixed || st.where === -2 ? '开灯' : '开灯（会曝光）', x1 - 14, y1 + 9);
+      o.textAlign = 'left';
+    }
+  }
+  const nearCord = (x, y) => { const c = st.cord, len = cordLen; return Math.hypot(x - (cordX + Math.sin(c.a) * len), y - (Math.cos(c.a) * len + 9)) < 22; };
+
+  /* ---------- 声音：全部现场合成，默认关 ---------- */
+  const sfx = (() => {
+    let ac = null, on = false, bus, water, hum;
+    const make = () => {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      bus = ac.createDynamicsCompressor();
+      bus.connect(ac.destination);
+      const n = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), d = n.getChannelData(0);
+      let b = 0;
+      for (let i = 0; i < d.length; i++) { b = (b + (Math.random() * 2 - 1) * 0.02) / 1.02; d[i] = b * 3.5; }   // 褐噪声：屋里的底噪和水声都用它
+      const src = ac.createBufferSource();
+      src.buffer = n;
+      src.loop = true;
+      const bp = ac.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 520;
+      bp.Q.value = 0.7;
+      water = ac.createGain();
+      water.gain.value = 0;
+      src.connect(bp).connect(water).connect(bus);
+      const room = ac.createGain();
+      room.gain.value = 0.012;
+      src.connect(room).connect(bus);
+      src.start();
+      hum = ac.createGain();
+      hum.gain.value = 0;
+      [100, 200].forEach((f, i) => { const o = ac.createOscillator(); o.frequency.value = f; const g = ac.createGain(); g.gain.value = i ? 0.3 : 1; o.connect(g).connect(hum); o.start(); });
+      hum.connect(bus);
+    };
+    const tone = (f, f2, dur, g, type = 'sine', t = ac.currentTime) => {
+      const o = ac.createOscillator(), a = ac.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f, t);
+      o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      a.gain.setValueAtTime(0.0001, t);
+      a.gain.exponentialRampToValueAtTime(g, t + 0.005);
+      a.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(a).connect(bus);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+    };
+    const noiseHit = (f, q, dur, g, t = ac.currentTime) => {
+      const n = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate), d = n.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 2;
+      const s = ac.createBufferSource(), b = ac.createBiquadFilter(), a = ac.createGain();
+      s.buffer = n;
+      b.type = 'bandpass';
+      b.frequency.value = f;
+      b.Q.value = q;
+      a.gain.value = g;
+      s.connect(b).connect(a).connect(bus);
+      s.start(t);
+    };
+    return {
+      toggle() {
+        on = !on;
+        if (on && !ac) make();
+        if (ac) { ac.resume(); hum.gain.setTargetAtTime(on ? 0.004 * st.safe * (1 - st.light) : 0, ac.currentTime, 0.2); if (!on) water.gain.setTargetAtTime(0, ac.currentTime, 0.1); }
+        return on;
+      },
+      water(e) {
+        if (!on || !ac) return;
+        water.gain.setTargetAtTime(Math.min(0.09, e * 0.012), ac.currentTime, 0.12);
+        hum.gain.setTargetAtTime(0.004 * st.safe * (1 - st.light), ac.currentTime, 0.3);
+      },
+      drip() { if (on && ac) tone(1300 + Math.random() * 700, 420, 0.12, 0.05); },
+      splash() { if (on && ac) noiseHit(900, 0.6, 0.45, 0.35); },
+      rock() { if (on && ac) noiseHit(380, 0.8, 0.7, 0.12); },
+      clack() { if (on && ac) noiseHit(2600, 4, 0.04, 0.25); },
+      ding() { if (on && ac) { tone(1568, 1560, 1.2, 0.06); tone(3920, 3900, 0.5, 0.015); } },
+      cord(lightOn) {
+        if (!on || !ac) return;
+        noiseHit(3200, 5, 0.03, 0.4);
+        if (lightOn) for (let k = 0; k < 3; k++) tone(120, 118, 0.07, 0.03, 'sawtooth', ac.currentTime + 0.05 + k * 0.09);
+      },
+      poke() { if (on && ac) tone(900 + Math.random() * 300, 300, 0.09, 0.03); },
+    };
+  })();
+
+  /* ---------- 交互 ---------- */
+  const ptr = { x: -1, y: -1, on: false };
+  scene.addEventListener('pointermove', e => {
+    const r = scene.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    if (ptr.on && started) {
+      const dx = x - ptr.x, dy = y - ptr.y, sp = Math.hypot(dx, dy), wx = x + st.cam, wy = y;
+      for (const [q, L] of [[Q1, L1], [Q2, L2]]) {
+        if (wx < L.x || wx > L.x + L.w || wy < L.y || wy > L.y + L.h) continue;
+        const n = Math.ceil(sp / 6);
+        for (let k = 1; k <= n; k++) poke(q, L, ptr.x + st.cam + dx * k / n, ptr.y + dy * k / n, 6, Math.min(1.8, sp * 0.05));
+        if (Math.abs(dx) > 8) slosh(q, -dx * 0.012, 0);
+        if (sp > 3) st.hintT = Math.min(1, st.hintT + 0.04);
+      }
+    }
+    ptr.x = x; ptr.y = y; ptr.on = true;
+    const h = nearCord(x, y);
+    if (h !== st.hover) { st.hover = h; scene.style.cursor = h ? 'pointer' : ''; }
+    dirty = true;
+  });
+  scene.addEventListener('pointerleave', () => { ptr.on = false; st.hover = false; scene.style.cursor = ''; dirty = true; });
+  scene.addEventListener('pointerdown', e => {
+    const r = scene.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    if (nearCord(x, y)) { pullCord(false); dirty = true; return; }
+    const wx = x + st.cam;
+    for (const [q, L] of [[Q1, L1], [Q2, L2]]) if (wx > L.x && wx < L.x + L.w && y > L.y && y < L.y + L.h) { poke(q, L, wx, y, 5, 9); sfx.poke(); st.hintT = 1; }
+    dirty = true;
+  });
+  let fadeTo = null;
+  $('#again').addEventListener('click', () => {
+    if (REDUCED) { finish(); dirty = true; return; }
+    fadeTo = 'out';
+  });
+  $('#sound').addEventListener('click', e => { e.target.textContent = sfx.toggle() ? '声音：开' : '声音：关'; });
+
+  /* ---------- 2D 退路：没有 WebGL 时画一张冲好的静态图 ---------- */
+  function drawFallback() {
+    const o = glc.getContext('2d');
+    o.setTransform(1, 0, 0, 1, 0, 0);
+    o.drawImage(benchCv, (W * benchScale), 0, W * benchScale, H * benchScale, 0, 0, glc.width, glc.height);
+    const img = new ImageData(printW, printH), d = img.data;
+    for (let i = 0; i < printTex.length; i++) { const v = 243 - printTex[i] * 0.93; d[i * 4] = v; d[i * 4 + 1] = v * 0.99; d[i * 4 + 2] = v * 0.96; d[i * 4 + 3] = 255; }
+    const pc = canvas(printW, printH);
+    pc.getContext('2d').putImageData(img, 0, 0);
+    o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    o.drawImage(pc, P2.x - W - PW / 2, P2.y - PH / 2, PW, PH);
+  }
+
+  /* ---------- 组装 ---------- */
+  let maxTex = 4096;
+  function build() {
+    layout();
+    if (glOK) maxTex = Math.min(8192, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+    renderBench(maxTex);
+    renderPrint();
+    makeLiquids();
+    if (glOK) {
+      upload('bench', 0, 'rgba', 0, 0, benchCv);
+      upload('print', 1, 'r', printW, printH, printTex);
+    }
+    if (REDUCED || !glOK) finish();
+    else if (started) begin();
+    else Object.assign(st, { phase: 'idle', cam: 0, where: -2, tongs: rest(1), light: 0, lightTo: 0, safe: 0.18 });
+    dirty = true;
+  }
+  function render(now) {
+    if (!glOK) { drawFallback(); drawOverlay(); return; }
+    packLiquid(Q1);
+    packLiquid(Q2);
+    for (let i = 0; i < dev.p.length; i++) dev.px[i] = clamp(dev.p[i] / 4 * 255, 0, 255);
+    upload('dev', 2, 'r', DX, DY, dev.px);
+    upload('liq0', 3, 'f', Q1.nx, Q1.ny, Q1.px);
+    upload('liq1', 4, 'f', Q2.nx, Q2.ny, Q2.px);
+    gl.viewport(0, 0, glc.width, glc.height);
+    gl.uniform2f(U.uRes, glc.width, glc.height);
+    gl.uniform2f(U.uWorld, WW, H);
+    gl.uniform2f(U.uPrintPx, printW, printH);
+    gl.uniform1f(U.uDpr, DPR);
+    gl.uniform1f(U.uCam, st.cam);
+    gl.uniform1f(U.uTime, now / 1000);
+    gl.uniform4f(U.uL0, L1.x, L1.y, L1.w, L1.h);
+    gl.uniform4f(U.uL1, L2.x, L2.y, L2.w, L2.h);
+    gl.uniform4f(U.uPaper, st.px, st.py, PW / 2, PH / 2);
+    gl.uniform1f(U.uR, LR);
+    gl.uniform1f(U.uRot, st.rot);
+    gl.uniform1f(U.uLift, st.lift);
+    gl.uniform1f(U.uWhere, st.where);
+    gl.uniform1f(U.uFog, st.fog);
+    gl.uniform1f(U.uWet, st.wet);
+    gl.uniform1f(U.uLight, st.light);
+    gl.uniform1f(U.uSafe, st.safe);
+    gl.uniform1f(U.uFade, st.fade);
+    gl.uniform1f(U.uGain, GAIN);
+    gl.uniform3f(U.uLamp, lamp[0], lamp[1], lamp[2]);
+    gl.uniform3f(U.uRoom, room[0], room[1], room[2]);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    drawOverlay();
+  }
+
+  let visible = false, last = performance.now();
+  new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; })).observe(scene);
+  function loop(now) {
+    requestAnimationFrame(loop);
+    const dt = Math.min(now - last, 50);
+    last = now;
+    if (!visible) return;
+    const r = scene.getBoundingClientRect();
+    if (!started && !REDUCED && glOK && (r.top < innerHeight * 0.72 || r.bottom <= innerHeight + 4)) begin();
+    if (fadeTo === 'out') { st.fade = Math.max(0, st.fade - dt / 350); if (st.fade <= 0) { begin(); fadeTo = 'in'; } }
+    else if (fadeTo === 'in') { st.fade = Math.min(1, st.fade + dt / 450); if (st.fade >= 1) fadeTo = null; }
+    const calm = !started || (st.phase === 'done' && Q1.e + Q2.e < 0.02 && st.cord.pull === 0 && Math.abs(st.cord.va) < 0.01 && !fadeTo);
+    if (started && !REDUCED) update(dt);
+    else if (REDUCED) { stepLiquid(Q1, dt / 1000); stepLiquid(Q2, dt / 1000); }
+    setStatus();
+    if (calm && !dirty) return;
+    dirty = false;
+    try { render(now); } catch (err) { console.error(err); }
+  }
+
+  // 字体到了再画照片；换品牌名、改宽度时重建
+  const fontsReady = () => Promise.all([
+    document.fonts.load('800 100px Fraunces'), document.fonts.load('900 100px "Noto Serif SC"', brand), document.fonts.load('600 20px Caveat'),
+  ]).catch(() => {});
+  try { glOK = initGL(); } catch (err) { console.error(err); glOK = false; }
+  if (!glOK) glc.dataset.mode = '2d';
+  layout();
+  makeLiquids();
+  fontsReady().then(() => { build(); requestAnimationFrame(loop); });
+  let tmr, lastW = innerWidth;
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(tmr);
+    tmr = setTimeout(() => { const keep = st.phase; build(); if (keep === 'done') finish(); }, 200);
+  });
+</script>
+</body>
+</html>

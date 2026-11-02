@@ -206,6 +206,7 @@
     <h2>暗房显影</h2>
     <p>红色安全灯下的显影盘。相纸滑进药水，影像一点点浮出来：最先出来的是最黑的背景，字先是一片留白，最后才显出字面上的明暗。鼠标在盘子上左右晃就是摇盘子，药水晃起来显影更快，画面也跟着水波晃。左上角计时。显得差不多了点“定影”，定影以后再“开灯”，就能在白光下看冲好的照片；要是没定影就开灯，相纸会整张发黑。</p>
     <p>每个像素有一个“最终会有多黑”的目标值，当前黑度按 dD/dt = k·(0.3 + 目标)·(目标 − 当前) 往目标走：越黑的地方走得越快，所以影像从暗部开始出现；摇盘子会让 k 变大。药水是一条一维波动方程，按水面的斜率把画面一条条错开，就有了隔着晃动的水看东西的感觉。</p>
+    <p class="note"><a href="../darkroom.html" style="color: inherit">这一个重做成了《一千零一页》的第 001 页：实时水面、重新设计的照片和整页排版 →</a></p>
     <div class="ctrl"><button type="button" id="dark-fix">定影</button><button type="button" id="dark-light">开灯</button><button type="button" id="dark-new">换张相纸</button></div>
   </div>
   <footer class="demo s7"></footer>

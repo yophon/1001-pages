@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>镭射闪卡 · 一千零一页</title>
+<meta name="description" content="页脚里放着一张镭射收藏卡，品牌名是烫上去的镭射箔，颜色按衍射光栅实时算，跟着倾角流动。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 字体表不挡脚本：挡住的话，网慢时页脚的初始化要等它下载完才开始 -->
+<link id="font-css" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@900&family=Syne:wght@600;700;800&display=swap" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --line: #26262b;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --syne: Syne, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+    /* 页脚：黑卡纸一样的印张，银色的字，印刷四色只在小地方露一点 */
+    --f-bg: #0c0b11;
+    --f-text: #ebe9f2;
+    --f-muted: #8f8c9e;
+    --f-faint: #5c5969;
+    --f-line: #1d1b25;
+    --c: #00a0e9;
+    --m: #e4007f;
+    --y: #ffe100;
+    --holo: linear-gradient(100deg, #ff9ac1, #ffd98a 22%, #a6f5c8 44%, #8fd2ff 64%, #c3a6ff 84%, #ff9ac1);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  /* ---------- 页脚 ---------- */
+  .foot { background: var(--f-bg); color: var(--f-text); border-top: 1px solid var(--f-line); }
+  .foot-top {
+    display: grid; grid-template-columns: minmax(300px, 1.6fr) repeat(3, minmax(120px, 1fr)); gap: 40px 48px;
+    max-width: 1320px; margin: 0 auto; padding: 60px clamp(16px, 4vw, 48px) 44px;
+  }
+  .brand .name { display: flex; align-items: baseline; gap: 12px; font: 800 34px/1 var(--syne); letter-spacing: -0.01em; }
+  .brand .name small { font: 500 12px/1 var(--mono); letter-spacing: .16em; color: var(--f-muted); }
+  .brand .tag { margin: 14px 0 26px; color: var(--f-muted); font-size: 14px; max-width: 34ch; text-wrap: pretty; }
+  .notify label { display: block; font: 500 11.5px/1 var(--mono); letter-spacing: .12em; color: var(--f-faint); margin-bottom: 10px; }
+  .notify .row { display: flex; max-width: 360px; border: 1px solid #2a2733; border-radius: 999px; padding: 4px; transition: border-color .2s; }
+  .notify .row:focus-within { border-color: #4a4560; }
+  .notify input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--f-text); font: 14px var(--sans); padding: 6px 12px; }
+  .notify input::placeholder { color: var(--f-faint); }
+  .notify button { font: 600 13px/1 var(--syne); letter-spacing: .02em; color: #0c0b11; background: var(--holo); background-size: 200% 100%; border: 0; border-radius: 999px; padding: 9px 16px; cursor: pointer; transition: background-position .6s; }
+  .notify button:hover { background-position: 100% 0; }
+  .notify .ok { margin: 10px 0 0; font-size: 12.5px; color: var(--f-muted); }
+  .col h3 { display: flex; align-items: center; gap: 9px; margin: 4px 0 14px; font: 500 11.5px/1 var(--mono); letter-spacing: .14em; color: var(--f-faint); }
+  .col h3 i { width: 8px; height: 8px; flex: none; }
+  .col h3 .c { background: var(--c); } .col h3 .m { background: var(--m); } .col h3 .y { background: var(--y); }
+  .col a { display: block; color: var(--f-text); opacity: .84; text-decoration: none; font-size: 14.5px; padding: 3px 0; }
+  .col a:hover { opacity: 1; }
+
+  .stage { position: relative; background: #0c0b10; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .stage canvas { display: block; width: 100%; outline: none; background: #0c0b10; }   /* 和入场前那一帧的印张同色，画面还没出来时不会先黑一块 */
+  .stage canvas:focus-visible { box-shadow: inset 0 0 0 2px #6d64a8; }
+  .read { position: absolute; font: 11.5px/1.4 var(--mono); letter-spacing: .06em; color: var(--f-muted); white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; transition: opacity .4s; }
+  .read b { font-weight: 500; color: var(--f-text); }
+
+  .foot-legal {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px;
+    max-width: 1320px; margin: 0 auto; padding: 18px clamp(16px, 4vw, 48px) 22px;
+    font-size: 12.5px; color: var(--f-faint); border-top: 1px solid var(--f-line);
+  }
+  .foot-legal a { color: var(--f-muted); text-decoration: none; }
+  .foot-legal a:hover { color: var(--f-text); }
+  .foot-legal .ctl { margin-left: auto; display: flex; gap: 8px; }
+  .foot-legal button {
+    font: 12.5px/1 var(--sans); color: var(--f-muted); cursor: pointer;
+    background: transparent; border: 1px solid var(--f-line); border-radius: 999px; padding: 8px 12px;
+  }
+  .foot-legal button:hover { color: var(--f-text); border-color: #36324a; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 760px) {
+    .foot-top { grid-template-columns: 1fr 1fr 1fr; padding-top: 48px; gap: 32px 20px; }
+    .brand { grid-column: 1 / -1; }
+    .foot-legal .ctl { margin-left: 0; width: 100%; }
+  }
+  @media (max-width: 420px) {
+    .foot-top { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 005</a>
+
+<footer class="foot">
+  <div class="foot-top">
+    <div class="brand">
+      <div class="name"><span id="f-name">Lumen</span><small>镭射印社</small></div>
+      <p class="tag">收藏卡、限量票根和镭射烫印。每一张都编号，每一批都限量，印完就不再加印。</p>
+      <form class="notify" id="notify">
+        <label for="mail">下一季开印时通知我</label>
+        <div class="row"><input id="mail" type="email" placeholder="你的邮箱" autocomplete="email" required><button type="submit">登记</button></div>
+        <p class="ok" id="ok" hidden>已登记。这是演示页面，不会真的发邮件。</p>
+      </form>
+    </div>
+    <nav class="col" aria-label="印制"><h3><i class="c"></i>印制</h3><a href="#">镭射收藏卡</a><a href="#">烫印名片</a><a href="#">限量票根</a><a href="#">打样</a></nav>
+    <nav class="col" aria-label="印社"><h3><i class="m"></i>印社</h3><a href="#">工艺手册</a><a href="#">关于我们</a><a href="#">到访印社</a><a href="#">招聘</a></nav>
+    <nav class="col" aria-label="联系"><h3><i class="y"></i>联系</h3><a href="#">商务合作</a><a href="#">邮件</a><a href="#">微博</a><a href="#">Instagram</a></nav>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="gl" tabindex="0" role="button" aria-label="一张镭射收藏卡，品牌名烫在正面；按回车或点一下翻面"></canvas>
+    <div class="read" id="read" aria-hidden="true"></div>
+  </div>
+  <div class="foot-legal">
+    <span>© 2026 <span class="bn">Lumen</span> 镭射印社</span>
+    <a href="#">隐私</a><a href="#">条款</a>
+    <div class="ctl"><button type="button" id="gyro" hidden>开启陀螺仪</button><button type="button" id="flip">翻面</button></div>
+  </div>
+</footer>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+  const MONO = '"IBM Plex Mono", Consolas, "Microsoft YaHei", monospace';
+  const BRAND = px => `800 ${px}px Syne, "Noto Sans SC", "Microsoft YaHei", sans-serif`;
+  // 固定种子的随机数：条码、扭索纹每次长得一样
+  function seeded(s) { return () => { s |= 0; s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  const stage = $('#stage'), glc = $('#gl'), readEl = $('#read');
+
+  /* ---------- 构图：透视相机正对着卡片，世界单位里卡片高 1 ---------- */
+  const TANF = Math.tan(15 * Math.PI / 180);   // 竖直视角 30°：倾斜看得出透视，又不会把卡拉变形
+  let W, H, DPR, mobile, CA, cardW, cardH, CY, DIST, YC, HALF, RAD, TW, TH;
+  function layout() {
+    W = stage.clientWidth;
+    DPR = Math.min(devicePixelRatio || 1, 2);
+    mobile = W < 680;
+    if (mobile) {   // 手机：竖着的标准卡比例，卡占满宽度，下面留出色条和版边字
+      CA = 63 / 88;
+      cardW = Math.min(W - 76, 340);
+      cardH = cardW / CA;
+      CY = 46 + cardH / 2;
+      H = Math.round(cardH + 140);
+    } else {        // 桌面：宽幅卡
+      CA = 1.8;
+      H = Math.round(clamp(W * 0.56, 420, 760));
+      cardH = H * 0.72;
+      cardW = cardH * CA;
+      if (cardW > W * 0.8) { cardW = W * 0.8; cardH = cardW / CA; }
+      CY = H / 2 - 10;
+    }
+    DIST = H / (cardH * 2 * TANF);
+    YC = (1 - CY / H * 2) * DIST * TANF;
+    HALF = [CA / 2, 0.5];
+    RAD = 0.048 * Math.min(CA, 1);   // 卡角圆角：短边的 4.8%，和真卡一样
+    // 卡面贴图：比屏幕上的卡再密一点，最长边不超过 2048
+    let tw = clamp(cardW * DPR * 1.25, 1024, 2048), th = tw / CA;
+    if (th > 2048) { th = 2048; tw = th * CA; }
+    if (Math.max(tw, th) < 1024) { const k = 1024 / Math.max(tw, th); tw *= k; th *= k; }
+    TW = Math.round(tw);
+    TH = Math.round(th);
+    glc.style.height = H + 'px';
+    glc.width = Math.round(W * DPR);
+    glc.height = Math.round(H * DPR);
+    // 读数放在卡片右下角外面
+    const x0 = (W - cardW) / 2, y1 = CY + cardH / 2;
+    Object.assign(readEl.style, mobile
+      ? { left: x0 + 'px', right: '', top: (y1 + 50) + 'px', textAlign: 'left' }
+      : { left: '', right: x0 + 'px', top: (y1 + 24) + 'px', textAlign: 'right' });
+  }
+
+  /* ---------- 卡面：每一面画六张图，在着色器里合起来 ----------
+     art  油墨的颜色
+     cov  油墨覆盖率：0 是露出镭射膜，1 是完全盖住
+     foil 烫印（品牌名、小星星），glit 碎钻边框，holo 星芒底纹（背面是防伪标），emb 凸起的高度 */
+  const rr = (o, x, y, w, h, r) => { o.beginPath(); o.roundRect(x, y, w, h, Math.max(0, r)); };
+  function ring(o, a, ra, b, rb, color) {   // 圆角矩形环：外圈内缩 a，内圈内缩 b
+    o.fillStyle = color;
+    o.beginPath();
+    o.roundRect(a, a, TW - 2 * a, TH - 2 * a, Math.max(0, ra));
+    o.roundRect(b, b, TW - 2 * b, TH - 2 * b, Math.max(0, rb));
+    o.fill('evenodd');
+  }
+  function star4(o, x, y, r) {   // 四角星，边是往里凹的弧
+    o.beginPath();
+    o.moveTo(x, y - r);
+    o.quadraticCurveTo(x, y, x + r, y);
+    o.quadraticCurveTo(x, y, x, y + r);
+    o.quadraticCurveTo(x, y, x - r, y);
+    o.quadraticCurveTo(x, y, x, y - r);
+    o.fill();
+  }
+  function fitBrand(o, text, maxW, maxH) {
+    o.font = BRAND(100);
+    const m = o.measureText(text);
+    const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight, h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+    const k = Math.min(maxW / Math.max(w, 1), maxH / Math.max(h, 1));
+    return { px: 100 * k, w: w * k, h: h * k, left: m.actualBoundingBoxLeft * k, asc: m.actualBoundingBoxAscent * k };
+  }
+  function drawBrand(os, text, cx, cy, f) {   // 按字形的实际外框居中
+    for (const o of os) {
+      o.font = BRAND(f.px);
+      o.textAlign = 'left';
+      o.textBaseline = 'alphabetic';
+      o.fillStyle = '#fff';
+      o.fillText(text, cx - f.w / 2 + f.left, cy - f.h / 2 + f.asc);
+    }
+  }
+  function both(A, V, color, fn) {   // 同一笔油墨：颜色画进 art，覆盖率画进 cov
+    A.fillStyle = A.strokeStyle = color;
+    V.fillStyle = V.strokeStyle = '#fff';
+    fn(A);
+    fn(V);
+  }
+  function mono(o, px, sp) {
+    o.font = `500 ${px}px ${MONO}`;
+    o.letterSpacing = sp + 'px';
+    o.textBaseline = 'top';
+  }
+
+  function drawFront(C) {
+    const { art: A, cov: V, foil: F, glit: G, holo: Hh, emb: E } = C;
+    const s = Math.min(TW, TH) / 100, R = 4.8 * s, port = TH > TW;
+    A.fillStyle = '#0c0a17';
+    A.fillRect(0, 0, TW, TH);
+    V.fillStyle = '#fff';
+    V.fillRect(0, 0, TW, TH);
+    // 碎钻边框：外面留一道很细的深色边，像真卡裁出来的样子
+    const b0 = 1.05 * s, b1 = 6.1 * s;
+    ring(G, b0, R - b0, b1, R - b1, '#fff');
+    ring(V, b0, R - b0, b1, R - b1, '#000');
+    // 星芒底纹：中间油墨薄、镭射透出来最多，四周压暗
+    const fi = 6.6 * s, fr = Math.max(R - fi, 1.4 * s), fw = TW - 2 * fi, fh = TH - 2 * fi;
+    const cx = TW / 2, cy = port ? TH * 0.47 : TH / 2;
+    rr(Hh, fi, fi, fw, fh, fr);
+    Hh.fillStyle = '#fff';
+    Hh.fill();
+    const rad = Math.hypot(fw, fh) / 2;
+    V.save();
+    rr(V, fi, fi, fw, fh, fr);
+    V.clip();
+    let g = V.createRadialGradient(cx, cy, 0, cx, cy, rad);
+    g.addColorStop(0, '#4a4a4a');
+    g.addColorStop(0.35, '#6a6a6a');
+    g.addColorStop(0.8, '#c4c4c4');
+    g.addColorStop(1, '#dcdcdc');
+    V.fillStyle = g;
+    V.fillRect(0, 0, TW, TH);
+    // 印一圈放射状的深色条：镭射在条里暗一些，星芒更像一道道光
+    const N = 44;
+    g = V.createRadialGradient(cx, cy, 0, cx, cy, rad);
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(0.12, 'rgba(255,255,255,0)');
+    g.addColorStop(0.3, 'rgba(255,255,255,.2)');
+    g.addColorStop(1, 'rgba(255,255,255,.34)');
+    V.fillStyle = g;
+    for (let i = 0; i < N; i += 2) {
+      const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+      V.beginPath();
+      V.moveTo(cx, cy);
+      V.lineTo(cx + Math.cos(a0) * rad * 1.2, cy + Math.sin(a0) * rad * 1.2);
+      V.lineTo(cx + Math.cos(a1) * rad * 1.2, cy + Math.sin(a1) * rad * 1.2);
+      V.closePath();
+      V.fill();
+    }
+    V.restore();
+    A.save();
+    rr(A, fi, fi, fw, fh, fr);
+    A.clip();
+    g = A.createRadialGradient(cx, cy, 0, cx, cy, rad);
+    g.addColorStop(0, '#3d2f86');
+    g.addColorStop(0.45, '#1d1745');
+    g.addColorStop(1, '#0b0a18');
+    A.fillStyle = g;
+    A.fillRect(0, 0, TW, TH);
+    A.restore();
+    // 底纹边上一道白线、往里一道淡紫的细线
+    both(A, V, '#efedf8', o => { o.lineWidth = 0.34 * s; rr(o, fi, fi, fw, fh, fr); o.stroke(); });
+    both(A, V, '#6f68a8', o => { o.lineWidth = 0.16 * s; rr(o, fi + 1.25 * s, fi + 1.25 * s, fw - 2.5 * s, fh - 2.5 * s, fr - 1.25 * s); o.stroke(); });
+    // 角上的小字
+    const pad = fi + 3.3 * s, ts = (port ? 3.1 : 2.35) * s;
+    both(A, V, '#efedf8', o => {
+      mono(o, ts, ts * 0.16);
+      o.textAlign = 'left';
+      o.fillText(port ? '镭射印社' : '镭射印社 · 第 03 季', pad, pad);
+      o.textAlign = 'right';
+      o.fillText(port ? 'No. 0042' : 'No. 0042 / 2000', TW - pad, pad);
+      o.textAlign = 'left';
+      o.textBaseline = 'bottom';
+      o.fillText(port ? '第 03 季 · 限定' : '宽幅镭射卡 · 限定', pad, TH - pad + ts * 0.2);
+      o.letterSpacing = '0px';
+    });
+    // 右下角三颗烫印小星
+    for (const o of [F, E]) {
+      o.fillStyle = '#fff';
+      for (let i = 0; i < 3; i++) star4(o, TW - pad - ts * 0.55 - i * ts * 1.45, TH - pad - ts * 0.5, ts * 0.62);
+    }
+    // 品牌名：烫印箔，微微凸起
+    const f = fitBrand(F, brand, fw * 0.84, fh * (port ? 0.3 : 0.44));
+    drawBrand([F, E], brand, cx, cy, f);
+    return { ctr: [cx / TW, cy / TH] };
+  }
+
+  let guilloche = null;
+  async function drawGuilloche(id) {
+    const s = Math.min(TW, TH) / 100, port = TH > TW, fi = 2.6 * s;
+    const cx = TW / 2, cy = port ? TH * 0.36 : TH * 0.47, R0 = port ? TW * 0.36 : TH * 0.36;
+    const c = canvas(TW, TH), A = c.getContext('2d', { willReadFrequently: true });   // 和卡面画布一样放在内存里，贴过去时不用从显卡读回来
+    // 两圈：外圈 18 瓣的花边，内圈 30 瓣的细网，每圈几十条线相位一点点错开，交叠出网纹
+    A.lineWidth = 0.11 * s;
+    for (const [n, base, amp, amp2, lobes, col] of [[30, 0.8, 0.13, 0.035, 18, 'rgba(150,165,235,.34)'], [26, 0.57, 0.06, 0.03, 30, 'rgba(185,170,245,.3)']]) {
+      A.strokeStyle = col;
+      for (let i = 0; i < n; i++) {
+        if (i % 14 === 13) { await nextFrame(); if (id !== buildId) return null; }   // 画十几条让出一帧
+        const ph = i / n * Math.PI * 2 / lobes;
+        A.beginPath();
+        for (let k = 0; k <= 1440; k++) {
+          const t = k / 1440 * Math.PI * 2;
+          const r = R0 * (base + amp * Math.cos(lobes * (t + ph)) + amp2 * Math.cos(lobes * 3 * t - 2 * lobes * ph));
+          const x = cx + Math.cos(t) * r, y = cy + Math.sin(t) * r;
+          k ? A.lineTo(x, y) : A.moveTo(x, y);
+        }
+        A.stroke();
+      }
+    }
+    // 横版：左右两条波纹带
+    if (!port) {
+      A.lineWidth = 0.11 * s;
+      for (let j = 0; j < 14; j++) {
+        A.strokeStyle = 'rgba(120,140,230,.32)';
+        for (const side of [-1, 1]) {
+          A.beginPath();
+          const xs = side < 0 ? fi + 4 * s : cx + R0 * 1.02, xe = side < 0 ? cx - R0 * 1.02 : TW - fi - 4 * s;
+          for (let x = xs; x <= xe; x += s * 0.5) {
+            const y = TH * 0.86 + Math.sin(x / (s * 5.2) + j * 0.42) * s * 1.6 + (j - 7) * s * 0.5;
+            x === xs ? A.moveTo(x, y) : A.lineTo(x, y);
+          }
+          A.stroke();
+        }
+      }
+    }
+    c.key = `${TW}x${TH}`;
+    return c;
+  }
+  function drawBack(C) {
+    const { art: A, cov: V, foil: F, glit: G, holo: Hh, emb: E } = C;
+    const s = Math.min(TW, TH) / 100, R = 4.8 * s, port = TH > TW;
+    const rnd = seeded(42);
+    A.fillStyle = '#0e1330';
+    A.fillRect(0, 0, TW, TH);
+    V.fillStyle = '#fff';
+    V.fillRect(0, 0, TW, TH);
+    // 背面只留一道细细的碎钻边
+    const b0 = 1.05 * s, b1 = 2.6 * s;
+    ring(G, b0, R - b0, b1, R - b1, '#fff');
+    ring(V, b0, R - b0, b1, R - b1, '#000');
+    const fi = 2.6 * s;
+    let g = A.createLinearGradient(0, 0, TW, TH);
+    g.addColorStop(0, '#141a3d');
+    g.addColorStop(1, '#0a0e24');
+    A.fillStyle = g;
+    rr(A, fi, fi, TW - 2 * fi, TH - 2 * fi, R - fi);
+    A.fill();
+    both(A, V, '#c9cff0', o => { o.lineWidth = 0.22 * s; rr(o, fi + 1.6 * s, fi + 1.6 * s, TW - 2 * fi - 3.2 * s, TH - 2 * fi - 3.2 * s, R - fi - 1.6 * s); o.stroke(); });
+    // 扭索纹：几十条相位错开的玫瑰线，像钞票上的底纹。它不随品牌名和字体变，按尺寸缓存一张（建卡前分几帧画好），改名时不用重画
+    const cx = TW / 2, cy = port ? TH * 0.36 : TH * 0.47, R0 = port ? TW * 0.36 : TH * 0.36;
+    A.drawImage(guilloche, 0, 0);
+    // 中间一圈深色衬底，再烫一个小号的品牌名
+    g = A.createRadialGradient(cx, cy, 0, cx, cy, R0 * 0.5);
+    g.addColorStop(0, '#0e1330');
+    g.addColorStop(0.8, '#0e1330');
+    g.addColorStop(1, 'rgba(14,19,48,0)');
+    A.fillStyle = g;
+    A.beginPath(); A.arc(cx, cy, R0 * 0.5, 0, 7); A.fill();
+    const f = fitBrand(F, brand, R0 * 0.66, R0 * 0.2);
+    drawBrand([F, E], brand, cx, cy - R0 * 0.02, f);
+    // 防伪微缩字：绕着品牌名一圈，正常大小看只是一道细线
+    const ring1 = `${brand.toUpperCase()} · 镭射印社 · No. 0042 · `;
+    A.fillStyle = '#b9c0ea';
+    A.font = `500 ${1.05 * s}px ${MONO}`;
+    A.textAlign = 'center';
+    A.textBaseline = 'middle';
+    const rr1 = R0 * 0.4, step = 1.05 * s * 0.74 / rr1, n1 = Math.floor(Math.PI * 2 / step);
+    for (let i = 0; i < n1; i++) {
+      const ch = ring1[i % ring1.length], a = i * step - Math.PI / 2;
+      A.save(); A.translate(cx + Math.cos(a) * rr1, cy + Math.sin(a) * rr1); A.rotate(a + Math.PI / 2); A.fillText(ch, 0, 0); A.restore();
+    }
+    A.beginPath(); A.arc(cx, cy, rr1 + 1.1 * s, 0, 7); A.arc(cx, cy, rr1 - 1.1 * s, 0, 7);
+    A.strokeStyle = '#b9c0ea'; A.lineWidth = 0.1 * s; A.stroke();
+    // 编号和序列号
+    const pad = fi + 5 * s;
+    both(A, V, '#e7e9fb', o => {
+      o.textAlign = 'left';
+      o.letterSpacing = '0px';
+      if (port) {
+        let y = TH * 0.66;
+        mono(o, 2.9 * s, 0.5 * s); o.fillText('镭射印社 出品', pad, pad);
+        o.font = `700 ${12 * s}px Syne, sans-serif`; o.letterSpacing = '0px'; o.textBaseline = 'top'; o.fillText('0042', pad, y);
+        mono(o, 3.4 * s, 0.4 * s); o.fillText('/ 2000', pad + o.measureText('0042').width * 0 + 34 * s, y + 6.2 * s);
+        y += 15 * s;
+        mono(o, 2.7 * s, 0.35 * s);
+        o.fillText('序列号  LM-26S3-0042-Q7', pad, y);
+        o.fillText('限量 2000 张 · 第 03 季', pad, y + 4.6 * s);
+      } else {
+        mono(o, 2.1 * s, 0.4 * s); o.fillText('镭射印社 出品 · 第 03 季', pad, pad);
+        o.font = `700 ${11 * s}px Syne, sans-serif`; o.letterSpacing = '0px'; o.textBaseline = 'top'; o.fillText('0042', pad, TH * 0.3);
+        mono(o, 2.6 * s, 0.3 * s); o.fillText('/ 2000', pad + 2 * s, TH * 0.3 + 13 * s);
+        mono(o, 2 * s, 0.3 * s);
+        o.fillText('序列号  LM-26S3-0042-Q7', pad, TH * 0.3 + 19 * s);
+        o.fillText('限量 2000 张，本张第 0042 张', pad, TH * 0.3 + 23 * s);
+      }
+    });
+    // 条码：随便的粗细，固定种子
+    const bx = port ? pad : TW - pad - 26 * s, by = port ? TH - pad - 13 * s : TH * 0.6, bw = 26 * s, bh = (port ? 8 : 9) * s;
+    both(A, V, '#e7e9fb', o => {
+      let x = bx;
+      const r2 = seeded(7);
+      while (x < bx + bw) { const w = (0.25 + Math.floor(r2() * 4) * 0.22) * s; if (r2() > 0.42) o.fillRect(x, by, w, bh); x += w + 0.22 * s; }
+      mono(o, 1.6 * s, 0.35 * s);
+      o.textAlign = 'left';
+      o.fillText('2 026003 004207', bx, by + bh + 1.2 * s);
+    });
+    // 防伪标：一枚圆形的镭射贴，自己带一个径向光栅，边上一圈压出来的字
+    const sr = port ? TW * 0.16 : TH * 0.13;
+    const sx = port ? TW - pad - sr : TW - pad - sr, sy = port ? TH - pad - sr : pad + sr + 2 * s;
+    Hh.fillStyle = '#fff';
+    Hh.beginPath(); Hh.arc(sx, sy, sr, 0, 7); Hh.fill();
+    V.fillStyle = '#000';
+    V.beginPath(); V.arc(sx, sy, sr, 0, 7); V.fill();
+    A.fillStyle = '#20264d';
+    A.beginPath(); A.arc(sx, sy, sr, 0, 7); A.fill();
+    E.fillStyle = '#fff';
+    E.strokeStyle = '#fff';
+    E.lineWidth = 0.35 * s;
+    E.beginPath(); E.arc(sx, sy, sr * 0.97, 0, 7); E.stroke();
+    E.beginPath(); E.arc(sx, sy, sr * 0.62, 0, 7); E.stroke();
+    E.font = `600 ${sr * 0.17}px ${MONO}`;
+    E.textAlign = 'center';
+    E.textBaseline = 'middle';
+    const ring2 = '正品 · AUTHENTIC · 镭射印社 · ', step2 = sr * 0.17 * 0.82 / (sr * 0.8), n2 = Math.floor(Math.PI * 2 / step2);
+    for (let i = 0; i < n2; i++) {
+      const a = i * step2 - Math.PI / 2;
+      E.save(); E.translate(sx + Math.cos(a) * sr * 0.8, sy + Math.sin(a) * sr * 0.8); E.rotate(a + Math.PI / 2); E.fillText(ring2[i % ring2.length], 0, 0); E.restore();
+    }
+    star4(E, sx, sy, sr * 0.42);
+    return { ctr: [sx / TW, sy / TH] };
+  }
+
+  // 可分离的方框模糊，原地改。竖向那一遍也按行往下推（每列一个滑动和），内存是连续读的，比逐列扫快很多
+  function blur(a, w, h, r, tmp) {
+    const inv = 1 / (2 * r + 1), line = new Float32Array(w);
+    for (let y = 0; y < h; y++) {
+      const o = y * w;
+      let s = a[o] * (r + 1);
+      for (let x = 1; x <= r; x++) s += a[o + Math.min(x, w - 1)];
+      for (let x = 0; x < w; x++) { line[x] = s * inv; s += a[o + Math.min(x + r + 1, w - 1)] - a[o + Math.max(x - r, 0)]; }
+      a.set(line, o);
+    }
+    for (let x = 0; x < w; x++) { let s = a[x] * (r + 1); for (let y = 1; y <= r; y++) s += a[Math.min(y, h - 1) * w + x]; line[x] = s; }
+    for (let y = 0; y < h; y++) {
+      const o = y * w, add = Math.min(y + r + 1, h - 1) * w, sub = Math.max(y - r, 0) * w;
+      for (let x = 0; x < w; x++) { tmp[o + x] = line[x] * inv; line[x] += a[add + x] - a[sub + x]; }
+    }
+    a.set(tmp);
+  }
+  // 分成十来小步，每步之间让出一帧，两倍屏上单步也只有二三十毫秒：画、读出来、打包、六遍模糊、叠起来
+  const nextFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+  let buildId = 0;
+  async function makeFace(draw, id) {
+    const C = {};
+    for (const k of ['art', 'cov', 'foil', 'glit', 'holo', 'emb']) {
+      C[k] = canvas(TW, TH).getContext('2d', { willReadFrequently: true });
+      if (k !== 'art') { C[k].fillStyle = '#000'; C[k].fillRect(0, 0, TW, TH); }
+    }
+    const info = draw(C), step = async () => { await nextFrame(); return id === buildId; };
+    if (!await step()) return null;
+    const n = TW * TH, px = k => C[k].getImageData(0, 0, TW, TH).data;
+    const art = px('art'), dc = px('cov'), df = px('foil'), dg = px('glit'), dh = px('holo'), de = px('emb');
+    if (!await step()) return null;
+    const mk = new Uint8Array(n * 4), hs = new Float32Array(n);
+    for (let i = 0, j = 0; i < n; i++, j += 4) {
+      mk[j] = df[j]; mk[j + 1] = dg[j]; mk[j + 2] = dh[j]; mk[j + 3] = dc[j];
+      hs[i] = de[j] / 255;
+    }
+    // 凸起的轮廓：一道窄的斜边加一圈很缓的肩，各模糊三遍叠起来，存成浮点
+    const s = Math.min(TW, TH) / 100, hb = hs.slice(), tmp = new Float32Array(n);
+    const r1 = Math.max(1, Math.round(0.24 * s)), r2 = Math.max(2, Math.round(1.1 * s));
+    for (const [a, r] of [[hs, r1], [hs, r1], [hs, r1], [hb, r2], [hb, r2], [hb, r2]]) {
+      if (!await step()) return null;
+      blur(a, TW, TH, r, tmp);
+    }
+    for (let i = 0; i < n; i++) hs[i] = hs[i] * 0.78 + hb[i] * 0.22;
+    return { art: C.art.canvas, artPx: art, mk, hgt: hs, ctr: info.ctr, w: TW, h: TH };
+  }
+
+  /* ---------- 印张：卡片背后那张纸，留着裁切线、套准标记、色条和版边字 ---------- */
+  let sheetCv;
+  function drawSheet() {
+    const c = canvas(W * DPR, H * DPR), o = c.getContext('2d', { willReadFrequently: true });
+    o.scale(DPR, DPR);
+    o.fillStyle = '#16151d';
+    o.fillRect(0, 0, W, H);
+    const x0 = (W - cardW) / 2, y0 = CY - cardH / 2, x1 = x0 + cardW, y1 = y0 + cardH;
+    const ink = 'rgba(214,211,230,.46)';
+    o.strokeStyle = ink;
+    o.lineWidth = 0.8;
+    const line = (a, b, c2, d) => { o.beginPath(); o.moveTo(a, b); o.lineTo(c2, d); o.stroke(); };
+    const gap = 9, L = mobile ? 14 : 20;
+    for (const [px, py, sx, sy] of [[x0, y0, -1, -1], [x1, y0, 1, -1], [x0, y1, -1, 1], [x1, y1, 1, 1]]) {
+      line(px + sx * gap, py, px + sx * (gap + L), py);
+      line(px, py + sy * gap, px, py + sy * (gap + L));
+    }
+    const reg = (x, y, r) => {   // 套准标记：圆圈加十字
+      o.beginPath(); o.arc(x, y, r, 0, 7); o.stroke();
+      o.beginPath(); o.arc(x, y, r * 0.45, 0, 7); o.stroke();
+      line(x - r * 1.7, y, x + r * 1.7, y);
+      line(x, y - r * 1.7, x, y + r * 1.7);
+    };
+    if (!mobile) { reg(x0 - 40, CY, 6.5); reg(x1 + 40, CY, 6.5); }
+    if (y0 > 40) reg(W / 2, y0 - 24, 6);
+    // 色条：四色实地、半色调，最后一格是镭射
+    const sw = mobile ? 9 : 11, cols = ['#00a0e9', '#e4007f', '#ffe100', '#231815', '#7fcff4', '#f17fbf', '#fff07f', '#8a8584'];
+    let bx = x0, by = y1 + (mobile ? 22 : 26);
+    cols.forEach((col, i) => { o.fillStyle = col; o.globalAlpha = 0.82; o.fillRect(bx + i * (sw + 2), by, sw, sw); });
+    const hg = o.createLinearGradient(bx + cols.length * (sw + 2), 0, bx + cols.length * (sw + 2) + sw * 3, 0);
+    ['#ff9ac1', '#ffd98a', '#a6f5c8', '#8fd2ff', '#c3a6ff'].forEach((c2, i) => hg.addColorStop(i / 4, c2));
+    o.fillStyle = hg;
+    o.fillRect(bx + cols.length * (sw + 2), by, sw * 3, sw);
+    o.globalAlpha = 1;
+    // 版边字
+    o.fillStyle = 'rgba(214,211,230,.5)';
+    o.font = `500 ${mobile ? 9.5 : 10.5}px ${MONO}`;
+    o.letterSpacing = '1.2px';
+    o.textBaseline = 'middle';
+    let slug = `${brand.toUpperCase()} 镭射印社  ·  ${mobile ? '' : '宽幅'}镭射卡 第 03 季  ·  印张 0042 / 2000`;
+    // 右边还要放读数：放不下就换短的，再放不下就不写
+    const sx = bx + cols.length * (sw + 2) + sw * 3 + 18, room = x1 - 290 - sx;
+    if (!mobile && o.measureText(slug).width > room) slug = `${brand.toUpperCase()} 镭射印社  ·  印张 0042 / 2000`;
+    if (!mobile && o.measureText(slug).width > room) slug = '';
+    if (mobile) {   // 手机：版边字竖着排在左边
+      o.save();
+      o.translate(x0 / 2, y0 + cardH / 2);
+      o.rotate(-Math.PI / 2);
+      o.textAlign = 'center';
+      o.fillText(slug, 0, 0);
+      o.restore();
+    } else {
+      o.textAlign = 'left';
+      o.fillText(slug, sx, by + sw / 2);
+    }
+    o.letterSpacing = '0px';
+    sheetCv = c;
+  }
+
+  /* ---------- 着色器 ---------- */
+  const VS = `#version 300 es
+in vec2 a;
+void main() { gl_Position = vec4(a, 0., 1.); }`;
+  const FS = `#version 300 es
+precision highp float;
+precision highp sampler2D;
+precision highp sampler2DArray;
+out vec4 o;
+uniform vec2 uRes, uHalf, uTex, uBoxS;
+uniform float uTanF, uRad, uTh, uBackZ, uBoxI, uFillI, uEmb;
+uniform vec3 uCam, uPos, uBox, uBoxU, uBoxV, uFill;
+uniform vec4 uCtr;
+uniform mat3 uRot;
+uniform sampler2DArray uArt, uMask, uHgt;
+uniform sampler2D uSheet, uSpec;
+
+float sdRR(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
+float h12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+vec3 h32(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973)); p3 += dot(p3, p3.yxz + 33.33); return fract((p3.xxy + p3.yzz) * p3.zyx); }
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h12(i), h12(i + vec2(1, 0)), f.x), mix(h12(i + vec2(0, 1)), h12(i + 1.), f.x), f.y); }
+vec3 aces(vec3 x) { return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+
+// 波长（纳米）对应的颜色，表是按 CIE 1931 配色函数算好的
+vec3 spec(float lam) { float x = (lam - 380.) / 400.; return x > 0. && x < 1. ? texture(uSpec, vec2(x, .5)).rgb : vec3(0.); }
+// 衍射光栅：h 是光线和视线在膜面上的投影之和，k 是光栅矢量（垂直于刻槽），d 是刻槽间距（纳米）。
+// 沿 k 的分量决定反射回来的波长（一、二、三级），垂直 k 的分量偏离 0 越多越暗，sig 管这道反光带有多宽
+vec3 grating(vec2 h, vec2 k, float d, float sig) {
+  float u = abs(dot(h, k)) * d, w = dot(h, vec2(-k.y, k.x)) / sig;
+  return (spec(u) + .5 * spec(u * .5) + .3 * spec(u / 3.)) * exp(-w * w);
+}
+// 灯：一根斜放的短灯管。从 p 沿 r 看出去能看到它多少：亮度从中线往两边、从中间往两头都是平滑衰减，倒影没有硬边；
+// soft 是表面有多毛（世界单位），越毛倒影糊得越开、也越暗；斜着看灯管时也暗一些
+float softbox(vec3 p, vec3 r, float soft) {
+  vec3 n = cross(uBoxU, uBoxV);
+  float dn = dot(r, n);
+  if (abs(dn) < 1e-4) return 0.;
+  float t = dot(uBox - p, n) / dn;
+  if (t <= 0.) return 0.;
+  vec2 c = vec2(dot(p + r * t - uBox, uBoxU), dot(p + r * t - uBox, uBoxV));
+  vec2 sg = sqrt(uBoxS * uBoxS + soft * soft);
+  vec2 e = exp(-c * c / (sg * sg));
+  return e.x * e.y * uBoxS.y / sg.y * abs(dn);
+}
+vec3 sat(vec3 c, float k) { float l = dot(c, vec3(.2126, .7152, .0722)); return max(mix(vec3(l), c, k), 0.); }
+// 屋子里其余的地方：很暗，上面稍亮
+vec3 env(vec3 r) { return mix(vec3(.014, .013, .019), vec3(.07, .066, .08), smoothstep(-.5, .9, r.y)); }
+
+vec3 face(vec2 uv, vec2 gx, vec2 gy, float layer, vec3 P, vec3 N, vec3 T, vec3 B, float fpx) {
+  vec3 tuv = vec3(uv, layer);
+  vec3 ink = textureGrad(uArt, tuv, gx, gy).rgb;
+  vec4 mk = textureGrad(uMask, tuv, gx, gy);
+  vec2 px = uv * uTex;
+  // 凸起：贴图 y 朝下，卡面的 B 朝上
+  vec2 ex = vec2(1.25 / uTex.x, 0.), ey = vec2(0., 1.25 / uTex.y);
+  float hR = textureLod(uHgt, vec3(uv + ex, layer), 0.).r, hL = textureLod(uHgt, vec3(uv - ex, layer), 0.).r;
+  float hU = textureLod(uHgt, vec3(uv - ey, layer), 0.).r, hD = textureLod(uHgt, vec3(uv + ey, layer), 0.).r;
+  vec2 g = vec2(hR - hL, hU - hD) * uEmb;
+  vec3 n = normalize(N - T * g.x - B * g.y);
+  vec3 V = normalize(uCam - P), L = normalize(uBox - P), Lf = normalize(uFill - P);
+  vec3 t1 = normalize(T - n * dot(n, T)), t2 = cross(n, t1);
+  vec3 Hs = L + V, Hf = Lf + V;
+  vec2 h = vec2(dot(Hs, t1), dot(Hs, t2)), hf = vec2(dot(Hf, t1), dot(Hf, t2));
+  float hz = dot(Hs, n), hfz = dot(Hf, n);
+  vec3 R = reflect(-V, n);
+  // 镀铝的镭射膜本身是一面镜子：照出屋子和柔光箱
+  vec3 mirror = env(R) + vec3(1., .97, .93) * softbox(P, R, .1) * uBoxI * 1.6;
+  vec3 foil = mirror * .5;
+
+  // 碎钻边框：几千粒朝向各不相同的小碎片，底子是暗的镜面，大多数角度下都是黑的。
+  // 六成碎片是小光栅，角度刚好对上时亮成一种很饱和的颜色；其余是小镜子，正对灯时白光一闪。倾斜一点，亮的就整批换掉
+  vec3 glare = vec3(0.);
+  if (mk.g > .002) {
+    float cs = 4.6;
+    vec2 gp = px / cs, ip = floor(gp), fp = fract(gp);
+    float F1 = 9., F2 = 9.;
+    vec2 id1 = ip;
+    for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+      vec2 oc = vec2(float(i), float(j));
+      vec2 d = oc + .1 + .8 * h32(ip + oc).xy - fp;
+      float dd = dot(d, d);
+      if (dd < F1) { F2 = F1; F1 = dd; id1 = ip + oc; } else if (dd < F2) F2 = dd;
+    }
+    float gap = sqrt(F2) - sqrt(F1);
+    vec3 r1 = h32(id1 + 17.3), r2 = h32(id1 + 3.7);
+    vec2 tl = (r2.xy - .5) * .9;   // 朝向散得很开：同一时刻只有少数对得上
+    vec2 hs = h - tl * hz, hfs = hf - tl * hfz;
+    vec3 nf = normalize(n + t1 * tl.x + t2 * tl.y);
+    vec3 Rf = reflect(-V, nf);
+    vec3 gc = env(Rf) * (.1 + .3 * r1.z) + vec3(.002, .0018, .003);
+    if (r2.z < .6) {
+      float th = r1.x * 6.2832, dd = 1050. + 800. * r1.y;
+      vec2 k = vec2(cos(th), sin(th));
+      gc += sat(grating(hs, k, dd, .026) * uBoxI + grating(hfs, k, dd, .026) * .6 * uFillI, 1.9) * 2.8 * (.25 + .75 * r1.z * r1.z);   // 亮度也有高有低
+    } else {
+      gc += vec3(1., .97, .92) * (exp(-dot(hs, hs) / .004) * uBoxI + exp(-dot(hfs, hfs) / .004) * .4 * uFillI) * 5.;
+    }
+    gc += vec3(1., .97, .93) * softbox(P, Rf, .03) * uBoxI * 6.;   // 灯管的倒影扫过哪几粒，哪几粒就亮
+    float seam = smoothstep(0., 1.2 * fpx / cs, gap);
+    float far = smoothstep(cs * .6, cs * .3, fpx);   // 碎片小到一个像素以下时不闪，免得满是噪点
+    vec3 gg = mix(vec3(.018, .016, .022), gc * (.7 + .3 * seam), far);
+    foil = mix(foil, gg, mk.g);
+  }
+  // 最亮的那几粒带星芒：粗一级的格子里每格挑一粒，正好对上灯时亮成一颗四角星，光芒伸到旁边的碎片上
+  if (textureLod(uMask, tuv, 3.).g > .01) {
+    float c2 = 4.6 * 3.2;
+    vec2 si = floor(px / c2);
+    for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+      vec2 id = si + vec2(float(i), float(j));
+      vec2 tl = (h32(id + 5.3).xy - .5) * .9, hs = h - tl * hz;
+      float I = exp(-dot(hs, hs) / .0035) * uBoxI;
+      if (I < .03) continue;
+      vec3 q = h32(id + 91.7);
+      vec2 cp = (id + .15 + .7 * q.xy) * c2;
+      if (textureLod(uMask, vec3(cp / uTex, layer), 0.).g < .5) continue;   // 星心要落在碎钻边框里
+      vec2 d = (px - cp) / max(fpx, .5);   // 换成屏幕像素
+      float len = 2.5 + 8. * I;
+      float rays = exp(-abs(d.y) * 1.5 - abs(d.x) / len) + exp(-abs(d.x) * 1.5 - abs(d.y) / len);
+      vec3 tint = mix(vec3(1., .98, .95), sat(spec(430. + 240. * q.z), 1.6) * 1.5, .4);
+      glare += tint * I * (exp(-dot(d, d) * .35) * 2.5 + rays * .9);
+    }
+  }
+  // 星芒底纹：刻槽是一圈圈同心圆（光栅矢量朝外），只有和 h 平行的那条半径最亮，倾斜时那道彩虹绕着中心转
+  if (mk.b > .002) {
+    vec2 c0 = layer < .5 ? uCtr.xy : uCtr.zw;
+    vec2 q = (uv - c0) * uTex;
+    q.y = -q.y;
+    float rr = length(q);
+    vec2 kr = q / max(rr, 1e-3), kt = vec2(-kr.y, kr.x);
+    // 分成 36 个扇区，相邻扇区刻槽疏密不同，彩虹在扇区边上错开一格；边界按屏幕像素抗锯齿
+    float a = atan(q.y, q.x) / 6.2832 * 36. + 36.;
+    float sec = floor(a), fa = fract(a);
+    float edge = min(fa, 1. - fa) * rr * 6.2832 / 36. / max(fpx, 1e-3);
+    float nb = fa < .5 ? sec - 1. : sec + 1.;
+    float d0 = 1240. + 190. * h12(vec2(mod(sec, 36.), 3.)), d1 = 1240. + 190. * h12(vec2(mod(nb, 36.), 3.));
+    float dd = mix(d1, d0, .5 + .5 * smoothstep(0., 1.5, edge));
+    vec3 hc = grating(h, kr, dd, .045) * 1.5 + grating(h, kr, dd, .16) * .32 + grating(hf, kr, dd, .05) * .7 * uFillI + grating(h, kt, 1720., .06) * .3;
+    // 背面的防伪标：亮银底，反光带宽一些，小小一枚也能看到彩虹
+    if (layer > .5) hc = env(R) * 2.4 + vec3(.1, .098, .11) + grating(h, kr, 1400., .3) * 1.3 + grating(hf, kr, 1400., .3) * .6 * uFillI + grating(h, kt, 1600., .2) * .6;
+    // 星点：零星几颗小镜面，各朝各的方向
+    float cs = 6.;
+    vec2 sp = px / cs, si = floor(sp), sf = fract(sp) - .5;
+    vec3 r3 = h32(si + 41.);
+    if (r3.x < .12) {
+      vec2 tl = (h32(si + 7.).xy - .5) * 1.1;
+      vec2 hs = h - tl * hz;
+      float dpx = length(sf - (r3.yz - .5) * .5) * cs / max(fpx, .6);
+      float fl = exp(-dot(hs, hs) * 320.) * exp(-dpx * dpx * .7);
+      hc += (vec3(.7) + spec(380. + 380. * fract(r3.y * 7.))) * fl * 5. * uBoxI;
+    }
+    foil += hc * mk.b * (1. - mk.g);
+  }
+  // 印上去的油墨：漫反射，加一点纸纹
+  float lam = max(dot(n, L), 0.), lamF = max(dot(n, Lf), 0.);
+  float grain = mix(1., .93 + .07 * vn(px * .4), smoothstep(3., 1., fpx));
+  vec3 inkLit = ink * (.06 + lam * .95 * uBoxI + lamF * .28 * uFillI) * grain;
+  vec3 col = mix(foil, inkLit, mk.a);
+
+  // 烫印的品牌名：银色的镭射箔，斜着拉丝，刻槽方向跟着拉丝的纹路抖一点
+  if (mk.r > .002) {
+    float ba = .42;
+    vec2 bd = vec2(cos(ba), sin(ba)), bp = vec2(-bd.y, bd.x), pc = vec2(px.x, -px.y);
+    float near = smoothstep(2.6, .8, fpx);   // 拉丝纹比像素还细时就淡掉，不然会闪成噪点
+    float st = vn(vec2(dot(pc, bd) * .01, dot(pc, bp) * .14));
+    float jt = (st - .5) * .22 * near;
+    vec2 k = vec2(cos(ba + jt + 1.5708), sin(ba + jt + 1.5708));
+    vec3 hc = grating(h, k, 1500., .28) * 1.1 + grating(hf, k, 1500., .28) * .5 * uFillI;
+    // 拉丝银：上方亮、下方暗的影棚，加上柔光箱拉开的一大片宽高光
+    vec3 metal = mix(vec3(.04, .04, .05), vec3(.46, .46, .5), smoothstep(-.45, .8, R.y)) * (.55 + .45 * uBoxI)
+               + vec3(1., .97, .93) * (softbox(P, R, .2) * 20. + softbox(P, R, .6) * 12.) * uBoxI;
+    vec3 tc = metal + hc * (.7 + .6 * st * near + .3 * (1. - near));
+    col = mix(col, tc, mk.r);
+  }
+  // 覆膜：一层很薄的透明光油，柔光箱在上面的倒影，带一点橘皮纹
+  vec2 op = vec2(vn(px * .05), vn(px * .05 + 31.)) - .5;
+  vec3 nl = normalize(n + (t1 * op.x + t2 * op.y) * .0012 * smoothstep(12., 4., fpx));
+  vec3 Rl = reflect(-V, nl);
+  float fr = .04 + .96 * pow(1. - max(dot(nl, V), 0.), 5.);
+  // 亮条本身很细很亮，外面再带一圈淡淡的晕
+  // 灯管在覆膜上的倒影：一道细细的亮线，外面一圈很淡的晕
+  col += (vec3(1., .98, .95) * (softbox(P, Rl, .006) * 22. + softbox(P, Rl, .07) * 5.) * uBoxI + env(Rl)) * fr * (1. - mk.r * .75);
+  return col + glare;
+}
+
+void main() {
+  vec2 f = gl_FragCoord.xy;
+  vec2 ndc = f / uRes * 2. - 1.;
+  vec3 dir = normalize(vec3(ndc.x * uRes.x / uRes.y * uTanF, ndc.y * uTanF, -1.));
+  mat3 Ri = transpose(uRot);
+  // 卡片是一块很薄的板：先和正反两个面求交，再看光线在板里那一小段有没有落进圆角矩形
+  vec3 ol = Ri * (uCam - uPos), dl = Ri * dir;
+  float dz = abs(dl.z) < 1e-6 ? 1e-6 : dl.z;
+  float s1 = (uTh - ol.z) / dz, s2 = (-uTh - ol.z) / dz;
+  bool front = s1 < s2;
+  float sIn = min(s1, s2), sOut = max(s1, s2);
+  vec3 pIn = ol + dl * sIn, pOut = ol + dl * sOut;
+  float dIn = sdRR(pIn.xy, uHalf, uRad), dOut = sdRR(pOut.xy, uHalf, uRad);
+  float dSil = sIn > 0. ? min(dIn, dOut) : 1.;
+  // 卡片平面延长过相机的那条线上，相邻像素的交点一个在前一个在后，导数会爆掉：给它封个顶
+  float cov = clamp(.5 - dSil / clamp(fwidth(dSil), 1e-6, .02), 0., 1.);
+  float fwIn = clamp(fwidth(dIn), 1e-6, .02);
+  vec2 uv = pIn.xy / (2. * uHalf) + .5;
+  uv = vec2(front ? uv.x : 1. - uv.x, 1. - uv.y);   // 贴图的 y 朝下；背面左右镜像
+  vec2 gx = dFdx(uv), gy = dFdy(uv);
+  float fpx = max(length(gx * uTex), length(gy * uTex));   // 一个屏幕像素跨几个贴图像素
+
+  // 背后的印张：柔光箱照亮，卡片投下一块软影
+  vec3 col = texture(uSheet, vec2(f.x, uRes.y - f.y) / uRes).rgb;   // 画布的 y 朝下
+  {
+    vec3 Pb = uCam + dir * ((uBackZ - uCam.z) / dir.z);
+    vec3 Lb = uBox - Pb;
+    float dl2 = dot(Lb, Lb);
+    Lb *= inversesqrt(dl2);
+    vec3 c0 = vec3(0., uPos.y, uBackZ) - uBox;
+    float lit = .42 + 1.05 * uBoxI * max(Lb.z, 0.) * dot(c0, c0) / dl2;
+    vec3 q = Ri * (Pb - uPos), ld = Ri * Lb;
+    float occ = 0.;
+    if (abs(ld.z) > 1e-4) {
+      float s = -q.z / ld.z;
+      if (s > 0.) {
+        float pen = .02 + s * .3;
+        occ = 1. - smoothstep(-pen, pen, sdRR(q.xy + ld.xy * s, uHalf, uRad));
+      }
+    }
+    col *= lit * (1. - .8 * occ * (.35 + .65 * uBoxI));
+  }
+  if (cov > 0.) {
+    vec3 P = uCam + dir * sIn;
+    float sg = front ? 1. : -1.;
+    vec3 N = uRot * vec3(0., 0., sg), T = uRot * vec3(sg, 0., 0.), B = uRot * vec3(0., 1., 0.);
+    vec3 c = face(clamp(uv, 0., 1.), gx, gy, front ? 0. : 1., P, N, T, B, fpx);
+    // 立起来快成一条线时，看得到卡纸白色的切边
+    float em = smoothstep(0., fwIn * 1.5, dIn);
+    if (em > 0.) {
+      vec2 e = vec2(1e-3, 0.);
+      vec2 gq = vec2(sdRR(pOut.xy + e, uHalf, uRad) - sdRR(pOut.xy - e, uHalf, uRad), sdRR(pOut.xy + e.yx, uHalf, uRad) - sdRR(pOut.xy - e.yx, uHalf, uRad));
+      vec3 ne = uRot * normalize(vec3(gq, 0.));
+      vec3 Pe = uCam + dir * sOut;
+      vec3 ec = vec3(.78, .76, .74) * (.06 + .9 * max(dot(ne, normalize(uBox - Pe)), 0.) * uBoxI);
+      c = mix(c, ec, em);
+    }
+    col = mix(col, c, cov);
+  }
+  col = pow(aces(col), vec3(1. / 2.2));
+  o = vec4(col + (h12(f) - .5) / 255., 1.);
+}`;
+
+  let gl = null, U = {}, tex = {}, glOK = false, prog = null, pcx = null, progReady = false;
+  function initGL() {
+    if (/[?&]nogl\b/.test(location.search)) return false;
+    gl = glc.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
+    if (!gl) return false;
+    // 着色器放到后台编译（KHR_parallel_shader_compile）：同步编译这段着色器要卡主线程半秒多
+    pcx = gl.getExtension('KHR_parallel_shader_compile');
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    prog = gl.createProgram();
+    prog.fs = sh(gl.FRAGMENT_SHADER, FS);
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, prog.fs);
+    gl.bindAttribLocation(prog, 0, 'a');
+    gl.linkProgram(prog);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    [['art', gl.TEXTURE_2D_ARRAY], ['mask', gl.TEXTURE_2D_ARRAY], ['hgt', gl.TEXTURE_2D_ARRAY], ['sheet', gl.TEXTURE_2D], ['spec', gl.TEXTURE_2D]].forEach(([k, t], i) => {
+      tex[k] = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0 + i);
+      gl.bindTexture(t, tex[k]);
+    });
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    tex.aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+    // 光谱表：Wyman 等人对 CIE 1931 配色函数的分段高斯拟合 → XYZ → 线性 sRGB
+    const n = 256, d = new Float32Array(n * 4);
+    const g = (x, m, a, b) => { const t = (x - m) / (x < m ? a : b); return Math.exp(-0.5 * t * t); };
+    for (let i = 0; i < n; i++) {
+      const l = 380 + 400 * (i + 0.5) / n;
+      const X = 1.056 * g(l, 599.8, 37.9, 31) + 0.362 * g(l, 442, 16, 26.7) - 0.065 * g(l, 501.1, 20.4, 26.2);
+      const Y = 0.821 * g(l, 568.8, 46.9, 40.5) + 0.286 * g(l, 530.9, 16.3, 31.1);
+      const Z = 1.217 * g(l, 437, 11.8, 36) + 0.681 * g(l, 459, 26, 13.8);
+      const rgb = [3.2406 * X - 1.5372 * Y - 0.4986 * Z, -0.9689 * X + 1.8758 * Y + 0.0415 * Z, 0.0557 * X - 0.204 * Y + 1.057 * Z];
+      // 纯光谱色在 sRGB 外面：往同亮度的灰拉一点再截掉负值，颜色不会突然断开
+      for (let c = 0; c < 3; c++) d[i * 4 + c] = Math.max(0, Y + (rgb[c] - Y) * 0.66) * 0.8;
+      d[i * 4 + 3] = 1;
+    }
+    gl.activeTexture(gl.TEXTURE4);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, n, 1, 0, gl.RGBA, gl.FLOAT, d);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return true;
+  }
+  // 编译完之前不碰需要着色器的调用（查状态、取 uniform 位置都会让主线程停下来等它）
+  function glReady() {
+    if (progReady) return true;
+    if (pcx && !gl.getProgramParameter(prog, pcx.COMPLETION_STATUS_KHR)) return false;
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getShaderInfoLog(prog.fs) || gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);
+    ['uRes', 'uHalf', 'uTex', 'uBoxS', 'uTanF', 'uRad', 'uTh', 'uBackZ', 'uBoxI', 'uFillI', 'uEmb', 'uCam', 'uPos', 'uBox', 'uBoxU', 'uBoxV', 'uFill', 'uCtr', 'uRot',
+     'uArt', 'uMask', 'uHgt', 'uSheet', 'uSpec'].forEach(k => { U[k] = gl.getUniformLocation(prog, k); });
+    ['uArt', 'uMask', 'uHgt', 'uSheet', 'uSpec'].forEach((k, i) => gl.uniform1i(U[k], i));
+    progReady = true;
+    return true;
+  }
+  function arrayParams(mip) {
+    const T = gl.TEXTURE_2D_ARRAY;
+    gl.texParameteri(T, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+    gl.texParameteri(T, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(T, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(T, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (mip && tex.aniso) gl.texParameterf(T, tex.aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(tex.aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  }
+  let FACE, BACK;
+  async function uploadCard(F, B, id) {
+    const T = gl.TEXTURE_2D_ARRAY, w = F.w, h = F.h, n = w * h, made = [];
+    const make = (fmt, type, internal, a, b, mip) => {
+      const data = new (a.constructor === Uint8ClampedArray ? Uint8Array : a.constructor)(n * 2 * (a.length / n));
+      data.set(a);
+      data.set(b, a.length);
+      const t = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE5);   // 用一个空着的单元传，别动正在画的那几张
+      gl.bindTexture(T, t);
+      gl.texImage3D(T, 0, internal, w, h, 2, 0, fmt, type, data);
+      if (mip) gl.generateMipmap(T);
+      arrayParams(mip);
+      made.push(t);
+    };
+    // 油墨颜色、各种遮罩：从字节数组传，比直接传画布快（画布要先从显卡读回来）
+    make(gl.RGBA, gl.UNSIGNED_BYTE, gl.SRGB8_ALPHA8, F.artPx, B.artPx, true);
+    await nextFrame();
+    make(gl.RGBA, gl.UNSIGNED_BYTE, gl.RGBA8, F.mk, B.mk, true);
+    await nextFrame();
+    // 高度存浮点：8 位的高度求出来的法线会有一道道台阶
+    make(gl.RED, gl.FLOAT, gl.R16F, F.hgt, B.hgt, false);
+    await nextFrame();
+    const sp = sheetCv.getContext('2d').getImageData(0, 0, sheetCv.width, sheetCv.height).data, ts = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, ts);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, sheetCv.width, sheetCv.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, sp);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    made.push(ts);
+    if (id !== buildId) { made.forEach(t => gl.deleteTexture(t)); return false; }
+    ['art', 'mask', 'hgt', 'sheet'].forEach((k, i) => {
+      gl.activeTexture(gl.TEXTURE0 + i);
+      gl.bindTexture(k === 'sheet' ? gl.TEXTURE_2D : T, made[i]);
+      gl.deleteTexture(tex[k]);
+      tex[k] = made[i];
+    });
+    return true;
+  }
+
+  /* ---------- 动起来：倾角、翻面、入场都是弹簧，带一点过冲 ---------- */
+  const MAXT = 0.33;   // 最大倾角约 19°
+  const st = {
+    started: false, t: 0,
+    rx: 0.3, ry: -0.42, vx: 0, vy: 0,          // 倾角（弧度）和角速度
+    fl: Math.PI, vf: 0, ft: Math.PI,             // 翻面角：π 是背面朝上；入场 0.6 秒后才翻过来
+    z: -1.1, vz: 0,                              // 入场前离得远一点、低一点
+    ptr: null, drag: null, gyro: null, touched: false,
+  };
+  window.__holo = st;   // 给测试脚本读数用
+  const SLOW = +(new URLSearchParams(location.search).get('slow') || 1);   // 测试用：?slow=4 放慢四倍看入场
+  function flip() {
+    st.touched = st.userFlip = true;
+    st.ft += Math.PI;
+    if (REDUCED) { st.fl = st.ft; st.vf = 0; }
+  }
+  function spring(x, v, target, k, zeta, s) {
+    const c = 2 * zeta * Math.sqrt(k);
+    v += (k * (target - x) - c * v) * s;
+    return [x + v * s, v];
+  }
+  function frame(dt) {
+    if (!st.started) return;
+    const s = dt / 1000 / SLOW;
+    st.t += s;
+    let tx = 0, ty = 0;
+    const g = st.gyro && performance.now() - st.gyro.at < 1500 ? st.gyro : null;
+    if (st.drag && !st.drag.mouse) { tx = st.drag.ny * MAXT * 0.8; ty = st.drag.nx * MAXT; }
+    else if (st.ptr) { tx = st.ptr[1] * MAXT * 0.75; ty = st.ptr[0] * MAXT; }
+    else if (g) {
+      // 基准慢慢跟上当前姿势：拿手机的角度随便，转动的那一下才算数
+      g.b0 += (g.b - g.b0) * Math.min(1, s * 0.35);
+      g.g0 += (g.g - g.g0) * Math.min(1, s * 0.35);
+      tx = clamp((g.b - g.b0) / 26, -1, 1) * MAXT * 0.8;
+      ty = clamp((g.g - g.g0) / 26, -1, 1) * MAXT;
+    } else if (REDUCED) { tx = -0.06; ty = 0.12; }
+    else {   // 没人碰时自己慢慢晃，入场结束后才晃起来
+      const k = smooth((st.t - 4) / 2.5);
+      tx = (0.07 * Math.sin(st.t * 0.41 + 0.6) - 0.02) * k;
+      ty = 0.15 * Math.sin(st.t * 0.29) * k;
+    }
+    const zt = 0.16 * Math.abs(Math.sin(st.fl));   // 翻面时往前抬一点
+    // 入场：先背面朝上从远处浮上来，0.6 秒时开始翻，翻得比平时慢
+    if (st.t >= 0.6 && !st.flipped) { st.flipped = true; if (!st.userFlip) st.ft = 0; }   // 用户自己先翻过了就不再替他翻
+    const zeta = REDUCED ? 1 : 0.5, intro = st.t < 3.2 && !st.userFlip;
+    for (let n = Math.ceil(s / 0.004), h = s / n, i = 0; i < n; i++) {
+      [st.rx, st.vx] = spring(st.rx, st.vx, tx, 70, zeta, h);
+      [st.ry, st.vy] = spring(st.ry, st.vy, ty, 70, zeta, h);
+      [st.fl, st.vf] = spring(st.fl, st.vf, st.ft, intro ? 15 : 48, REDUCED ? 1 : 0.7, h);
+      [st.z, st.vz] = spring(st.z, st.vz, zt, intro ? 12 : 40, 0.8, h);
+    }
+  }
+  // 卡片本地 → 世界：先绕竖轴翻面、左右倾，再上下倾。按列存
+  function rotM() {
+    const a = st.rx, b = st.ry + st.fl, ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b);
+    return [cb, sa * sb, -ca * sb, 0, ca, sa, sb, -sa * cb, ca * cb];
+  }
+  // 灯：一块柔光箱在右上方。入场时从左边远处扫过来，冲过头一点再回到原位
+  function lights() {
+    const t = st.t, on = REDUCED ? 1 : smooth((t - 1.1) / 0.8);
+    const u = REDUCED ? 1 : smooth((t - 1.2) / 2.3);
+    const sweep = REDUCED ? 0 : (1 - u) * -5.2 + Math.sin(Math.PI * u) * 0.9;
+    const p = st.ptr || [0, 0];
+    // 扫的时候灯放低一点，倒影横穿品牌名，停下来时升到右上角
+    const box = [(mobile ? 0.06 : HALF[0] * 0.32 + 0.22) + sweep - p[0] * 0.35, YC + 0.12 + 0.43 * u + p[1] * 0.2, DIST * 0.82];
+    const ctr = [0, YC, 0], nb = norm(sub(ctr, box)), u0 = norm(cross([0, 1, 0], nb)), v0 = cross(nb, u0);
+    const ca = Math.cos(0.38), sa = Math.sin(0.38);   // 灯管斜着放，倒影是一道斜的亮条
+    const ub = u0.map((v, i) => v * ca + v0[i] * sa), vb = v0.map((v, i) => v * ca - u0[i] * sa);
+    return {
+      box, U: ub, V: vb, S: mobile ? [0.2, 0.008] : [0.32, 0.011], I: 0.1 + 0.9 * on,
+      fill: [-HALF[0] - 0.7, YC - 0.95, DIST * 0.7], F: 0.15 + 0.4 * on,
+    };
+  }
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const norm = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+
+  function render() {
+    if (!glOK) return;
+    const Lt = lights();
+    gl.viewport(0, 0, glc.width, glc.height);
+    gl.uniform2f(U.uRes, glc.width, glc.height);
+    gl.uniform2f(U.uHalf, HALF[0], HALF[1]);
+    gl.uniform2f(U.uTex, FACE.w, FACE.h);   // 用贴图自己的尺寸：改宽度时新贴图还没建好，先接着用旧的
+    gl.uniform1f(U.uTanF, TANF);
+    gl.uniform1f(U.uRad, RAD);
+    gl.uniform1f(U.uTh, 0.0045);
+    gl.uniform1f(U.uBackZ, -0.32);
+    gl.uniform1f(U.uBoxI, Lt.I);
+    gl.uniform1f(U.uFillI, Lt.F);
+    gl.uniform1f(U.uEmb, Math.min(FACE.w, FACE.h) / 100 * 0.25);
+    gl.uniform3f(U.uCam, 0, 0, DIST);
+    gl.uniform3f(U.uPos, 0, YC - 0.06 * Math.max(0, -st.z), st.z);
+    gl.uniform3fv(U.uBox, Lt.box);
+    gl.uniform3fv(U.uBoxU, Lt.U);
+    gl.uniform3fv(U.uBoxV, Lt.V);
+    gl.uniform2fv(U.uBoxS, Lt.S);
+    gl.uniform3fv(U.uFill, Lt.fill);
+    gl.uniform4f(U.uCtr, FACE.ctr[0], FACE.ctr[1], BACK.ctr[0], BACK.ctr[1]);
+    gl.uniformMatrix3fv(U.uRot, false, rotM());
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  // 读数：没碰过时是提示，碰过以后显示倾角和哪一面朝上
+  let readAt = 0;
+  function readout(now) {
+    if (now - readAt < 100) return;
+    readAt = now;
+    const back = Math.cos(st.fl) < 0;
+    const deg = v => { const d = Math.round(v * 1800 / Math.PI) / 10; return ((d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1)).padStart(5, ' ') + '°'; };   // 用数字宽的空格补在前面，读数不跳
+    const txt = !st.touched
+      ? (mobile ? '左右拖动，或转动手机 · 轻点翻面' : '移动鼠标，看光怎么流过卡面 · 点一下翻面')
+      : `倾角 <b>${deg(-st.rx)}</b> <b>${deg(st.ry)}</b> · ${back ? '背面' : '正面'}`;
+    if (readEl.innerHTML !== txt) readEl.innerHTML = txt;
+  }
+
+  /* ---------- 交互 ---------- */
+  const local = e => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const overCard = (x, y) => Math.abs(x - W / 2) < cardW / 2 + 6 && Math.abs(y - CY) < cardH / 2 + 6;
+  stage.addEventListener('pointermove', e => {
+    const [x, y] = local(e);
+    if (e.pointerType === 'mouse') {
+      st.ptr = [clamp((x - W / 2) / (cardW / 2 + 90), -1, 1), clamp((y - CY) / (cardH / 2 + 70), -1, 1)];
+      st.touched = true;
+      glc.style.cursor = overCard(x, y) ? 'pointer' : '';
+    }
+    const d = st.drag;
+    if (d && d.id === e.pointerId) {
+      const dx = x - d.x, dy = y - d.y;
+      if (Math.hypot(dx, dy) > 8) d.moved = true;
+      d.nx = clamp(dx / (cardW * 0.55), -1, 1);
+      d.ny = clamp(dy / (cardH * 0.55), -1, 1);
+      if (!d.mouse) st.touched = true;
+    }
+  });
+  stage.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') st.ptr = null; });
+  stage.addEventListener('pointerdown', e => {
+    const [x, y] = local(e);
+    st.drag = { id: e.pointerId, x, y, nx: 0, ny: 0, moved: false, mouse: e.pointerType === 'mouse', on: overCard(x, y) };
+    if (e.pointerType !== 'mouse') stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointerup', e => {
+    const d = st.drag;
+    st.drag = null;
+    if (d && d.id === e.pointerId && !d.moved && d.on) flip();
+  });
+  stage.addEventListener('pointercancel', () => { st.drag = null; });
+  glc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+  $('#flip').addEventListener('click', flip);
+
+  // 陀螺仪：iPhone 要用户点一下才给权限；没有陀螺仪的设备不会收到带数值的事件，照常自己晃
+  function onOri(e) {
+    if (e.beta == null || e.gamma == null) return;
+    const g = st.gyro, now = performance.now();
+    if (!g || now - g.at > 1500) { st.gyro = { b0: e.beta, g0: e.gamma, b: e.beta, g: e.gamma, at: now }; gyroBtn.hidden = true; }
+    else { g.b = e.beta; g.g = e.gamma; g.at = now; }
+  }
+  const gyroBtn = $('#gyro');
+  addEventListener('deviceorientation', onOri);
+  // 只有触屏设备、又要授权（iPhone）、过了一会儿还没收到数据，才把按钮露出来；桌面的 Chromium 也有这个函数，不能只看它
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function' && matchMedia('(pointer: coarse)').matches) {
+    setTimeout(() => { if (!st.gyro) gyroBtn.hidden = false; }, 1200);
+    gyroBtn.addEventListener('click', () => {
+      DeviceOrientationEvent.requestPermission()
+        .then(r => { if (r === 'granted') gyroBtn.hidden = true; else gyroBtn.textContent = '陀螺仪没有授权'; })
+        .catch(() => { gyroBtn.textContent = '陀螺仪用不了'; });
+    });
+  }
+
+  $('#notify').addEventListener('submit', e => { e.preventDefault(); $('#ok').hidden = false; });
+
+  // 没有 WebGL2：画一张静止的卡，镭射用一道固定的彩虹渐变代替
+  function fallback() {
+    const o = glc.getContext('2d');
+    if (!o) return;
+    o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    o.drawImage(sheetCv, 0, 0, W, H);
+    const x0 = (W - cardW) / 2, y0 = CY - cardH / 2, r = RAD / (HALF[1] * 2) * cardH;
+    o.save();
+    rr(o, x0, y0, cardW, cardH, r);
+    o.clip();
+    const g = o.createLinearGradient(x0, y0, x0 + cardW, y0 + cardH);
+    ['#a9a6b8', '#ffb3d1', '#ffe3a1', '#b9f5d4', '#a9dcff', '#d3bdff', '#a9a6b8'].forEach((c, i) => g.addColorStop(i / 6, c));
+    o.fillStyle = g;
+    o.fillRect(x0, y0, cardW, cardH);
+    // 油墨按覆盖率盖上去
+    const p = canvas(FACE.w, FACE.h), pc = p.getContext('2d');
+    pc.drawImage(FACE.art, 0, 0);
+    const im = pc.getImageData(0, 0, FACE.w, FACE.h);
+    for (let i = 0; i < FACE.w * FACE.h; i++) im.data[i * 4 + 3] = FACE.mk[i * 4] > 8 ? 0 : FACE.mk[i * 4 + 3] * 0.92;
+    pc.putImageData(im, 0, 0);
+    o.drawImage(p, x0, y0, cardW, cardH);
+    o.restore();
+  }
+
+  let cardReady = false, warmed = false;
+  async function buildCard() {
+    const id = ++buildId;
+    const F = await makeFace(drawFront, id);
+    if (!F) return;
+    if (!guilloche || guilloche.key !== `${TW}x${TH}`) {
+      const g = await drawGuilloche(id);
+      if (!g) return;
+      guilloche = g;
+    }
+    const B = await makeFace(drawBack, id);
+    if (!B) return;
+    drawSheet();
+    if (glOK && !await uploadCard(F, B, id)) return;
+    if (id !== buildId) return;
+    FACE = F;
+    BACK = B;
+    if (!glOK) fallback();
+    cardReady = true;
+    warmed = false;
+  }
+  function build() {
+    layout();
+    if (REDUCED && !st.started) { st.started = st.flipped = true; st.fl = st.ft = 0; st.z = 0; st.rx = -0.06; st.ry = 0.12; st.t = 9; }
+    return buildCard();
+  }
+  // 预热：贴图和着色器都好了就先画一帧，不管在不在画面里；画布上留着入场前那一帧，滚到时不会先黑一下再闪出来
+  function warm() {
+    try { render(); gl.flush(); } catch (err) { console.error(err); }
+    warmed = true;
+  }
+
+  let visible = false, last = performance.now(), fontsIn = false, buildFonts = null, fontsPending = false;
+  new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; }), { rootMargin: '300px 0px' }).observe(stage);
+  function loop(now) {
+    requestAnimationFrame(loop);
+    const dt = Math.min(now - last, 50);
+    last = now;
+    const r = stage.getBoundingClientRect(), onScreen = r.bottom > 0 && r.top < innerHeight;
+    // 字体比第一版贴图晚到：等页脚不在画面里、还没开始，或入场演完了再重建，别在入场中途卡一下
+    if (fontsPending && (!onScreen || !st.started || st.t > 4.6)) { fontsPending = false; buildFonts = true; buildCard(); }
+    if (glOK) {
+      try { if (!glReady()) return; } catch (err) { console.error(err); glOK = false; if (FACE) fallback(); return; }
+      if (cardReady && !warmed) warm();
+    }
+    if (!visible || !cardReady) return;
+    if (!st.started && (r.top < innerHeight * 0.72 || r.bottom <= innerHeight + 4)) st.started = true;
+    frame(dt);
+    try { render(); } catch (err) { console.error(err); }
+    readout(now);
+  }
+
+  const fontCss = $('#font-css');
+  const cssReady = new Promise(r => { if (fontCss.media === 'all') r(); else { fontCss.addEventListener('load', r); fontCss.addEventListener('error', r); } });
+  const fontsReady = () => cssReady.then(() => Promise.all([
+    document.fonts.load('800 100px Syne', brand), document.fonts.load('900 100px "Noto Sans SC"', brand),
+    document.fonts.load('700 100px Syne', '0042'), document.fonts.load('500 20px "IBM Plex Mono"', 'No. 0042 / 2000'),
+  ])).catch(() => {});
+  try { glOK = initGL(); } catch (err) { console.error(err); glOK = false; }
+  // 字体最多等 2 秒：卡片一打开页面就入场，宁可多等一会儿，也别演到一半换字体；没到就先用系统字体建一版，字体到了再换
+  const fontsP = fontsReady().then(() => { fontsIn = true; if (buildFonts === false) fontsPending = true; });
+  Promise.race([fontsP, new Promise(r => setTimeout(r, 2000))]).then(() => { buildFonts = fontsIn; build(); });
+  requestAnimationFrame(loop);
+  let tmr, lastW = innerWidth;
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(tmr);
+    tmr = setTimeout(build, 250);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1793 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>倒影 · 一千零一页</title>
+<meta name="description" content="黄昏的湖，品牌名是栈道上的几层楼高的大字，水里的倒影实时算出来；太阳落山以后，字上的灯泡一盏盏亮起来。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Noto+Serif+SC:wght@900&display=swap">
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --line: #26262b;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --sans: "DM Sans", "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --slab: "Alfa Slab One", "Noto Serif SC", Georgia, serif;
+    /* 页脚：暮色的蓝紫，落日的橙，灯泡的暖白 */
+    --f-bg: #0d0c15;
+    --f-text: #efe8e1;
+    --f-muted: #9a93a1;
+    --f-faint: #625c6c;
+    --f-line: #201d2a;
+    --sun: #ff9d64;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  /* ---------- 页脚 ---------- */
+  .foot { background: var(--f-bg); color: var(--f-text); border-top: 1px solid var(--f-line); }
+  .foot-top {
+    display: grid; grid-template-columns: minmax(280px, 1.6fr) repeat(3, minmax(110px, 1fr)); gap: 40px 48px;
+    max-width: 1320px; margin: 0 auto; padding: 68px clamp(16px, 4vw, 48px) 44px;
+  }
+  .brand .name { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .brand .name b { font: 400 34px/1 var(--slab); letter-spacing: .01em; font-weight: 400; }
+  .brand .name small { font: 500 12px/1 var(--sans); letter-spacing: .22em; color: var(--f-muted); }
+  .brand .tag { margin: 16px 0 24px; color: var(--f-muted); font-size: 14.5px; line-height: 1.75; max-width: 30ch; text-wrap: pretty; }
+  .status { display: inline-flex; align-items: center; gap: 9px; font: 12.5px/1 var(--sans); color: var(--f-muted); padding: 8px 13px 8px 10px; border: 1px solid var(--f-line); border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--f-faint); flex: none; transition: background .8s, box-shadow .8s; }
+  .status[data-on="gold"] i { background: #ffc06a; box-shadow: 0 0 10px 1px rgb(255 192 106 / .6); }
+  .status[data-on="set"] i { background: #ff8a52; box-shadow: 0 0 12px 2px rgb(255 138 82 / .65); }
+  .status[data-on="glow"] i { background: #ff7896; box-shadow: 0 0 12px 2px rgb(255 120 150 / .55); }
+  .status[data-on="blue"] i { background: #8f9cff; box-shadow: 0 0 10px 1px rgb(143 156 255 / .55); }
+  .status[data-on="night"] i { background: #ffd28e; box-shadow: 0 0 10px 2px rgb(255 210 142 / .7); }
+  .col h3 { margin: 4px 0 14px; font: 500 12px/1 var(--sans); letter-spacing: .2em; color: var(--f-faint); }
+  .col a { display: block; color: var(--f-text); opacity: .84; text-decoration: none; font-size: 14.5px; padding: 3px 0; }
+  .col a:hover { opacity: 1; }
+
+  .scene { position: relative; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .scene canvas { display: block; width: 100%; }
+  .scene .over { position: absolute; inset: 0; height: 100%; z-index: 2; }
+  /* 上下两头和页脚的底色接起来，画面像是从页面里长出来的 */
+  .scene::before, .scene::after { content: ""; position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
+  .scene::before { top: 0; height: 72px; background: linear-gradient(var(--f-bg), rgb(13 12 21 / 0)); }
+  .scene::after { bottom: 0; height: 40px; background: linear-gradient(rgb(13 12 21 / 0), var(--f-bg)); }
+
+  .foot-legal {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px;
+    max-width: 1320px; margin: 0 auto; padding: 16px clamp(16px, 4vw, 48px) 22px;
+    font-size: 12.5px; color: var(--f-faint);
+  }
+  .foot-legal a { color: var(--f-muted); text-decoration: none; }
+  .foot-legal a:hover { color: var(--f-text); }
+  .foot-legal .ctl { margin-left: auto; display: flex; gap: 8px; }
+  .foot-legal button {
+    display: inline-flex; align-items: center; gap: 7px;
+    font: 12.5px/1 var(--sans); color: var(--f-muted); cursor: pointer;
+    background: transparent; border: 1px solid var(--f-line); border-radius: 999px; padding: 8px 13px;
+  }
+  .foot-legal button:hover { color: var(--f-text); border-color: #3a3448; }
+  .foot-legal button svg { width: 14px; height: 14px; flex: none; }
+  #sound[aria-pressed="true"] { color: var(--f-text); border-color: #4a3f5a; }
+  #sound .wave { opacity: 0; transition: opacity .3s; }
+  #sound[aria-pressed="true"] .wave { opacity: 1; }
+  #sound[aria-pressed="true"] .mute { opacity: 0; }
+
+  @media (max-width: 760px) {
+    .scene::before { height: 44px; }
+    .foot-top { grid-template-columns: 1fr 1fr; padding-top: 52px; gap: 32px 24px; }
+    .brand { grid-column: 1 / -1; }
+    .brand .name b { font-size: 30px; }
+    .foot-legal .ctl { margin-left: 0; width: 100%; }
+    .foot-legal button { flex: 1; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 003</a>
+
+<footer class="foot">
+  <div class="foot-top">
+    <div class="brand">
+      <div class="name"><b id="f-name">Lumen</b><small>湖畔酒店</small></div>
+      <p class="tag">湖边四十间房，每一间都朝西。<br>天黑以前，我们不开灯。</p>
+      <div class="status" id="status" data-on="gold"><i></i><span id="status-text">湖边 18:31 · 离日落还有 16 分钟</span></div>
+    </div>
+    <nav class="col" aria-label="住"><h3>住</h3><a href="#">客房</a><a href="#">湖景套房</a><a href="#">长住</a><a href="#">预订</a></nav>
+    <nav class="col" aria-label="湖上"><h3>湖上</h3><a href="#">日落划船</a><a href="#">夜钓</a><a href="#">观星</a><a href="#">湖畔餐厅</a></nav>
+    <nav class="col" aria-label="关于"><h3>关于</h3><a href="#">我们的故事</a><a href="#">交通</a><a href="#">招聘</a><a href="#">联系</a></nav>
+  </div>
+  <div class="scene" id="scene">
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <canvas id="over" class="over" aria-label="黄昏的湖，品牌名是栈道上的大字；在水面上划过会起涟漪，点一下是扔一颗石子"></canvas>
+  </div>
+  <div class="foot-legal">
+    <span>© 2026 <span class="bn">Lumen</span> 湖畔酒店</span>
+    <a href="#">隐私</a><a href="#">条款</a>
+    <div class="ctl">
+      <button type="button" id="sound" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z"/><path class="wave" d="M10.6 5.6a3.4 3.4 0 0 1 0 4.8M12.4 3.9a5.8 5.8 0 0 1 0 8.2"/><path class="mute" d="M11 6.2l3 3.6M14 6.2l-3 3.6"/></svg><span>声音 · 关</span></button>
+      <button type="button" id="replay">再看一次日落</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+  const isCJK = s => /[⺀-鿿豈-﫿＀-￯]/.test(s);
+  // 字母用粗衬线的 Alfa Slab One（老式灯泡招牌的味道），中文退到思源宋体最粗的那一档
+  const signFont = s => isCJK(brand) ? `900 ${s}px "Noto Serif SC", "Alfa Slab One", serif` : `400 ${s}px "Alfa Slab One", "Noto Serif SC", Georgia, serif`;
+
+  /* ---------- 随机数与噪声 ---------- */
+  function rng(seed) {
+    return () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  function hash2(x, y) {
+    let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  }
+  const fade = t => t * t * (3 - 2 * t);
+  function noise1(x, seed) { const i = Math.floor(x), f = fade(x - i); return lerp(hash2(i, seed), hash2(i + 1, seed), f); }
+  const fbm1 = (x, seed) => noise1(x, seed) * 0.55 + noise1(x * 2.1 + 5, seed + 1) * 0.3 + noise1(x * 4.4 + 9, seed + 2) * 0.15;
+
+  // Zhang-Suen 细化：把 0/1 点阵一层层削成一像素宽的骨架（点阵最外一圈要是空的）
+  function thin(src, w, h) {
+    const a = Uint8Array.from(src), del = [];
+    for (let changed = true; changed;) {
+      changed = false;
+      for (let pass = 0; pass < 2; pass++) {
+        del.length = 0;
+        for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+          const i = y * w + x;
+          if (!a[i]) continue;
+          const p2 = a[i - w], p3 = a[i - w + 1], p4 = a[i + 1], p5 = a[i + w + 1];
+          const p6 = a[i + w], p7 = a[i + w - 1], p8 = a[i - 1], p9 = a[i - w - 1];
+          const b = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+          if (b < 2 || b > 6) continue;
+          const t = (!p2 & p3) + (!p3 & p4) + (!p4 & p5) + (!p5 & p6) + (!p6 & p7) + (!p7 & p8) + (!p8 & p9) + (!p9 & p2);
+          if (t !== 1) continue;
+          if (pass === 0 ? p2 * p4 * p6 || p4 * p6 * p8 : p2 * p4 * p8 || p2 * p6 * p8) continue;
+          del.push(i);
+        }
+        if (del.length) changed = true;
+        for (const i of del) a[i] = 0;
+      }
+    }
+    return a;
+  }
+  // 骨架上一个点的邻居：上下左右直接算，斜着的只在拐角两边都空时才算
+  function skelNeighbors(a, w, i, out) {
+    out.length = 0;
+    const up = a[i - w], dn = a[i + w], lf = a[i - 1], rt = a[i + 1];
+    if (up) out.push(i - w);
+    if (dn) out.push(i + w);
+    if (lf) out.push(i - 1);
+    if (rt) out.push(i + 1);
+    if (a[i - w - 1] && !up && !lf) out.push(i - w - 1);
+    if (a[i - w + 1] && !up && !rt) out.push(i - w + 1);
+    if (a[i + w - 1] && !dn && !lf) out.push(i + w - 1);
+    if (a[i + w + 1] && !dn && !rt) out.push(i + w + 1);
+    return out;
+  }
+  // 把骨架拆成一段段：端点、分叉点之间各一段，没有端点的闭合圈（比如 o）单独一段
+  function skelPaths(a, w) {
+    const n = a.length, deg = new Uint8Array(n), used = new Uint8Array(n), nb = [], nb2 = [], paths = [];
+    for (let i = 0; i < n; i++) if (a[i]) deg[i] = skelNeighbors(a, w, i, nb).length;
+    const walk = (start, next) => {
+      const p = [start];
+      let prev = start, cur = next;
+      while (cur !== undefined) {
+        p.push(cur);
+        if (deg[cur] !== 2 || cur === start) break;
+        used[cur] = 1;
+        skelNeighbors(a, w, cur, nb2);
+        const nx = nb2[0] === prev ? nb2[1] : nb2[0];
+        prev = cur;
+        cur = nx;
+      }
+      return p;
+    };
+    for (let i = 0; i < n; i++) {
+      if (!a[i] || deg[i] === 2) continue;
+      for (const j of skelNeighbors(a, w, i, nb).slice()) {
+        if (deg[j] !== 2) { if (j > i) paths.push([i, j]); }
+        else if (!used[j]) paths.push(walk(i, j));
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      if (!a[i] || used[i] || deg[i] !== 2) continue;
+      used[i] = 1;
+      paths.push(walk(i, skelNeighbors(a, w, i, nb)[0]));
+    }
+    return { paths, deg };
+  }
+  // 横竖各一遍的滑动平均
+  function boxBlur(a, w, h, r) {
+    if (r < 1) return;
+    const t = new Float32Array(a.length), n = r * 2 + 1;
+    for (let y = 0; y < h; y++) {
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += a[y * w + clamp(k, 0, w - 1)];
+      for (let x = 0; x < w; x++) { t[y * w + x] = s / n; s += a[y * w + Math.min(w - 1, x + r + 1)] - a[y * w + Math.max(0, x - r)]; }
+    }
+    for (let x = 0; x < w; x++) {
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += t[clamp(k, 0, h - 1) * w + x];
+      for (let y = 0; y < h; y++) { a[y * w + x] = s / n; s += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x]; }
+    }
+  }
+
+  const scene = $('#scene'), glc = $('#gl'), ovc = $('#over'), octx = ovc.getContext('2d');
+  const statusEl = $('#status'), statusText = $('#status-text');
+
+  /* ---------- 构图 ----------
+     针孔相机站在离水面 1 个单位高的地方，平视；屏幕坐标 x ∈ [-ASP, ASP]，y ∈ [-1, 1]，地平线在 yH。
+     栈道和字在 D1 远处，对岸的山和树在 D2 远处，各当成一块竖着的“背景板”；水面上一点的倒影，
+     是从这一点沿反射方向射出去，先碰哪块板就是哪块，两块都没碰到就是天空。 */
+  let W, H, DPR, ASP, mobile, G = {};
+  function layout() {
+    W = scene.clientWidth;
+    DPR = Math.min(devicePixelRatio || 1, 2, 3800 / Math.max(W, 1));
+    mobile = W < 680;
+    H = Math.round(mobile ? clamp(W * 1.22, 420, 600) : clamp(W * 0.5, 380, 700));
+    ASP = W / H;
+    const F = 2, yH = mobile ? 0.3 : 0.17, g1 = mobile ? 0.056 : 0.06, g2 = 0.006;
+    G = { F, yH, D1: F / g1, D2: F / g2, yw1: yH - g1, yw2: yH - g2 };
+    G.deck = G.yw1 + (mobile ? 0.032 : 0.036);   // 栈道面：离水大约 0.6 个单位
+    // 字框：电脑上偏左，右边留给落日和小船；手机上铺满一行，太阳从字后面落下去
+    G.TB = mobile ? { x0: -ASP * 0.9, x1: ASP * 0.9, y0: G.deck, y1: G.deck + 0.34 }
+                  : { x0: -ASP * 0.88, x1: ASP * 0.46, y0: G.deck, y1: G.deck + 0.6 };
+    G.LR = { x0: -ASP * 1.12, x1: ASP * 1.12, y0: G.yw1 - 0.006, y1: Math.min(1.08, G.TB.y1 + 0.13) };
+    G.FR = { x0: -ASP * 1.2, x1: ASP * 1.2, y0: G.yw2 - 0.006, y1: yH + 0.36 };
+    G.BR = { x0: -ASP * 1.2, x1: ASP * 1.2, y0: G.yw2 - 0.03, y1: yH + 1.85 };
+    G.ppu = H * DPR / 2;                          // 每个屏幕单位多少设备像素
+    G.sunX = ASP * (mobile ? 0.5 : 0.72);
+    G.sunR = mobile ? 0.042 : 0.046;
+    G.moon = mobile ? [-ASP * 0.52, 0.86] : [ASP * 0.56, yH + 0.56];
+    G.moonR = mobile ? 0.02 : 0.022;
+    G.boat = mobile ? { sx: ASP * 0.62, z: 25, s: 0.8 } : { sx: ASP * 0.7, z: 27, s: 1 };
+    glc.style.height = ovc.style.height = H + 'px';
+    glc.width = ovc.width = Math.round(W * DPR);
+    glc.height = ovc.height = Math.round(H * DPR);
+  }
+  const SX = sx => (sx / ASP + 1) / 2 * W, SY = sy => (1 - sy) / 2 * H;         // 屏幕坐标 → CSS 像素
+  const proj = (x, y, z) => [x * G.F / z, G.yH + (y - 1) * G.F / z];           // 世界坐标 → 屏幕坐标
+  const ppw = z => G.F / z * H / 2;                                            // z 远处，一个世界单位是多少 CSS 像素
+
+  /* ---------- 对岸：远山、近山、树林、几户人家 ---------- */
+  let FAR = null;
+  const farTop = x => G.yH + 0.035 + 0.08 * fbm1(x * 0.85 + 3.1, 11) + 0.085 * Math.exp(-(((x - G.sunX * 0.95) / 0.8) ** 2));
+  const midTop = x => G.yH + 0.008 + 0.045 * fbm1(x * 1.9 + 17, 23) + 0.03 * Math.exp(-(((x - G.sunX * 1.1) / 0.45) ** 2));
+  function buildFar() {
+    const R = G.FR, ppu = G.ppu, fw = Math.round((R.x1 - R.x0) * ppu), fh = Math.round((R.y1 - R.y0) * ppu);
+    const X = x => (x - R.x0) * ppu, Y = y => (R.y1 - y) * ppu, Xi = px => R.x0 + px / ppu;
+    const mk = () => { const c = canvas(fw, fh).getContext('2d', { willReadFrequently: true }); return c; };
+    const alb = mk(), hz = mk(), win = mk(), wr = mk();
+    const ridge = (fn, col, haze) => {
+      for (const [c, fill] of [[alb, col], [hz, `rgb(${haze * 255},0,0)`]]) {
+        c.fillStyle = fill;
+        c.beginPath();
+        c.moveTo(0, fh);
+        for (let px = 0; px <= fw + 2; px += 2) c.lineTo(px, Y(fn(Xi(px))));
+        c.lineTo(fw, fh);
+        c.fill();
+      }
+    };
+    ridge(farTop, '#2f2c42', 0.72);
+    ridge(midTop, '#1e1c2a', 0.44);
+    // 树林：一列一列算高度，尖的是松，圆的是阔叶树
+    const r = rng(31), prof = new Float32Array(fw + 1), base = G.yw2 + 0.0025;
+    for (let x = R.x0; x < R.x1;) {
+      const conifer = r() < 0.72, h = (0.007 + 0.026 * r() * (0.35 + noise1(x * 3, 5))) * (mobile ? 1.15 : 1);
+      const wd = h * (conifer ? 0.42 : 0.9) * (0.7 + 0.5 * r());
+      const c0 = X(x), hw = wd / 2 * ppu;
+      for (let px = Math.max(0, Math.floor(c0 - hw)); px <= Math.min(fw, Math.ceil(c0 + hw)); px++) {
+        const u = (px - c0) / hw;
+        if (Math.abs(u) > 1) continue;
+        const v = conifer ? (1 - Math.abs(u)) * (0.86 + 0.14 * Math.cos(u * 30)) : (Math.sqrt(1 - u * u) * 0.75 + 0.25 * (1 - Math.abs(u))) * (0.9 + 0.1 * Math.sin(u * 17 + x * 50));
+        prof[px] = Math.max(prof[px], h * v);
+      }
+      x += wd * (0.35 + 0.5 * r());
+    }
+    for (const [c, fill] of [[alb, '#141618'], [hz, 'rgb(56,0,0)']]) {
+      c.fillStyle = fill;
+      c.beginPath();
+      c.moveTo(0, fh);
+      for (let px = 0; px <= fw; px++) c.lineTo(px, Y(base + prof[px] + 0.0015 * noise1(px * 0.05, 3)));
+      c.lineTo(fw, fh);
+      c.fill();
+    }
+    // 几户人家：小木屋，窗户天黑以后陆续亮
+    for (const hx of [-0.98, -0.62, -0.16, 0.36, 0.6, 0.93]) {
+      const x = hx * ASP + (r() - 0.5) * 0.06, w = (0.018 + 0.012 * r()) * (mobile ? 1.2 : 1), h = w * (0.55 + 0.2 * r()), y0 = base + 0.001;
+      for (const [c, fill] of [[alb, '#18171d'], [hz, 'rgb(46,0,0)']]) {
+        c.fillStyle = fill;
+        c.fillRect(X(x - w / 2), Y(y0 + h), w * ppu, h * ppu);
+        c.beginPath(); c.moveTo(X(x - w * 0.6), Y(y0 + h)); c.lineTo(X(x), Y(y0 + h + w * 0.38)); c.lineTo(X(x + w * 0.6), Y(y0 + h)); c.fill();
+      }
+      const nwin = 1 + Math.floor(r() * 3), ww = Math.max(w * 0.16, 1.4 / ppu), wh = Math.max(h * 0.32, 1.4 / ppu);
+      for (let k = 0; k < nwin; k++) {
+        const cx = x - w / 2 + w * (k + 0.5) / nwin;
+        win.fillStyle = '#f00';
+        win.fillRect(X(cx - ww / 2), Y(y0 + h * 0.62), ww * ppu, wh * ppu);
+        wr.fillStyle = `rgb(${Math.round(r() * 255)},0,0)`;
+        wr.fillRect(X(cx - ww / 2) - 1, Y(y0 + h * 0.62) - 1, ww * ppu + 2, wh * ppu + 2);
+      }
+    }
+    const A = alb.getImageData(0, 0, fw, fh).data, Hz = hz.getImageData(0, 0, fw, fh).data, Wn = win.getImageData(0, 0, fw, fh).data, Wr = wr.getImageData(0, 0, fw, fh).data;
+    const fa = new Uint8Array(fw * fh * 4), fb = new Uint8Array(fw * fh * 4);
+    for (let i = 0; i < fw * fh; i++) {
+      const o = i * 4, a = A[o + 3] / 255;
+      fa[o] = A[o] * a; fa[o + 1] = A[o + 1] * a; fa[o + 2] = A[o + 2] * a; fa[o + 3] = A[o + 3];   // 预乘透明度，缩小几级取样时边上不发黑
+      fb[o] = Wn[o]; fb[o + 1] = Wr[o]; fb[o + 2] = Hz[o]; fb[o + 3] = 255;
+    }
+    FAR = { w: fw, h: fh, fa, fb };
+    // 太阳落到哪条线以下就看不见了：远山、近山里高的那个
+    G.ridgeAt = x => Math.max(farTop(x), midTop(x));
+  }
+
+  /* ---------- 栈道和字：字面奶白，侧边黄铜，字面上沿笔画中线嵌一串灯泡 ---------- */
+  let LET = null;
+  function buildLetters() {
+    const R = G.LR, ppu = G.ppu, lw = Math.round((R.x1 - R.x0) * ppu), lh = Math.round((R.y1 - R.y0) * ppu);
+    const X = x => (x - R.x0) * ppu, Y = y => (R.y1 - y) * ppu;
+    const mk = () => canvas(lw, lh).getContext('2d', { willReadFrequently: true });
+    const alb = mk(), sil = mk(), emi = mk(), rid = mk();
+    // 量字：字形底边落在栈道面上，水平居中在字框里
+    alb.font = signFont(100);
+    const m = alb.measureText(brand);
+    const tw = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) || 1, th = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || 1;
+    const bw = (G.TB.x1 - G.TB.x0) * ppu, bh = (G.TB.y1 - G.TB.y0) * ppu;
+    const size = Math.min(100 * bw / tw, 100 * bh / th), k = size / 100;
+    const cx = X((G.TB.x0 + G.TB.x1) / 2), bottom = Y(G.TB.y0);
+    const ox = cx - tw * k / 2 + m.actualBoundingBoxLeft * k, oy = bottom - m.actualBoundingBoxDescent * k;
+    const left = cx - tw * k / 2, right = cx + tw * k / 2, top = bottom - th * k;
+    G.letters = { x0: R.x0 + left / ppu, x1: R.x0 + right / ppu, top: R.y1 - top / ppu };
+    const font = signFont(size);
+    // 立体感：按透视，字的背面是正面朝灭点缩一点；中间一层层叠出侧边
+    const vpx = X(0), vpy = Y(G.yH), depth = 1.3, sBack = G.D1 / (G.D1 + depth);
+    const at = (c, s) => c.setTransform(s, 0, 0, s, vpx * (1 - s), vpy * (1 - s));
+    const steps = Math.ceil(Math.hypot(left - vpx, top - vpy) * (1 - sBack)) + 2;
+
+    // 栈道：面板、立柱，左边伸出画面，右边到字的外头一点就收住
+    const pierL = R.x0, pierR = mobile ? R.x1 : G.letters.x1 + ASP * 0.12;
+    const deckH = (G.deck - G.yw1) * 0.5;
+    const drawPier = (c, col, postCol) => {
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.fillStyle = col;
+      c.fillRect(X(pierL), Y(G.deck), X(pierR) - X(pierL), deckH * ppu);
+      c.fillStyle = postCol;
+      const step = 2.4 * G.F / G.D1, pw = Math.max(0.3 * G.F / G.D1, 1.8 / ppu), pr = rng(3);
+      for (let x = pierR - pw; x > pierL; x -= step * (0.85 + 0.3 * pr())) c.fillRect(X(x), Y(G.deck - deckH * 0.5), pw * ppu, (G.deck - deckH * 0.5 - G.yw1 + 0.002) * ppu);
+      // 栈道尽头两根系船的桩子
+      if (!mobile) for (const [dx, hh] of [[0.05, 0.016], [0.085, 0.009]]) c.fillRect(X(pierR + dx), Y(G.deck + hh), pw * 1.2 * ppu, (G.deck + hh - G.yw1 + 0.002) * ppu);
+    };
+    drawPier(alb, '#4a3627', '#2a1e17');
+    drawPier(sil, '#fff', '#fff');
+    // 面板上的木纹：几条横线
+    alb.globalAlpha = 0.35;
+    alb.fillStyle = '#2b1f17';
+    for (let k2 = 1; k2 < 3; k2++) alb.fillRect(X(pierL), Y(G.deck) + deckH * ppu * k2 / 3, X(pierR) - X(pierL), Math.max(1, ppu * 0.0012));
+    alb.globalAlpha = 1;
+
+    // 侧边：黄铜色，越往里越暗
+    for (let i = steps; i >= 1; i--) {
+      const s = 1 - (1 - sBack) * i / steps, f = i / steps;
+      at(alb, s);
+      alb.font = font;
+      alb.fillStyle = `rgb(${Math.round(150 - 70 * f)},${Math.round(112 - 56 * f)},${Math.round(72 - 38 * f)})`;
+      alb.fillText(brand, ox, oy);
+      at(sil, s);
+      sil.font = font;
+      sil.fillStyle = '#fff';
+      sil.fillText(brand, ox, oy);
+    }
+    // 字面：奶白，上亮下暗一点；边上压一道细线，分开正面和侧边
+    at(alb, 1);
+    alb.font = font;
+    const fg = alb.createLinearGradient(0, top, 0, bottom);
+    fg.addColorStop(0, '#f3ebde');
+    fg.addColorStop(1, '#ddd0bd');
+    alb.fillStyle = fg;
+    alb.fillText(brand, ox, oy);
+    alb.lineWidth = Math.max(1, size * 0.006);
+    alb.strokeStyle = 'rgba(120,96,70,.55)';
+    alb.globalCompositeOperation = 'source-atop';
+    alb.strokeText(brand, ox, oy);
+    alb.globalCompositeOperation = 'source-over';
+
+    // 轮廓光：朝着太阳那一侧的边。整块剪影减去往太阳方向挪一点的自己，剩下的就是那道边
+    const sd = [G.sunX - (G.letters.x0 + G.letters.x1) / 2, (G.yH + 0.3) - (G.letters.top + G.deck) / 2], sl = Math.hypot(...sd);
+    const rw = Math.max(1.6 * DPR, 0.006 * ppu), dx = sd[0] / sl * rw, dy = -sd[1] / sl * rw;
+    rid.drawImage(sil.canvas, 0, 0);
+    rid.globalCompositeOperation = 'destination-out';
+    rid.drawImage(sil.canvas, -dx, -dy);
+    rid.globalCompositeOperation = 'source-over';
+    const rimC = canvas(lw, lh).getContext('2d', { willReadFrequently: true });
+    rimC.filter = `blur(${0.6 * DPR}px)`;
+    rimC.drawImage(rid.canvas, 0, 0);
+
+    // 灯泡：把字缩成小点阵，削出骨架，沿每一段骨架等距摆
+    const bulbs = placeBulbs(font, size, ox, oy, lw, lh);
+    const rb = size * (isCJK(brand) ? 0.019 : 0.023);
+    const rndC = mk();
+    const r = rng(77);
+    for (const b of bulbs) {
+      // 灯座和玻璃泡
+      alb.setTransform(1, 0, 0, 1, 0, 0);
+      alb.fillStyle = 'rgba(90,70,52,.55)';
+      alb.beginPath(); alb.arc(b[0] + rb * 0.12, b[1] + rb * 0.18, rb * 1.22, 0, 7); alb.fill();
+      alb.fillStyle = '#b39a7c';
+      alb.beginPath(); alb.arc(b[0], b[1], rb * 1.16, 0, 7); alb.fill();
+      const gg = alb.createLinearGradient(0, b[1] - rb, 0, b[1] + rb);
+      gg.addColorStop(0, '#fffbf2');
+      gg.addColorStop(0.55, '#efe3cf');
+      gg.addColorStop(1, '#b7a993');
+      alb.fillStyle = gg;
+      alb.beginPath(); alb.arc(b[0], b[1], rb, 0, 7); alb.fill();
+      alb.fillStyle = '#fff';
+      alb.beginPath(); alb.arc(b[0] - rb * 0.32, b[1] - rb * 0.36, rb * 0.22, 0, 7); alb.fill();
+      const eg = emi.createRadialGradient(b[0], b[1], 0, b[0], b[1], rb * 1.15);
+      eg.addColorStop(0, 'rgba(255,0,0,1)');
+      eg.addColorStop(0.55, 'rgba(255,0,0,.85)');
+      eg.addColorStop(1, 'rgba(255,0,0,0)');
+      emi.fillStyle = eg;
+      emi.beginPath(); emi.arc(b[0], b[1], rb * 1.15, 0, 7); emi.fill();
+      rndC.fillStyle = `rgb(${Math.round(r() * 255)},0,0)`;
+      rndC.beginPath(); rndC.arc(b[0], b[1], rb * 1.45, 0, 7); rndC.fill();
+    }
+    const A = alb.getImageData(0, 0, lw, lh).data, S = sil.getImageData(0, 0, lw, lh).data, E = emi.getImageData(0, 0, lw, lh).data;
+    const Ri = rimC.getImageData(0, 0, lw, lh).data, Rn = rndC.getImageData(0, 0, lw, lh).data;
+    const la = new Uint8Array(lw * lh * 4), lb = new Uint8Array(lw * lh * 4);
+    for (let i = 0; i < lw * lh; i++) {
+      const o = i * 4, a = A[o + 3] / 255;
+      la[o] = A[o] * a; la[o + 1] = A[o + 1] * a; la[o + 2] = A[o + 2] * a; la[o + 3] = A[o + 3];
+      lb[o] = Ri[o + 3] * (S[o + 3] / 255); lb[o + 1] = E[o + 3]; lb[o + 2] = Rn[o]; lb[o + 3] = 255;
+    }
+    // 光晕：灯泡那一层缩小四倍，再糊三档，分别给“照在字面上”“灯泡周围”“大片的光晕”用
+    const gw = Math.ceil(lw / 4), gh = Math.ceil(lh / 4), g0 = new Float32Array(gw * gh);
+    for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) g0[(y >> 2) * gw + (x >> 2)] += E[(y * lw + x) * 4 + 3] / 255 / 16;
+    const blurN = (src, rad) => { const a = Float32Array.from(src); for (let k2 = 0; k2 < 3; k2++) boxBlur(a, gw, gh, rad); return a; };
+    const u = ppu / 4;   // 光晕贴图每个屏幕单位多少格
+    const gA = blurN(g0, Math.max(1, Math.round(u * 0.005))), gB = blurN(g0, Math.max(2, Math.round(u * 0.012))), gC = blurN(g0, Math.max(4, Math.round(u * 0.035)));
+    const glow = new Float32Array(gw * gh * 4);
+    for (let i = 0; i < gw * gh; i++) { glow[i * 4] = gA[i] * 3; glow[i * 4 + 1] = gB[i] * 4; glow[i * 4 + 2] = gC[i] * 4; glow[i * 4 + 3] = 1; }
+    LET = { w: lw, h: lh, la, lb, gw, gh, glow, n: bulbs.length };
+  }
+
+  function placeBulbs(font, size, ox, oy, lw, lh) {
+    // 在一张小点阵上做：字高大约 110 格
+    const sc = Math.min(1, 150 / size), mw = Math.ceil(lw * sc) + 4, mh = Math.ceil(lh * sc) + 4;
+    const c = canvas(mw, mh).getContext('2d', { willReadFrequently: true });
+    c.setTransform(sc, 0, 0, sc, 2, 2);
+    c.font = font;
+    c.fillStyle = '#fff';
+    c.fillText(brand, ox, oy);
+    const d = c.getImageData(0, 0, mw, mh).data, mask = new Uint8Array(mw * mh);
+    for (let i = 0; i < mask.length; i++) mask[i] = d[i * 4 + 3] > 140 ? 1 : 0;
+    for (let x = 0; x < mw; x++) mask[x] = mask[(mh - 1) * mw + x] = 0;
+    for (let y = 0; y < mh; y++) mask[y * mw] = mask[y * mw + mw - 1] = 0;
+    const sk = thin(mask, mw, mh), { paths, deg } = skelPaths(sk, mw);
+    const em = size * sc, gap = em * (isCJK(brand) ? 0.088 : 0.1), spur = em * 0.07;
+    const out = [], far = (x, y, dmin) => out.every(b => Math.hypot(b[0] - x, b[1] - y) >= dmin);
+    const add = (x, y, dmin) => { if (far(x, y, dmin)) out.push([x, y]); };
+    const segs = [];
+    for (const p of paths) {
+      const pts = p.map(i => [i % mw, (i / mw) | 0]);
+      let len = 0;
+      for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      const e0 = deg[p[0]] === 1, e1 = deg[p[p.length - 1]] === 1;
+      if ((e0 || e1) && len < spur) continue;   // 细化留下的小毛刺
+      // 抹平一点台阶
+      const sm = pts.map((q, i) => { if (i === 0 || i === pts.length - 1) return q; let sx = 0, sy = 0, n = 0; for (let k = -3; k <= 3; k++) { const j = clamp(i + k, 0, pts.length - 1); sx += pts[j][0]; sy += pts[j][1]; n++; } return [sx / n, sy / n]; });
+      segs.push({ pts: sm, len, closed: p[0] === p[p.length - 1] });
+    }
+    // 先放分叉点和端点，再在每段中间等距补
+    for (const s of segs) { if (!s.closed) { add(...s.pts[0], gap * 0.6); add(...s.pts[s.pts.length - 1], gap * 0.6); } }
+    for (const s of segs) {
+      const n = s.closed ? Math.max(3, Math.round(s.len / gap)) : Math.round(s.len / gap) - 1;
+      if (n <= 0) continue;
+      const tgt = [];
+      for (let i = 1; i <= n; i++) tgt.push(s.closed ? s.len * i / n : s.len * i / (n + 1));
+      let acc = 0, ti = 0;
+      for (let i = 1; i < s.pts.length && ti < tgt.length; i++) {
+        const a = s.pts[i - 1], b = s.pts[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        while (ti < tgt.length && acc + l >= tgt[ti]) { const f = l ? (tgt[ti] - acc) / l : 0; add(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, gap * 0.62); ti++; }
+        acc += l;
+      }
+    }
+    return out.map(([x, y]) => [(x - 2) / sc + 0.5 / sc, (y - 2) / sc + 0.5 / sc]);
+  }
+
+  /* ---------- 水面的细波纹：几十道整数波数的余弦叠起来，可以无缝平铺；存坡度和坡度平方，缩小几级取样时还能知道“看不清的那部分有多糙” ---------- */
+  function buildDetail() {
+    const N = 256, r = rng(19), waves = [];
+    while (waves.length < 60) {
+      const kk = 3 * Math.pow(30 / 3, r()), th = Math.PI / 2 + (r() + r() + r() - 1.5) * 1.15;
+      const kx = Math.round(kk * Math.cos(th)), ky = Math.round(kk * Math.sin(th));
+      if (!kx && !ky) continue;
+      waves.push([kx, ky, Math.pow(Math.hypot(kx, ky), -2.1), r() * 6.2832]);
+    }
+    const sx = new Float32Array(N * N), sy = new Float32Array(N * N);
+    let ss = 0;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      let a = 0, b = 0;
+      for (const [kx, ky, am, ph] of waves) { const s = -am * Math.sin(6.2832 * (kx * x + ky * y) / N + ph) * 6.2832; a += s * kx; b += s * ky; }
+      const i = y * N + x;
+      sx[i] = a; sy[i] = b;
+      ss += a * a + b * b;
+    }
+    const norm = 1 / Math.sqrt(ss / (N * N));
+    const levels = [];
+    let cur = new Float32Array(N * N * 4), n = N;
+    for (let i = 0; i < N * N; i++) { const a = sx[i] * norm, b = sy[i] * norm; cur.set([a, b, a * a, b * b], i * 4); }
+    levels.push([n, cur]);
+    while (n > 1) {
+      const m = n >> 1, nx = new Float32Array(m * m * 4);
+      for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) for (let c = 0; c < 4; c++) {
+        nx[(y * m + x) * 4 + c] = (cur[((2 * y) * n + 2 * x) * 4 + c] + cur[((2 * y) * n + 2 * x + 1) * 4 + c] + cur[((2 * y + 1) * n + 2 * x) * 4 + c] + cur[((2 * y + 1) * n + 2 * x + 1) * 4 + c]) / 4;
+      }
+      levels.push([m, nx]);
+      cur = nx; n = m;
+    }
+    return levels;
+  }
+  // 可平铺的值噪声：四个通道四种疏密，云、风和雾都从这里取
+  function buildNoise() {
+    const N = 256, d = new Uint8Array(N * N * 4), lat = [16, 8, 32, 4];
+    for (let c = 0; c < 4; c++) {
+      const L = lat[c], cell = N / L, hv = (x, y) => hash2(((x % L) + L) % L + c * 977, ((y % L) + L) % L);
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        const fx = x / cell, fy = y / cell, xi = Math.floor(fx), yi = Math.floor(fy), u = fade(fx - xi), v = fade(fy - yi);
+        const a = hv(xi, yi), b = hv(xi + 1, yi), e = hv(xi, yi + 1), f = hv(xi + 1, yi + 1);
+        d[(y * N + x) * 4 + c] = (a + (b - a) * u + (e - a) * v + (a - b - e + f) * u * v) * 255;
+      }
+    }
+    return d;
+  }
+
+  /* ---------- 着色器 ---------- */
+  const VS = `#version 300 es
+in vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }`;
+  const COMMON = `#version 300 es
+precision highp float;
+uniform vec2 uRes;
+uniform vec4 uView;
+uniform float uAsp, uF, uYH, uD1, uD2, uT, uWinT, uMist, uBulbT;
+uniform vec2 uSun, uBulbX;
+uniform float uSunR;
+uniform vec3 uZen, uHor, uGlow, uHalo, uCLit, uCDark, uFarAmb, uWinCol, uMistCol;
+uniform sampler2D uNoise, uFA, uFB;
+uniform vec4 uFRect;
+
+vec2 scr() { return vec2(mix(uView.x, uView.z, gl_FragCoord.x / uRes.x), mix(uView.y, uView.w, gl_FragCoord.y / uRes.y)); }
+vec2 rectUV(vec4 r, vec2 s) { return vec2((s.x - r.x) / (r.z - r.x), (r.w - s.y) / (r.w - r.y)); }
+// 在不在这块贴图里：边上留一点渐变。贴图是夹边取样，出了界不乘这个会把边上那一排一直拖出去
+float inRect(vec2 uv) { vec2 e = smoothstep(vec2(-.004), vec2(.01), uv) * smoothstep(vec2(-.004), vec2(.01), 1. - uv); return e.x * e.y; }
+float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float ign(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(.06711056, .00583715)))); }
+vec3 skyDir(vec2 s) { return normalize(vec3(s.x, s.y - uYH, uF)); }
+
+// 天空：地平线到头顶的渐变，太阳那个方位贴着地平线的一大片暖光，太阳周围的光晕
+vec3 skyBase(vec2 s) {
+  vec3 d = skyDir(s), sd = skyDir(uSun);
+  float el = max(d.y, 0.);
+  vec3 c = mix(uHor, uZen, pow(smoothstep(0., .42, el), .62));
+  float az = atan(d.x, d.z) - atan(sd.x, sd.z);
+  float gw = exp(-az * az / .08) * .7 + exp(-az * az / .55) * .45;
+  c += uGlow * gw * exp(-el / (.03 + .09 * gw));
+  float a = acos(clamp(dot(d, sd), -1., 1.));
+  c += uHalo * (exp(-a / .016) * 1.8 + exp(-a / .07) * .7 + exp(-a / .25) * .25);
+  return c;
+}
+float fbmT(vec2 p) {
+  float s = 0., a = .5;
+  for (int i = 0; i < 5; i++) { s += a * texture(uNoise, p).r; p = mat2(1.6, 1.2, -1.2, 1.6) * p + vec2(.131, .293); a *= .5; }
+  return s / .96875;
+}
+// 云：投到一层水平的云底上取噪声，近处大块、远处压扁成一条条，靠近太阳的薄边亮
+vec4 cloud(vec2 s) {
+  vec3 d = skyDir(s);
+  float dy = max(d.y, .002);
+  vec2 q = d.xz / dy;
+  vec2 uv = vec2(q.x * .014 + uT * .0011, q.y * .0135);
+  float n = fbmT(uv + vec2(0., .37));
+  float lay = texture(uNoise, uv * .21 + vec2(.61, .17)).g;
+  float cov = .63 - .16 * lay;
+  float a = smoothstep(cov, cov + .17, n);
+  a *= smoothstep(.002, .035, d.y) * (1. - .6 * smoothstep(.2, .45, d.y));
+  float thin = 1. - smoothstep(cov, cov + .3, n);
+  float fw = pow(max(dot(d, skyDir(uSun)), 0.), 10.);
+  vec3 c = mix(uCDark, uCLit, .22 + .78 * thin) * (1. + 2.4 * fw * (.35 + thin));
+  c = mix(c, skyBase(s), exp(-d.y / .022) * .75);
+  return vec4(c, a);
+}
+float winOn(float r) { float t0 = r * 11.; return smoothstep(t0, t0 + .25, uWinT); }
+// 对岸：颜色是“自己的颜色 × 环境光”，越远越被天光糊掉；窗户天黑以后陆续亮
+vec4 farLit(vec2 s, float lod) {
+  vec2 uv = rectUV(uFRect, s);
+  vec4 a = textureLod(uFA, uv, lod), b = textureLod(uFB, uv, lod);
+  a *= step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.);
+  vec3 c = a.rgb / max(a.a, 1e-3) * uFarAmb;
+  c = mix(c, skyBase(vec2(s.x, max(s.y, uYH + .004))) * .92, b.b);
+  c += uWinCol * b.r * winOn(b.g) * 5.;
+  return vec4(c * a.a, a.a);
+}
+// 灯泡：从左到右一盏盏亮，刚亮时闪两下，灯丝从橙红慢慢烧到暖白；有一两颗接触不良
+float bulbT(float x, float r) { return uBulbT - clamp((x - uBulbX.x) / (uBulbX.y - uBulbX.x), 0., 1.) * 1.8 - r * .22; }
+float bulbOn(float t, float r) {
+  if (t < 0.) return 0.;
+  float f = t < .05 ? .9 : t < .11 ? .1 : t < .17 ? .65 : 1.;
+  f *= .3 + .7 * smoothstep(0., .5, t);
+  if (r > .986) f *= .15 + .85 * step(.3, textureLod(uNoise, vec2(uT * .21, r * 7.3), 0.).b);
+  return f;
+}
+vec3 bulbCol(float t) { return mix(vec3(1., .36, .09), vec3(1., .69, .4), smoothstep(0., .8, t)); }
+`;
+
+  // 第一遍：天空和对岸。一张只有天（直接看时用），一张天和对岸叠在一起（算倒影时用）
+  const FS_BG = COMMON + `
+uniform float uEnc;
+layout(location = 0) out vec4 oSky;
+layout(location = 1) out vec4 oBg;
+void main() {
+  vec2 s = scr();
+  vec3 c = skyBase(s);
+  vec4 cl = cloud(s);
+  c = mix(c, cl.rgb, cl.a);
+  oSky = vec4(c * uEnc, 1. - cl.a);
+  vec4 f = farLit(s, 0.);
+  oBg = vec4((c * (1. - f.a) + f.rgb) * uEnc, 1.);
+}`;
+
+  // 第二遍：栈道和字打上光，存成一张预乘透明度的图
+  const FS_LIT = COMMON + `
+uniform sampler2D uLA, uLB, uGlowT;
+uniform vec4 uLRect;
+uniform vec3 uFill, uRimCol;
+uniform float uEnc;
+out vec4 o;
+void main() {
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 s = vec2(mix(uLRect.x, uLRect.z, uv.x), mix(uLRect.w, uLRect.y, uv.y));
+  vec4 a = textureLod(uLA, uv, 0.), b = textureLod(uLB, uv, 0.);
+  vec3 g = textureLod(uGlowT, uv, 0.).rgb;
+  float h = clamp((s.y - uLRect.y) / (uLRect.w - uLRect.y), 0., 1.);
+  vec3 c = a.rgb * uFill * (.78 + .5 * h);
+  c += a.rgb * uRimCol * b.r * 3.2;
+  float tx = bulbT(s.x, .5), tb = bulbT(s.x, b.b);
+  c += a.rgb * bulbCol(tx) * g.r * bulbOn(tx, .5) * 1.3;     // 灯泡把周围的字面照亮
+  c += bulbCol(tb) * b.g * bulbOn(tb, b.b) * 16.;
+  o = vec4(c * uEnc, a.a);
+}`;
+
+  // 水波：二维波动方程，一格一格往外传，边上慢慢吸收掉
+  const FS_SIM = `#version 300 es
+precision highp float;
+uniform sampler2D uPrev;
+uniform vec2 uN;
+uniform vec4 uImpA[8], uImpB[8];
+uniform int uImpN;
+uniform float uDamp;
+out vec4 o;
+void main() {
+  ivec2 c = ivec2(gl_FragCoord.xy), mx = ivec2(uN) - 1;
+  vec2 cur = texelFetch(uPrev, c, 0).rg;
+  float l = texelFetch(uPrev, ivec2(max(c.x - 1, 0), c.y), 0).r, r = texelFetch(uPrev, ivec2(min(c.x + 1, mx.x), c.y), 0).r;
+  float d = texelFetch(uPrev, ivec2(c.x, max(c.y - 1, 0)), 0).r, u = texelFetch(uPrev, ivec2(c.x, min(c.y + 1, mx.y)), 0).r;
+  float h = (l + r + d + u) * .5 - cur.g;
+  vec2 e = min(vec2(c), uN - 1. - vec2(c));
+  h *= uDamp * mix(.92, 1., smoothstep(0., 28., min(e.x, e.y)));
+  vec2 p = vec2(c);
+  for (int i = 0; i < 8; i++) {
+    if (i >= uImpN) break;
+    vec2 a = uImpA[i].xy, b = uImpA[i].zw, ab = b - a;
+    float t = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-4), 0., 1.);
+    float q = length(p - a - ab * t) / uImpB[i].x;
+    if (q < 1.) { float f = 1. - q * q; h -= uImpB[i].y * f * f; }
+  }
+  o = vec4(h, cur.r, 0., 1.);
+}`;
+
+  // 屏幕上画的两遍共用：叠对岸、雾、字，加光晕，色调映射
+  const MAIN = COMMON + `
+uniform sampler2D uLit, uGlowT, uLA;
+uniform vec4 uLRect, uBgRect;
+uniform float uDec, uExpo, uBulbGlow;
+out vec4 o;
+vec3 aces(vec3 x) { return clamp(x * (2.51 * x + .03) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+vec3 finish(vec3 c, vec2 p) {
+  c = aces(c * uExpo);
+  c *= 1. - .16 * smoothstep(.8, 1.7, length(vec2(p.x / uAsp * 1.15, p.y)));
+  c = pow(c, vec3(1. / 2.2));
+  return c + (ign(gl_FragCoord.xy) - .5) / 255.;
+}
+vec3 layers(vec3 c, vec2 p) {
+  vec4 f = farLit(p, 0.);
+  c = c * (1. - f.a) + f.rgb;
+  // 贴着对岸的一层薄雾，入夜以后浓一点
+  float y = p.y - (uYH - .008), m = exp(-y * y / .0016) * uMist;
+  m *= .45 + .55 * texture(uNoise, vec2(p.x * .05 + uT * .0025, p.y * .35 + .3)).g;
+  c = mix(c, uMistCol, clamp(m, 0., .7));
+  vec2 lu = rectUV(uLRect, p);
+  vec4 l = texture(uLit, lu) * step(0., lu.y) * step(lu.y, 1.);   // 栈道桩子的底边贴着这张图的下沿，夹边取样会把它一路往下拖成竖线
+  c = c * (1. - l.a) + l.rgb * uDec;
+  vec3 g = texture(uGlowT, lu).rgb * inRect(lu);
+  float tx = bulbT(p.x, .5);
+  c += bulbCol(tx) * bulbOn(tx, .5) * (g.g * .25 + g.b * .35) * uBulbGlow;
+  vec2 fu = rectUV(uFRect, p);
+  c += uWinCol * textureLod(uFB, fu, 3.).r * inRect(fu) * smoothstep(1., 12., uWinT) * 1.2;
+  return c;
+}
+`;
+
+  const FS_SKY = MAIN + `
+uniform sampler2D uSky;
+uniform vec2 uMoon;
+uniform float uMoonR, uMoonV, uStar, uSunDisk;
+uniform vec3 uSunCol;
+float stars(vec2 p) {
+  vec2 g = p * 170., c = floor(g), f = fract(g) - .5;
+  float h = hash12(c);
+  if (h < .9945) return 0.;
+  vec2 off = (vec2(hash12(c + 7.1), hash12(c + 3.3)) - .5) * .5;
+  float b = (h - .9945) / .0055, r = length(f - off);
+  float tw = .7 + .3 * sin(uT * (1.5 + 3. * hash12(c + 1.7)) + h * 80.);
+  return smoothstep(.3, .0, r) * (.35 + 2.4 * b * b) * tw * smoothstep(.04, .12, p.y - uYH);
+}
+// 月牙：一个圆减去往背着太阳方向挪开的另一个圆；暗的那部分有一点点地照
+vec3 moon(vec2 p) {
+  float r = length(p - uMoon), disk = smoothstep(uMoonR, uMoonR * .85, r);
+  vec2 away = normalize(uMoon - vec2(uSun.x, uYH - .45));   // 太阳已经在地平线下面了
+  float lit = disk * smoothstep(uMoonR * .96, uMoonR * 1.08, length(p - uMoon - away * uMoonR * .62));
+  return (vec3(1., .94, .82) * lit * 2.6 + vec3(.06, .07, .1) * disk) * uMoonV;
+}
+vec3 sunDisk(vec2 p) {
+  vec2 q = p - uSun;
+  q.y *= 1. + .14 * smoothstep(.25, .0, uSun.y - uYH);     // 贴近地平线时被大气压扁一点
+  float r = length(q) / uSunR;
+  return uSunCol * uSunDisk * smoothstep(1., .88, r) * (.62 + .38 * sqrt(max(0., 1. - r * r)));
+}
+void main() {
+  vec2 p = scr();
+  vec4 sk = texture(uSky, rectUV(uBgRect, p));
+  vec3 c = sk.rgb * uDec;
+  c += (vec3(.85, .9, 1.) * stars(p) * uStar + moon(p)) * sk.a;
+  c += sunDisk(p) * mix(1., sk.a, .85);
+  c = layers(c, p);
+  o = vec4(finish(c, p), 1.);
+}`;
+
+  const FS_WATER = MAIN + `
+uniform sampler2D uBg, uDet, uSim;
+uniform vec4 uSimRect;
+uniform vec2 uSimN, uWindDir, uMoon;
+uniform float uSimOn, uCalm, uSwell, uGlintI, uMoonR, uMoonV;
+uniform vec3 uBody, uSunCol;
+// 涌浪：四道很长、很缓的波，从远处往岸边推；比一个像素还细的时候就淡掉，那部分算进“糙度”
+const vec4 SW[4] = vec4[4](vec4(.22, -1., 4.6, .0095), vec4(-.5, -1., 2.5, .008), vec4(.75, -1., 1.4, .0065), vec4(-.12, -1., .82, .0055));
+// 细波纹：三层平铺的波纹贴图，各转一个角度、各自漂；周期、角度、速度、坡度
+const vec4 DL[3] = vec4[3](vec4(2.7, .35, .5, .024), vec4(1.1, -.55, .8, .021), vec4(.45, .9, 1.25, .017));
+vec2 waves(vec2 w, vec2 fp, float rough, out float vr) {
+  vec2 s = vec2(0.);
+  vr = 0.;
+  for (int i = 0; i < 4; i++) {
+    vec2 dir = normalize(SW[i].xy);
+    float k = 6.2832 / SW[i].z, ph = dot(dir, w) * k - sqrt(9.8 * k) * .3 * uT;
+    float aa = 1. - smoothstep(.3, 1.2, k * dot(abs(dir), fp));
+    float A = SW[i].w * uSwell;
+    s += dir * A * sin(ph) * 1.414 * aa;
+    vr += A * A * (1. - aa);
+  }
+  for (int i = 0; i < 3; i++) {
+    float an = DL[i].y;
+    mat2 R = mat2(cos(an), sin(an), -sin(an), cos(an));
+    vec2 uv = R * w / DL[i].x + vec2(0., uT * DL[i].z / DL[i].x);
+    vec4 m = texture(uDet, uv);
+    float A = DL[i].w * rough;
+    s += transpose(R) * m.xy * A;
+    vec2 v2 = max(m.zw - m.xy * m.xy, 0.);
+    vr += (v2.x + v2.y) * .5 * A * A;
+  }
+  return s;
+}
+// 一阵阵的风：大块的斑顺着风往岸边漂，斑里的细纹密，斑外几乎是镜面
+float gust(vec2 w) {
+  vec2 q = w * vec2(.045, .055) - uWindDir * uT * .02;
+  float g = texture(uNoise, q).g * .62 + texture(uNoise, q * 2.6 + vec2(.37, .71) - uWindDir * uT * .004).g * .38;
+  return smoothstep(.5, .74, g);
+}
+vec2 ripples(vec2 w, vec2 fp) {
+  vec2 sz = uSimRect.zw - uSimRect.xy, uv = (w - uSimRect.xy) / sz, e = max(1. / uSimN, fp / sz * .7);
+  float hl = textureLod(uSim, uv - vec2(e.x, 0.), 0.).r, hr = textureLod(uSim, uv + vec2(e.x, 0.), 0.).r;
+  float hd = textureLod(uSim, uv - vec2(0., e.y), 0.).r, hu = textureLod(uSim, uv + vec2(0., e.y), 0.).r;
+  vec2 g = vec2(hr - hl, hu - hd) / (2. * e * sz);
+  float inside = step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.);
+  return g * inside * (1. - smoothstep(.75, 1., uv.y)) * uSimOn;
+}
+vec2 onPlane(vec3 P, vec3 r, float D) { vec3 Q = P + r * ((D - P.z) / r.z); return vec2(Q.x * uF / D, uYH + (Q.y - 1.) * uF / D); }
+// 沿反射方向看出去：先碰栈道和字那块板，再碰对岸（连着天）
+// 取样的范围是竖着的长条（水面的起伏主要让倒影上下错开）：用梯度告诉显卡这个形状，它会沿长边多取几次
+vec3 along(vec3 P, vec3 r, vec2 gb, vec2 gl) {
+  vec3 c = textureGrad(uBg, rectUV(uBgRect, onPlane(P, r, uD2)), vec2(gb.x, 0.), vec2(0., gb.y)).rgb;
+  if (P.z < uD1) {
+    vec4 l = textureGrad(uLit, rectUV(uLRect, onPlane(P, r, uD1)), vec2(gl.x, 0.), vec2(0., gl.y));
+    c = c * (1. - l.a) + l.rgb;
+  }
+  return c;
+}
+// 太阳、月亮在水里的碎光：要多陡的小水面才能把光反射进眼睛，按坡度的分布算有多少
+vec3 glint(vec3 d, vec2 sl, float v, vec3 L, vec3 col) {
+  vec3 hv = normalize(L - d);
+  vec2 dl = -hv.xz / hv.y - sl;
+  float D = exp(-dot(dl, dl) / (2. * v)) / (6.2832 * v);
+  return col * D * (.02 + .98 * pow(1. - clamp(dot(-d, hv), 0., 1.), 5.));
+}
+// 从水面上这一点看太阳，有没有被对岸的山或者字挡住
+float occl(vec3 P, vec3 L) {
+  if (L.y <= 0.) return 0.;
+  float v = 1. - textureLod(uFA, rectUV(uFRect, onPlane(P, L, uD2)), 1.).a;
+  if (P.z < uD1) v *= 1. - textureLod(uLA, rectUV(uLRect, onPlane(P, L, uD1)), 1.).a;
+  return v;
+}
+const vec2 TAP[7] = vec2[7](vec2(0.), vec2(1., 0.), vec2(.5, .866), vec2(-.5, .866), vec2(-1., 0.), vec2(-.5, -.866), vec2(.5, -.866));
+void main() {
+  vec2 p = scr();
+  vec3 d = normalize(vec3(p.x, min(p.y - uYH, -1e-4), uF));
+  vec3 P = vec3(0., 1., 0.) + d / -d.y;
+  vec2 w = P.xz, fp = vec2(P.z / uF, P.z * P.z / uF) * (2. / uRes.y);
+  float rough = mix(uCalm, 1., gust(w)), vr;
+  vec2 sl = waves(w, fp, rough, vr) + ripples(w, fp);
+  vr += 1.2e-5;
+  vec3 n = normalize(vec3(-sl.x, 1., -sl.y));
+  float Fr = .02 + .98 * pow(1. - clamp(dot(-d, n), 0., 1.), 5.);
+  // 倒影：按看不清的那部分波纹有多糙，把法线抖七下各看一眼再平均——越糙越糊，而且是竖着拉长的
+  float sg = sqrt(vr), an = ign(gl_FragCoord.xy) * 6.2832;
+  mat2 rot = mat2(cos(an), sin(an), -sin(an), cos(an));
+  vec3 r0 = reflect(d, n);
+  r0.z = max(r0.z, .05);
+  vec2 q0 = onPlane(P, r0, uD2);
+  // 每一下取样要覆盖的范围（贴图坐标）：横向窄、竖向长；离字脚越近越小，所以字脚那里清楚
+  vec2 fw = fwidth(q0);
+  float spread = 2.2 * sg * uF, near = max(0., 1. - P.z / uD1);
+  vec2 bgS = vec2(uBgRect.z - uBgRect.x, uBgRect.w - uBgRect.y), lS = vec2(uLRect.z - uLRect.x, uLRect.w - uLRect.y);
+  // 上限：太大的话显卡会取到很小的那几级，整列的栈道桩子会被抹成一道道竖线
+  vec2 gb = min((vec2(spread * .22, spread * .8) + fw) / bgS, vec2(.01, .05));
+  vec2 gl = min((vec2(spread * .22, spread * .8) * near + fw * .7) / lS, vec2(.008, .09));
+  vec3 acc = vec3(0.);
+  for (int i = 0; i < 7; i++) {
+    vec2 st = sl + rot * TAP[i] * sg * 1.3 + vec2(0., sg * .35);   // 糙的地方多反射一点高处的天，所以会暗一点
+    vec3 r = reflect(d, normalize(vec3(-st.x, 1., -st.y)));
+    r.y = max(r.y, .001);
+    r.z = max(r.z, .05);
+    acc += along(P, r, gb, gl);
+  }
+  vec3 refl = acc / 7. * uDec;
+  // 灯泡倒影周围的一点光晕
+  if (P.z < uD1) {
+    vec2 q1 = onPlane(P, r0, uD1), u1 = rectUV(uLRect, q1);
+    float tx = bulbT(q1.x, .5);
+    refl += bulbCol(tx) * bulbOn(tx, .5) * textureLod(uGlowT, u1, 0.).b * inRect(u1) * uBulbGlow * .5;
+  }
+  vec3 c = mix(uBody, refl, max(Fr, .05));
+  vec3 sd = skyDir(uSun);
+  c += glint(d, sl, vr + pow(uSunR / uF * .5, 2.), sd, uSunCol) * uGlintI * occl(P, sd);
+  c += glint(d, sl, vr + pow(uMoonR / uF * .5, 2.), skyDir(uMoon), vec3(1., .94, .82)) * .006 * uMoonV;   // 月亮在水里那一小道碎光
+  c = layers(c, p);
+  o = vec4(finish(c, p), 1.);
+}`;
+
+  /* ---------- WebGL ---------- */
+  let gl = null, glOK = false, floatRT = false, simOK = false, aniso = null;
+  const PR = {}, TX = {}, FBO = {};
+  const UNIT = { uNoise: 0, uDet: 1, uFA: 2, uFB: 3, uLA: 4, uLB: 5, uGlowT: 6, uSky: 7, uBg: 8, uLit: 9, uSim: 10, uPrev: 11 };
+  function initGL() {
+    gl = glc.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false, powerPreference: 'high-performance' });
+    if (!gl) return false;
+    floatRT = !!gl.getExtension('EXT_color_buffer_float');
+    simOK = floatRT;
+    aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const vs = sh(gl.VERTEX_SHADER, VS);
+    const mkProg = (name, fs) => {
+      const p = gl.createProgram();
+      gl.attachShader(p, vs);
+      gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+      gl.bindAttribLocation(p, 0, 'a');
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(name + ': ' + gl.getProgramInfoLog(p));
+      const u = {};
+      const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+      for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i), key = info.name.replace(/\[0\]$/, ''); u[key] = gl.getUniformLocation(p, info.name); }
+      gl.useProgram(p);
+      for (const [k, unit] of Object.entries(UNIT)) if (u[k]) gl.uniform1i(u[k], unit);
+      PR[name] = { p, u };
+    };
+    mkProg('bg', FS_BG);
+    mkProg('lit', FS_LIT);
+    mkProg('sky', FS_SKY);
+    mkProg('water', FS_WATER);
+    if (simOK) mkProg('sim', FS_SIM);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    for (const k of Object.keys(UNIT)) TX[k] = gl.createTexture();
+    TX.simB = gl.createTexture();
+    // 不变的两张：噪声和细波纹
+    bindT('uNoise');
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 256, 256, 0, gl.RGBA, gl.UNSIGNED_BYTE, buildNoise());
+    gl.generateMipmap(gl.TEXTURE_2D);
+    params(gl.REPEAT, true);
+    if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 8);
+    bindT('uDet');
+    for (const [i, [n, data]] of buildDetail().entries()) gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA16F, n, n, 0, gl.RGBA, gl.FLOAT, data);
+    params(gl.REPEAT, true);
+    if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 16);
+    for (const k of ['bg', 'lit', 'simA', 'simB']) FBO[k] = gl.createFramebuffer();
+    return true;
+  }
+  function bindT(k, tex = TX[k]) { gl.activeTexture(gl.TEXTURE0 + UNIT[k]); gl.bindTexture(gl.TEXTURE_2D, tex); }
+  function params(wrap, mip) {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
+  }
+  const RTF = () => floatRT ? [gl.RGBA16F, gl.HALF_FLOAT] : [gl.RGBA8, gl.UNSIGNED_BYTE];
+  function rt(k, w, h, mip, tex = TX[k]) {
+    bindT(k, tex);
+    const [fmt, type] = RTF();
+    gl.texImage2D(gl.TEXTURE_2D, 0, fmt, w, h, 0, gl.RGBA, type, null);
+    params(gl.CLAMP_TO_EDGE, mip);
+    if (mip && aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 16);
+  }
+  let BGW, BGH, SIM = null;
+  function uploadAll() {
+    bindT('uFA');
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, FAR.w, FAR.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, FAR.fa);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    params(gl.CLAMP_TO_EDGE, true);
+    bindT('uFB');
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, FAR.w, FAR.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, FAR.fb);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    params(gl.CLAMP_TO_EDGE, true);
+    uploadLetters();
+    // 天空 + 对岸：半分辨率，倒影要的是糊的版本
+    BGW = Math.round((G.BR.x1 - G.BR.x0) * G.ppu * 0.5);
+    BGH = Math.round((G.BR.y1 - G.BR.y0) * G.ppu * 0.5);
+    rt('uSky', BGW, BGH, false);
+    rt('uBg', BGW, BGH, true);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FBO.bg);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, TX.uSky, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, TX.uBg, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+    if (simOK) setupSim();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  function uploadLetters() {
+    bindT('uLA');
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, LET.w, LET.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, LET.la);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    params(gl.CLAMP_TO_EDGE, true);
+    bindT('uLB');
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, LET.w, LET.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, LET.lb);
+    params(gl.CLAMP_TO_EDGE, false);
+    bindT('uGlowT');
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, LET.gw, LET.gh, 0, gl.RGBA, gl.FLOAT, LET.glow);
+    params(gl.CLAMP_TO_EDGE, false);
+    rt('uLit', LET.w, LET.h, true);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FBO.lit);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, TX.uLit, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  // 涟漪只在近处这一片水里算：按“最近处一格大约 6 个像素”定格子，太多就放粗
+  function setupSim() {
+    const z0 = G.F / (G.yH + 1) * 0.97, z1 = Math.min(13, G.D1 * 0.6);
+    let cell = clamp(6 / ppw(z0), 0.01, 0.08);
+    const x1 = ASP * z1 / G.F * 1.03;
+    let nx = Math.ceil(2 * x1 / cell), nz = Math.ceil((z1 - z0) / cell);
+    const cap = 900000;
+    if (nx * nz > cap) { const f = Math.sqrt(nx * nz / cap); cell *= f; nx = Math.ceil(2 * x1 / cell); nz = Math.ceil((z1 - z0) / cell); }
+    SIM = { x0: -x1, z0, x1, z1: z0 + nz * cell, cell, nx, nz, cur: 'uSim', on: false, idle: 0, acc: 0, dirty: true };
+    rt('uSim', nx, nz, false, TX.uSim);
+    rt('uSim', nx, nz, false, TX.simB);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FBO.simA);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, TX.uSim, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FBO.simB);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, TX.simB, 0);
+    SIM.texs = [TX.uSim, TX.simB];
+    SIM.fbos = [FBO.simA, FBO.simB];
+    SIM.i = 0;
+  }
+
+  /* ---------- 一天里的光：五个关键时刻的颜色，中间插值 ----------
+     0 金色时刻，1 太阳落到山后，2 晚霞最浓，3 蓝调时刻，4 入夜 */
+  const hex = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255].map(v => Math.pow(v, 2.2)); };
+  const PAL = {
+    zen:   [['#4a66a8', .9], ['#43569a', .86], ['#3b3b7b', .78], ['#1f2c63', .62], ['#0b1130', .55]],
+    hor:   [['#ffc68c', 1.1], ['#ffa074', 1.05], ['#e48a96', 1.0], ['#5e62a2', .66], ['#151d42', .5]],
+    glow:  [['#ffa24c', 2.3], ['#ff8840', 2.1], ['#ff5a3c', 1.5], ['#a6516f', .5], ['#26214a', .16]],
+    clit:  [['#ffc98c', 1.05], ['#ffa66e', 1.3], ['#ff6e8e', 1.3], ['#7466a4', .48], ['#222a52', .3]],
+    cdark: [['#5c5f90', .5], ['#5c4e82', .48], ['#563f72', .46], ['#2b315f', .42], ['#0d1228', .38]],
+    fill:  [['#c9aeb0', .56], ['#c4909c', .48], ['#8e6a98', .36], ['#454f84', .24], ['#161c3a', .17]],
+    far:   [['#6c6284', .34], ['#605272', .3], ['#4c3e64', .25], ['#242c54', .18], ['#0c1128', .15]],
+    body:  [['#15211f', .42], ['#161b1f', .4], ['#141621', .36], ['#0b1020', .3], ['#05080f', .26]],
+    mist:  [['#f6caa8', .38], ['#eda08c', .42], ['#d78c9b', .4], ['#6c72aa', .36], ['#1f2850', .3]],
+    win:   [['#ffc678', 1], ['#ffc678', 1], ['#ffc678', 1], ['#ffc678', 1], ['#ffc678', 1]],
+  };
+  const PALL = Object.fromEntries(Object.entries(PAL).map(([k, v]) => [k, v.map(([h, i]) => hex(h).map(c => c * i))]));
+  function ramp(key, k) {
+    const a = PALL[key], i = clamp(Math.floor(k), 0, 3), f = smooth(clamp(k - i, 0, 1));
+    return a[i].map((c, j) => c + (a[i + 1][j] - c) * f);
+  }
+  const mix3 = (a, b, t) => a.map((c, j) => c + (b[j] - c) * t);
+  const T_BULB = 41.5, T_WIN = 33, T_BOAT = 37, T_FLY = 50;
+  function env(t) {
+    const k = t < 20 ? t / 20 : t < 32 ? 1 + (t - 20) / 12 : t < 46 ? 2 + (t - 32) / 14 : t < 74 ? 3 + (t - 46) / 28 : 4;
+    const sunY = G.setY + G.sunR + G.sunV * (18 - t), up = clamp((sunY - G.setY) / (G.sunR + G.sunV * 18), 0, 1);
+    const vis = smooth((sunY - G.setY + G.sunR) / (2 * G.sunR));      // 0 = 整个落到山后
+    const sunCol = mix3(hex('#ff5e22'), hex('#ffd9a0'), Math.pow(up, 0.7));
+    return {
+      t, k, up, vis,
+      sun: [G.sunX + 0.0015 * t, sunY], sunCol,
+      halo: sunCol.map(c => c * (1.15 * smooth((sunY - G.setY + 3 * G.sunR) / (4 * G.sunR)) + 0.15 * vis)),
+      rim: sunCol.map(c => c * vis * 1.2),
+      glint: vis,
+      star: smooth((k - 2.7) / 1.1), moon: smooth((k - 2.15) / 1.25),
+      mist: 0.1 + 0.42 * smooth((k - 1.6) / 2.2),
+      expo: [1, 1.04, 1.12, 1.42, 1.9][Math.min(4, Math.floor(k))] * (1 - (k % 1)) + [1, 1.04, 1.12, 1.42, 1.9][Math.min(4, Math.floor(k) + 1)] * (k % 1),
+      calm: lerp(0.24, 0.13, smooth((k - 2) / 2)),
+      swell: lerp(1, 0.72, smooth((k - 2) / 2)),
+    };
+  }
+
+  /* ---------- 状态 ---------- */
+  const st = { t: 0, started: false, rewind: false, imp: [], drops: [], nextFish: 4, touched: false, last: null, clacked: false, lastSpeed: 0 };
+  if (REDUCED) { st.t = 45.5; st.started = true; }
+
+  function setStatus(e) {
+    const t = e.t, mins = t < 24 ? 18 * 60 + 31 + t / 24 * 16 : 18 * 60 + 47 + (t - 24) * 0.9;
+    const hh = Math.floor(mins / 60), mm = Math.floor(mins % 60), clock = `${hh}:${String(mm).padStart(2, '0')}`;
+    let on, txt;
+    if (t < 20) { on = 'gold'; txt = `湖边 ${clock} · 离日落还有 ${Math.max(1, 47 - mm)} 分钟`; }
+    else if (t < 28) { on = 'set'; txt = `湖边 ${clock} · 太阳落山了`; }
+    else if (t < 39) { on = 'glow'; txt = `湖边 ${clock} · 晚霞正浓`; }
+    else if (t < T_FLY) { on = 'blue'; txt = t < T_BULB ? `湖边 ${clock} · 蓝调时刻` : `湖边 ${clock} · 蓝调时刻，灯亮了`; }
+    else { on = 'night'; txt = `湖边 ${clock} · 入夜，萤火虫出来了`; }
+    if (statusText.textContent !== txt) statusText.textContent = txt;
+    if (statusEl.dataset.on !== on) statusEl.dataset.on = on;
+  }
+
+  /* ---------- 每帧：推进时间、算水波、画 ---------- */
+  function frame(s) {
+    if (st.started && !REDUCED) {
+      if (st.rewind) {
+        st.t -= s * 24;
+        if (st.t <= 0) { st.t = 0; st.rewind = false; }
+      } else st.t += s;
+    }
+    if (st.t < T_BULB) st.clacked = false;
+    else if (!st.clacked && !st.rewind) { st.clacked = true; if (SND.on) clackRow(); }
+    // 偶尔有鱼在近处冒头，一圈小涟漪
+    if (!REDUCED && simOK) {
+      st.nextFish -= s;
+      if (st.nextFish <= 0) {
+        st.nextFish = 6 + Math.random() * 8;
+        const z = 3 + Math.random() * 8, x = (Math.random() * 1.7 - 0.85) * ASP * z / G.F;
+        poke(x, z, x, z, 0.05, 0.022);
+      }
+    }
+    // 溅起来的水珠落回水面
+    for (const p of st.drops) { p.vy += 900 * s; p.x += p.vx * s; p.y += p.vy * s; }
+    st.drops = st.drops.filter(p => {
+      if (p.vy < 0 || p.y < p.y0) return true;
+      const w = toWorld(p.x, p.y0);
+      if (w) poke(w.x, w.z, w.x, w.z, 0.03, 0.012);
+      return false;
+    });
+  }
+
+  function poke(ax, az, bx, bz, r, a) {
+    if (!SIM) return;
+    st.imp.push([ax, az, bx, bz, r, a]);
+  }
+  function toWorld(cx, cy) {
+    const sx = (cx / W * 2 - 1) * ASP, sy = 1 - cy / H * 2;
+    if (sy > G.yH - 0.012) return null;
+    const z = G.F / (G.yH - sy);
+    return { x: sx * z / G.F, z };
+  }
+
+  function stepSim(s) {
+    if (!simOK || !SIM) return;
+    if (st.imp.length) {
+      if (!SIM.on) {   // 停过一阵：先把两张图清空，免得旧的波纹冒出来
+        for (const f of SIM.fbos) { gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); }
+        SIM.on = true;
+        SIM.acc = 1 / 60;
+      }
+      SIM.idle = 0;
+    }
+    if (!SIM.on) return;
+    SIM.idle += s;
+    if (SIM.idle > 9) { SIM.on = false; return; }
+    SIM.acc = Math.min(SIM.acc + s, 4 / 60);
+    const P = PR.sim;
+    gl.useProgram(P.p);
+    gl.viewport(0, 0, SIM.nx, SIM.nz);
+    gl.uniform2f(P.u.uN, SIM.nx, SIM.nz);
+    gl.uniform1f(P.u.uDamp, 0.9935);
+    while (SIM.acc >= 1 / 60) {
+      SIM.acc -= 1 / 60;
+      const imp = st.imp.splice(0, 8), A = new Float32Array(32), B = new Float32Array(32);
+      imp.forEach(([ax, az, bx, bz, r, a], i) => {
+        A.set([(ax - SIM.x0) / SIM.cell, (az - SIM.z0) / SIM.cell, (bx - SIM.x0) / SIM.cell, (bz - SIM.z0) / SIM.cell], i * 4);
+        B.set([Math.max(1.2, r / SIM.cell), a, 0, 0], i * 4);
+      });
+      gl.uniform4fv(P.u.uImpA, A);
+      gl.uniform4fv(P.u.uImpB, B);
+      gl.uniform1i(P.u.uImpN, imp.length);
+      bindT('uPrev', SIM.texs[SIM.i]);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, SIM.fbos[1 - SIM.i]);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      SIM.i = 1 - SIM.i;
+    }
+    st.imp.length = 0;
+    bindT('uPrev', null);
+    bindT('uSim', SIM.texs[SIM.i]);
+  }
+
+  function setCommon(P, e, now) {
+    const u = P.u, f = (k, ...v) => { if (u[k]) gl['uniform' + v.length + 'f'](u[k], ...v); };
+    f('uAsp', ASP); f('uF', G.F); f('uYH', G.yH); f('uD1', G.D1); f('uD2', G.D2); f('uT', now);
+    f('uWinT', e.t - T_WIN); f('uMist', e.mist); f('uBulbT', e.t - T_BULB);
+    f('uSun', ...e.sun); f('uBulbX', G.letters.x0, G.letters.x1); f('uSunR', G.sunR);
+    f('uZen', ...ramp('zen', e.k)); f('uHor', ...ramp('hor', e.k)); f('uGlow', ...ramp('glow', e.k).map(c => c * (0.35 + 0.65 * smooth(1.6 - e.k * 0.35))));
+    f('uHalo', ...e.halo); f('uCLit', ...ramp('clit', e.k)); f('uCDark', ...ramp('cdark', e.k)); f('uFarAmb', ...ramp('far', e.k));
+    f('uWinCol', ...ramp('win', e.k)); f('uMistCol', ...ramp('mist', e.k));
+    f('uFRect', G.FR.x0, G.FR.y0, G.FR.x1, G.FR.y1);
+    f('uLRect', G.LR.x0, G.LR.y0, G.LR.x1, G.LR.y1);
+    f('uBgRect', G.BR.x0, G.BR.y0, G.BR.x1, G.BR.y1);
+    f('uEnc', floatRT ? 1 : 0.125); f('uDec', floatRT ? 1 : 8);
+  }
+
+  function render(now) {
+    const e = env(st.t);
+    setStatus(e);
+    if (!glOK) return;
+    stepSim(st.dt || 0);
+    // 1. 天空和对岸
+    let P = PR.bg;
+    gl.useProgram(P.p);
+    setCommon(P, e, now);
+    gl.uniform2f(P.u.uRes, BGW, BGH);
+    gl.uniform4f(P.u.uView, G.BR.x0, G.BR.y1, G.BR.x1, G.BR.y0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FBO.bg);
+    gl.viewport(0, 0, BGW, BGH);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    bindT('uBg');
+    gl.generateMipmap(gl.TEXTURE_2D);
+    // 2. 栈道和字
+    P = PR.lit;
+    gl.useProgram(P.p);
+    setCommon(P, e, now);
+    gl.uniform2f(P.u.uRes, LET.w, LET.h);
+    gl.uniform3f(P.u.uFill, ...ramp('fill', e.k));
+    gl.uniform3f(P.u.uRimCol, ...e.rim);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FBO.lit);
+    gl.viewport(0, 0, LET.w, LET.h);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    bindT('uLit');
+    gl.generateMipmap(gl.TEXTURE_2D);
+    // 3. 屏幕：地平线以上画天，以下画水
+    const cw = glc.width, ch = glc.height, split = clamp(Math.ceil((G.yH + 1) / 2 * ch - 0.5), 0, ch);
+    gl.viewport(0, 0, cw, ch);
+    gl.enable(gl.SCISSOR_TEST);
+    for (const [name, y0, y1] of [['water', 0, split], ['sky', split, ch]]) {
+      if (y1 <= y0) continue;
+      P = PR[name];
+      gl.useProgram(P.p);
+      setCommon(P, e, now);
+      const u = P.u, f = (k, ...v) => { if (u[k]) gl['uniform' + v.length + 'f'](u[k], ...v); };
+      f('uRes', cw, ch); f('uView', -ASP, -1, ASP, 1);
+      f('uExpo', e.expo); f('uBulbGlow', 1);
+      f('uMoon', ...G.moon); f('uMoonR', G.moonR); f('uMoonV', e.moon);
+      f('uSunCol', ...e.sunCol);
+      if (name === 'sky') { f('uStar', e.star); f('uSunDisk', lerp(2.4, 13, Math.pow(e.up, 1.4))); }
+      else {
+        f('uSimRect', SIM ? SIM.x0 : 0, SIM ? SIM.z0 : 0, SIM ? SIM.x1 : 1, SIM ? SIM.z1 : 1);
+        f('uSimN', SIM ? SIM.nx : 1, SIM ? SIM.nz : 1);
+        f('uSimOn', SIM && SIM.on ? 1 : 0);
+        f('uWindDir', 0.33, -0.94);
+        f('uCalm', e.calm); f('uSwell', e.swell); f('uGlintI', 0.04 * e.glint);
+        f('uBody', ...ramp('body', e.k));
+      }
+      gl.scissor(0, y0, cw, y1 - y0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    gl.disable(gl.SCISSOR_TEST);
+  }
+
+  /* ---------- 叠加层：小船、芦苇、萤火虫、飞鸟、溅起的水珠 ---------- */
+  let REEDS = [], FLIES = [], BOAT_C = null;
+  function buildProps() {
+    const r = rng(5);
+    REEDS = [];
+    const clusters = mobile ? [[-0.985, 9, 0.62], [0.985, 7, 0.5]] : [[-0.975, 12, 1.32], [0.985, 8, 0.86]];
+    for (const [cx, n, hmax] of clusters) for (let i = 0; i < n; i++) {
+      const z = (mobile ? 1.9 : 2.1) + r() * 1.4, sx = (cx + (r() - 0.5) * 0.1 * (mobile ? 1.6 : 1)) * ASP;
+      const kind = r() < 0.32 ? 'cat' : r() < 0.6 ? 'blade' : 'stem';
+      REEDS.push({ x: sx * z / G.F, z, h: hmax * (0.45 + 0.55 * r()) * (kind === 'blade' ? 0.75 : 1), lean: (r() - 0.5) * 0.3 - cx * 0.06, ph: r() * 6.28, kind, w: 0.011 + r() * 0.007 });
+    }
+    REEDS.sort((a, b) => b.z - a.z);
+    FLIES = [];
+    const nf = mobile ? 9 : 16;
+    for (let i = 0; i < nf; i++) {
+      const side = i % 3 === 0 ? (r() - 0.5) * 1.5 : i % 3 === 1 ? -0.9 : 0.9, z = 2.6 + r() * 5;
+      FLIES.push({ hx: side * ASP * z / G.F, hy: 0.25 + r() * 1.1, hz: z, a: r() * 6.28, b: r() * 6.28, per: 2.4 + r() * 2.8, ph: r(), on: T_FLY + r() * 14 });
+    }
+  }
+
+  function drawOverlay(now, e) {
+    const o = octx;
+    o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    o.clearRect(0, 0, W, H);
+    const T = REDUCED ? 3 : now;
+    // 环境里的“剪影色”：天越黑越黑
+    const night = smooth((e.k - 2.4) / 1.6);
+    drawBirds(o, e, T);
+    drawBoat(o, e, T, night);
+    for (const rd of REEDS) drawReed(o, rd, T, e, night);
+    drawFlies(o, e, T);
+    o.fillStyle = `rgba(255,236,220,${0.85 - night * 0.45})`;
+    for (const p of st.drops) { o.beginPath(); o.arc(p.x, p.y, 1.3, 0, 7); o.fill(); }
+    if (!st.touched && st.started) {
+      o.font = '12px "DM Sans", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+      o.fillStyle = 'rgba(239,232,225,.42)';
+      o.textBaseline = 'bottom';
+      o.fillText(mobile ? '手指在水面上横着划一划' : '在水面上划一划，点一下扔颗石子', 16, H - 12);
+    }
+  }
+
+  // 船：本地坐标，船头朝右，y 向上，单位是世界单位
+  function hull(o) {
+    o.beginPath();
+    o.moveTo(-2.15, 0.5);
+    o.quadraticCurveTo(0, 0.32, 2.35, 0.8);
+    o.lineTo(2.06, 0.02);
+    o.quadraticCurveTo(0, -0.12, -1.98, 0);
+    o.closePath();
+  }
+  function boatShape(o, withLamp) {
+    hull(o);
+    o.fill();
+    o.fillRect(-1.78, 0.42, 0.07, 1.95);           // 挂灯的杆
+    o.fillRect(-1.78, 2.3, 0.42, 0.05);
+    if (withLamp) { o.fillRect(-1.47, 2.0, 0.03, 0.3); o.fillRect(-1.55, 1.74, 0.2, 0.28); }
+  }
+  function drawBoat(o, e, T, night) {
+    const B = G.boat, k = ppw(B.z) * B.s, bob = Math.sin(T * 1.25) * 0.035, roll = Math.sin(T * 0.83 + 1) * 0.018;
+    const x = B.sx * B.z / G.F, [sx, sy] = proj(x, bob, B.z), px = SX(sx), py = SY(sy);
+    const sil = `rgb(${Math.round(lerp(22, 7, night))},${Math.round(lerp(15, 8, night))},${Math.round(lerp(22, 14, night))})`;
+    const lamp = clamp((e.t - T_BOAT) / 1.2, 0, 1) * (0.9 + 0.1 * Math.sin(T * 7.1) * Math.sin(T * 3.3));
+    // 系船的桩子
+    const [qx, qy] = proj(x + 3.3 * B.s, 0, B.z + 0.4), pk = ppw(B.z + 0.4) * B.s, postX = SX(qx), postY = SY(qy);
+    // 倒影：整条船上下翻过来先画到一张小图上，再一行行（按设备像素）左右错一点贴回来；用裁剪一条条画的话，条与条之间会露出细缝
+    const reach = 2.6 * k, ox = 3 * k, rw = Math.ceil(10 * k * DPR), rh = Math.ceil(reach * DPR) + 2;
+    if (!BOAT_C || BOAT_C.width < rw || BOAT_C.height < rh) BOAT_C = canvas(rw + 8, rh + 8);
+    const bc = BOAT_C.getContext('2d');
+    bc.setTransform(1, 0, 0, 1, 0, 0);
+    bc.clearRect(0, 0, BOAT_C.width, BOAT_C.height);
+    bc.fillStyle = sil;
+    bc.setTransform(DPR, 0, 0, DPR, ox * DPR, 0);
+    bc.fillRect(postX - px - 0.09 * pk, postY - py, 0.18 * pk, 1.5 * pk);
+    bc.rotate(roll);
+    bc.scale(k, k);
+    boatShape(bc, true);
+    o.save();
+    o.setTransform(1, 0, 0, 1, 0, 0);
+    o.globalAlpha = 0.55 * (1 - night * 0.4);
+    const x0 = Math.round((px - ox) * DPR), y0 = Math.round(py * DPR), step = Math.max(1, Math.round(DPR));
+    for (let yy = 0; yy < rh; yy += step) {
+      const c = yy / DPR, off = (Math.sin(c * 0.31 + T * 2.3) * (0.4 + c / reach * 2.2) + Math.sin(c * 0.13 - T * 1.1) * 0.6) * DPR;
+      o.drawImage(BOAT_C, 0, yy, rw, step, x0 + Math.round(off), y0 + yy, rw, step);
+    }
+    o.restore();
+    // 船身
+    o.save();
+    o.translate(px, py);
+    o.rotate(-roll);
+    o.scale(k, -k);
+    o.fillStyle = sil;
+    boatShape(o, true);
+    // 金色时刻：船舷上一道逆光的边
+    if (e.vis > 0.01) {
+      o.strokeStyle = `rgba(255,190,120,${0.55 * e.vis})`;
+      o.lineWidth = 1.1 / k;
+      o.beginPath(); o.moveTo(-2.15, 0.5); o.quadraticCurveTo(0, 0.32, 2.35, 0.8); o.stroke();
+    }
+    o.restore();
+    o.fillStyle = sil;
+    o.fillRect(postX - 0.09 * pk, postY - 1.5 * pk, 0.18 * pk, 1.5 * pk);
+    // 缆绳：从船头垂一道弧到桩子上
+    const bowX = px + 2.3 * k, bowY = py - 0.78 * k;
+    o.strokeStyle = sil;
+    o.lineWidth = Math.max(0.7, 0.04 * k);
+    o.beginPath(); o.moveTo(bowX, bowY); o.quadraticCurveTo((bowX + postX) / 2, Math.max(bowY, postY - 1.3 * pk) + 0.5 * k, postX, postY - 1.3 * pk); o.stroke();
+    // 船灯
+    if (lamp > 0) {
+      const lx = px - 1.45 * k, ly = py - 1.88 * k;
+      const g = o.createRadialGradient(lx, ly, 0, lx, ly, 26 * B.s);
+      g.addColorStop(0, `rgba(255,214,150,${0.75 * lamp})`);
+      g.addColorStop(0.25, `rgba(255,170,90,${0.25 * lamp})`);
+      g.addColorStop(1, 'rgba(255,150,80,0)');
+      o.fillStyle = g;
+      o.fillRect(lx - 30, ly - 30, 60, 60);
+      o.fillStyle = `rgba(255,236,200,${lamp})`;
+      o.fillRect(lx - 0.07 * k, ly - 0.11 * k, 0.14 * k, 0.2 * k);
+      // 灯在水里的倒影：一竖条断断续续的短横
+      const ry = py + 1.88 * k;
+      for (let i = 0; i < 22; i++) {
+        const yy = py + 2 + (ry - py) * 1.6 * i / 22, f = 1 - i / 22, jit = Math.sin(i * 1.7 + T * 3.1) * (1.2 + i * 0.25);
+        const a = lamp * (0.12 + 0.5 * Math.exp(-(((yy - ry) / (0.6 * k)) ** 2))) * (0.6 + 0.4 * Math.sin(i * 2.3 + T * 5.3));
+        o.fillStyle = `rgba(255,190,120,${a * f})`;
+        o.fillRect(lx + jit - (2 + 3 * (1 - f)), yy, 4 + 6 * (1 - f), 1.2);
+      }
+    }
+  }
+
+  function drawReed(o, rd, T, e, night) {
+    const gustS = Math.sin(T * 0.37 + rd.x * 0.2) * 0.5 + 0.5;
+    const sway = REDUCED ? 0 : (Math.sin(T * 1.25 + rd.ph) * 0.6 + Math.sin(T * 0.53 + rd.ph * 1.7) * 0.4) * 0.045 * rd.h * (0.6 + 0.8 * gustS);
+    const dx = rd.lean * rd.h + sway, k = ppw(rd.z);
+    const P = (fx, fy) => { const [a, b] = proj(rd.x + fx, fy, rd.z); return [SX(a), SY(b)]; };
+    const M = (fx, fy, T2) => { const [a, b] = proj(rd.x + fx, -fy, rd.z); return [SX(a) + Math.sin(b * 40 + T2 * 2.2) * 1.4, SY(b)]; };
+    const col = `rgb(${Math.round(lerp(14, 6, night))},${Math.round(lerp(11, 7, night))},${Math.round(lerp(17, 12, night))})`;
+    for (const refl of [true, false]) {
+      const Pt = refl ? (fx, fy) => M(fx, fy, T) : P;
+      o.globalAlpha = refl ? 0.32 : 1;
+      o.fillStyle = o.strokeStyle = col;
+      const b = Pt(0, 0), m = Pt(dx * 0.22, rd.h * 0.55), t = Pt(dx, rd.h);
+      if (rd.kind === 'blade') {
+        // 一片叶子：底下宽、尖上细，往外弯
+        const w = rd.w * 2.6 * k;
+        o.beginPath();
+        o.moveTo(b[0] - w / 2, b[1]);
+        o.quadraticCurveTo(m[0] - w * 0.3, m[1], t[0], t[1]);
+        o.quadraticCurveTo(m[0] + w * 0.3, m[1], b[0] + w / 2, b[1]);
+        o.fill();
+      } else {
+        o.lineWidth = Math.max(0.8, rd.w * k);
+        o.lineCap = 'round';
+        o.beginPath(); o.moveTo(...b); o.quadraticCurveTo(...m, ...t); o.stroke();
+        if (rd.kind === 'cat') {
+          // 香蒲：杆子上头一截粗的棕色穗
+          const c0 = Pt(dx * 0.86, rd.h * 0.8), c1 = Pt(dx * 0.95, rd.h * 0.93);
+          o.lineWidth = Math.max(2, rd.w * 3.4 * k);
+          o.beginPath(); o.moveTo(...c0); o.lineTo(...c1); o.stroke();
+        }
+      }
+      if (!refl && e.vis > 0.01 && rd.kind !== 'blade') {
+        o.strokeStyle = `rgba(255,186,120,${0.45 * e.vis})`;
+        o.lineWidth = 0.7;
+        o.beginPath(); o.moveTo(m[0] + 0.8, m[1]); o.quadraticCurveTo(m[0] + 0.8, m[1], t[0] + 0.8, t[1]); o.stroke();
+      }
+    }
+    o.globalAlpha = 1;
+  }
+
+  function drawFlies(o, e, T) {
+    if (e.t < T_FLY - 2) return;
+    for (const f of FLIES) {
+      const a = clamp((e.t - f.on) / 3, 0, 1);
+      if (a <= 0) continue;
+      const tt = REDUCED ? 0 : T;
+      const x = f.hx + Math.sin(tt * 0.31 + f.a) * 0.4 + Math.sin(tt * 0.71 + f.b) * 0.18;
+      const y = f.hy + Math.sin(tt * 0.43 + f.b) * 0.2 + Math.sin(tt * 1.1 + f.a) * 0.06;
+      const z = f.hz + Math.sin(tt * 0.23 + f.a * 2) * 0.4;
+      const fl = REDUCED ? 0.8 : Math.pow(Math.max(0, Math.sin(6.2832 * (tt / f.per + f.ph))), 2.5);
+      const b = fl * a;
+      if (b < 0.01) continue;
+      const [sx, sy] = proj(x, y, z), [rx, ry] = proj(x, -y, z), k = ppw(z) / ppw(4);
+      const R0 = 11 * k, px = SX(sx), py = SY(sy);
+      const g = o.createRadialGradient(px, py, 0, px, py, R0);
+      g.addColorStop(0, `rgba(236,255,150,${0.95 * b})`);
+      g.addColorStop(0.18, `rgba(206,255,112,${0.42 * b})`);
+      g.addColorStop(0.5, `rgba(190,255,100,${0.1 * b})`);
+      g.addColorStop(1, 'rgba(190,255,100,0)');
+      o.fillStyle = g;
+      o.fillRect(px - R0, py - R0, R0 * 2, R0 * 2);
+      o.fillStyle = `rgba(250,255,215,${b})`;
+      o.beginPath(); o.arc(px, py, Math.max(0.8, 1.3 * k), 0, 7); o.fill();
+      // 水里那一个，暗一点、竖着拉长
+      const qx = SX(rx), qy = SY(ry);
+      if (qy < H) {
+        o.save();
+        o.translate(qx + Math.sin(T * 2.7 + f.a) * 0.8, qy);
+        o.scale(1, 2.2);
+        const g2 = o.createRadialGradient(0, 0, 0, 0, 0, R0 * 0.8);
+        g2.addColorStop(0, `rgba(220,255,130,${0.3 * b})`);
+        g2.addColorStop(1, 'rgba(200,255,110,0)');
+        o.fillStyle = g2;
+        o.fillRect(-R0, -R0, R0 * 2, R0 * 2);
+        o.restore();
+      }
+    }
+  }
+
+  function drawBirds(o, e, T) {
+    const u = (e.t - 4) / 17;
+    if (u <= 0 || u >= 1 || REDUCED) return;
+    for (let i = 0; i < 3; i++) {
+      const z = 52 + i * 4, sx = lerp(1.12, -1.15, u) * ASP + i * 0.05 * ASP, y = (mobile ? 22 : 14) + i * 1.1 + Math.sin(u * 4 + i) * 0.5;
+      const x = sx * z / G.F, k = ppw(z), flap = Math.sin(T * 8.3 + i * 2.1);
+      for (const refl of [false, true]) {
+        const [a, b] = proj(x, refl ? -y : y, z), px = SX(a), py = SY(b);
+        if (refl && py > H) continue;
+        const span = 0.62 * k, wy = flap * 0.3 * k * (refl ? -1 : 1);
+        o.strokeStyle = refl ? 'rgba(20,14,26,.22)' : 'rgba(26,18,30,.85)';
+        o.lineWidth = Math.max(1, 0.08 * k);
+        o.beginPath();
+        o.moveTo(px - span, py - wy);
+        o.quadraticCurveTo(px - span * 0.45, py - Math.abs(wy) * 0.4 - 0.12 * k * (refl ? -1 : 1), px, py);
+        o.quadraticCurveTo(px + span * 0.45, py - Math.abs(wy) * 0.4 - 0.12 * k * (refl ? -1 : 1), px + span, py - wy);
+        o.stroke();
+      }
+    }
+  }
+
+  /* ---------- 声音：默认关，点开才建 AudioContext；同一套代码也能在离线环境里渲染出来检查 ---------- */
+  function makeSound(ac, dest) {
+    const sr = ac.sampleRate;
+    const out = ac.createGain();
+    out.gain.value = 0.9;
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.25;
+    out.connect(comp).connect(dest);
+    // 4 秒粉红噪声，左右声道各自独立
+    const nbuf = ac.createBuffer(2, sr * 4, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = nbuf.getChannelData(ch);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < d.length; i++) {
+        const w = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.969 * b2 + w * 0.153852;
+        b3 = 0.8665 * b3 + w * 0.3104856; b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898;
+        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11;
+        b6 = w * 0.115926;
+      }
+    }
+    // 混响：一段指数衰减、偏暗的噪声当冲激响应；湖上空旷，尾巴不长
+    const ir = ac.createBuffer(2, Math.round(sr * 2.2), sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      let lp = 0;
+      for (let i = 0; i < d.length; i++) { lp += (Math.random() * 2 - 1 - lp) * 0.3; d[i] = lp * Math.pow(1 - i / d.length, 3.2) * 0.9; }
+    }
+    const verb = ac.createConvolver();
+    verb.buffer = ir;
+    const wet = ac.createGain();
+    wet.gain.value = 0.32;
+    verb.connect(wet).connect(out);
+    const src = () => { const s = ac.createBufferSource(); s.buffer = nbuf; s.loop = true; return s; };
+    const send = (node, amt) => { const g = ac.createGain(); g.gain.value = amt; node.connect(g).connect(verb); };
+
+    // 远处的风和湖：一层很低很轻的底
+    const bed = src(), bedF = ac.createBiquadFilter(), bedG = ac.createGain();
+    bedF.type = 'lowpass'; bedF.frequency.value = 300; bedG.gain.value = 0.16;
+    bed.connect(bedF).connect(bedG).connect(out);
+    bed.start(0, Math.random() * 3);
+    // 水拍栈道：左右两路带通噪声，一阵一阵地涌上来再退下去
+    const laps = [-0.5, 0.45].map(pan => {
+      const s = src(), f = ac.createBiquadFilter(), f2 = ac.createBiquadFilter(), g = ac.createGain(), p = ac.createStereoPanner();
+      f.type = 'bandpass'; f.frequency.value = 420; f.Q.value = 0.85;
+      f2.type = 'lowpass'; f2.frequency.value = 1500;
+      g.gain.value = 0.02; p.pan.value = pan;
+      s.connect(f).connect(f2).connect(g).connect(p).connect(out);
+      send(p, 0.25);
+      s.start(0, Math.random() * 3.5);
+      return { f, g };
+    });
+    // 划水的沙沙声：音量跟着鼠标的速度
+    const sw = src(), swF = ac.createBiquadFilter(), swG = ac.createGain();
+    swF.type = 'bandpass'; swF.frequency.value = 650; swF.Q.value = 1.6; swG.gain.value = 0;
+    sw.connect(swF).connect(swG).connect(out);
+    send(swG, 0.3);
+    sw.start(0, Math.random() * 3);
+    // 虫鸣：三只蟋蟀，音高、节奏、方位各不一样，天黑以后才叫
+    const bugs = ac.createGain();
+    bugs.gain.value = 0;
+    bugs.connect(out);
+    send(bugs, 0.45);
+    const crickets = [
+      { f: 4650, per: 0.62, n: 3, pan: -0.55, g: 0.05 },
+      { f: 4280, per: 0.83, n: 4, pan: 0.6, g: 0.04 },
+      { f: 5080, per: 0.47, n: 2, pan: 0.12, g: 0.018 },
+    ].map(c => { const p = ac.createStereoPanner(); p.pan.value = c.pan; p.connect(bugs); return { ...c, p, next: 0 }; });
+
+    let nextLap = 0, nextPlip = 0, side = 0;
+    function lap(t) {
+      const L = laps[side ^= 1], peak = 0.06 + Math.random() * 0.07;
+      L.g.gain.setTargetAtTime(peak, t, 0.1);
+      L.g.gain.setTargetAtTime(0.018, t + 0.32, 0.38);
+      L.f.frequency.setTargetAtTime(650 + Math.random() * 400, t, 0.08);
+      L.f.frequency.setTargetAtTime(380, t + 0.3, 0.3);
+    }
+    // 水滴：音高往上滑的一小声“噗”，是水里的小气泡在响
+    function plip(t, amp = 1) {
+      const o = ac.createOscillator(), g = ac.createGain(), p = ac.createStereoPanner(), f0 = 700 + Math.random() * 1000;
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(f0 * (1.7 + Math.random() * 0.7), t + 0.045);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime((0.025 + Math.random() * 0.035) * amp, t + 0.003);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+      p.pan.value = Math.random() * 1.4 - 0.7;
+      o.connect(g).connect(p).connect(out);
+      send(p, 0.6);
+      o.start(t); o.stop(t + 0.1);
+    }
+    function chirp(c, t) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = c.f * (1 + (Math.random() - 0.5) * 0.004);
+      g.gain.setValueAtTime(0, t);
+      for (let i = 0; i < c.n; i++) {
+        const s = t + i * 0.03;
+        g.gain.setValueAtTime(0, s);
+        g.gain.linearRampToValueAtTime(c.g, s + 0.004);
+        g.gain.setValueAtTime(c.g, s + 0.012);
+        g.gain.linearRampToValueAtTime(0, s + 0.019);
+      }
+      o.connect(g).connect(c.p);
+      o.start(t); o.stop(t + c.n * 0.03 + 0.03);
+    }
+    return {
+      reset(t) { nextLap = t + 0.2; nextPlip = t + 0.6; for (const c of crickets) c.next = t + Math.random() * c.per; },
+      // 把 [t0, t1) 里该响的事件排上
+      sched(t0, t1, night) {
+        while (nextLap < t1) { if (nextLap >= t0 - 0.05) lap(nextLap); nextLap += 0.9 + Math.random() * 1.8; }
+        while (nextPlip < t1) { if (nextPlip >= t0 - 0.05) plip(nextPlip); nextPlip += 0.35 + Math.random() * 2.6; }
+        for (const c of crickets) while (c.next < t1) {
+          if (night > 0.03 && c.next >= t0 - 0.05) chirp(c, c.next);
+          c.next += c.per * (0.92 + Math.random() * 0.16);
+        }
+      },
+      night(v, t) { bugs.gain.setTargetAtTime(v, t, 1.2); },
+      swish(v, t) { swG.gain.setTargetAtTime(v, t, 0.06); },
+      // 石子入水：一声短促的“噗”，一声闷的“咚”，水下空腔回弹的“咕”，再落回几滴
+      plunk(t) {
+        const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+        s.buffer = nbuf;
+        f.type = 'lowpass'; f.frequency.value = 2200;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.42, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+        s.connect(f).connect(g).connect(out);
+        send(g, 0.4);
+        s.start(t, Math.random() * 3); s.stop(t + 0.16);
+        const o = ac.createOscillator(), g2 = ac.createGain();
+        o.frequency.setValueAtTime(150, t);
+        o.frequency.exponentialRampToValueAtTime(64, t + 0.16);
+        g2.gain.setValueAtTime(0.0001, t);
+        g2.gain.exponentialRampToValueAtTime(0.32, t + 0.006);
+        g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+        o.connect(g2).connect(out);
+        o.start(t); o.stop(t + 0.26);
+        const o2 = ac.createOscillator(), g3 = ac.createGain();
+        o2.frequency.setValueAtTime(380, t + 0.06);
+        o2.frequency.exponentialRampToValueAtTime(1250, t + 0.13);
+        g3.gain.setValueAtTime(0.0001, t + 0.06);
+        g3.gain.exponentialRampToValueAtTime(0.2, t + 0.066);
+        g3.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+        o2.connect(g3).connect(out);
+        send(g3, 0.5);
+        o2.start(t + 0.06); o2.stop(t + 0.17);
+        for (let i = 0; i < 4; i++) plip(t + 0.24 + Math.random() * 0.4, 0.7);
+      },
+      // 继电器吸合：一下很短的“咔”，带一点闷响
+      clack(t) {
+        const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+        s.buffer = nbuf;
+        f.type = 'bandpass'; f.frequency.value = 2600; f.Q.value = 1.3;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.5, t + 0.0015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+        s.connect(f).connect(g).connect(out);
+        send(g, 0.35);
+        s.start(t, Math.random() * 3); s.stop(t + 0.04);
+        const o = ac.createOscillator(), g2 = ac.createGain();
+        o.frequency.value = 95;
+        g2.gain.setValueAtTime(0.0001, t);
+        g2.gain.exponentialRampToValueAtTime(0.22, t + 0.003);
+        g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+        o.connect(g2).connect(out);
+        o.start(t); o.stop(t + 0.07);
+      },
+    };
+  }
+  const SND = { ac: null, eng: null, master: null, on: false, until: 0 };
+  const soundBtn = $('#sound');
+  soundBtn.addEventListener('click', async () => {
+    try {
+      if (!SND.ac) {
+        SND.ac = new AudioContext();
+        SND.master = SND.ac.createGain();
+        SND.master.gain.value = 0;
+        SND.master.connect(SND.ac.destination);
+        SND.eng = makeSound(SND.ac, SND.master);
+      }
+      SND.on = !SND.on;
+      const now = SND.ac.currentTime;
+      if (SND.on) {
+        await SND.ac.resume();
+        SND.eng.reset(SND.ac.currentTime);
+        SND.until = SND.ac.currentTime;
+        SND.master.gain.cancelScheduledValues(now);
+        SND.master.gain.setTargetAtTime(1, now, 0.5);
+      } else {
+        SND.master.gain.cancelScheduledValues(now);
+        SND.master.gain.setTargetAtTime(0, now, 0.25);
+        setTimeout(() => { if (!SND.on) SND.ac.suspend(); }, 1400);
+      }
+    } catch (err) { console.error(err); SND.on = false; }
+    soundBtn.setAttribute('aria-pressed', String(SND.on));
+    soundBtn.querySelector('span').textContent = SND.on ? '声音 · 开' : '声音 · 关';
+  });
+  function soundTick(e) {
+    if (!SND.on || !SND.ac || SND.ac.state !== 'running') return;
+    const now = SND.ac.currentTime;
+    SND.eng.sched(Math.max(SND.until, now), now + 0.3, smooth((e.k - 2.3) / 1.2));
+    SND.until = now + 0.3;
+    SND.eng.night(smooth((e.k - 2.3) / 1.2), now);
+    SND.eng.swish(Math.min(0.14, st.lastSpeed * 0.0001), now);
+    st.lastSpeed *= 0.8;
+  }
+  function clackRow() {
+    const n = Math.min(6, Math.max(1, [...brand].length)), t0 = SND.ac.currentTime + 0.02;
+    for (let i = 0; i < n; i++) SND.eng.clack(t0 + i / n * 1.8 + Math.random() * 0.05);
+  }
+
+  /* ---------- 交互：划水、扔石子 ---------- */
+  scene.addEventListener('pointermove', e => {
+    const r = scene.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    if (e.pointerType === 'touch' && !e.buttons) { st.last = null; return; }
+    const w = toWorld(x, y);
+    if (w && st.last) {
+      const d = Math.hypot(x - st.last.x, y - st.last.y);
+      if (d > 0.5) {
+        // 沿路径点几下，而不是拖一整条：一个个小圈互相叠，才像手指划过水的那串细纹
+        const n = Math.min(4, Math.ceil(d / 16)), a = clamp(d * 0.00032, 0.0012, 0.0075), wl = st.last.w;
+        for (let k = 1; k <= n; k++) { const f = k / n, px = lerp(wl.x, w.x, f), pz = lerp(wl.z, w.z, f); poke(px, pz, px, pz, 0.035, a); }
+        st.lastSpeed = Math.max(st.lastSpeed, d / Math.max(1, e.timeStamp - st.last.t) * 1000);
+        st.touched = true;
+      }
+    }
+    st.last = w ? { x, y, w, t: e.timeStamp } : null;
+  });
+  scene.addEventListener('pointerleave', () => { st.last = null; });
+  scene.addEventListener('pointerup', e => { if (e.pointerType === 'touch') st.last = null; });
+  scene.addEventListener('click', e => {
+    const r = scene.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, w = toWorld(x, y);
+    if (!w) return;
+    st.touched = true;
+    poke(w.x, w.z, w.x, w.z, 0.08, 0.1);
+    const k = ppw(w.z) / ppw(4);
+    for (let i = 0; i < 14; i++) st.drops.push({ x, y, vx: (Math.random() - 0.5) * 110 * k, vy: -(140 + Math.random() * 190) * k, y0: y + (Math.random() - 0.5) * 6 * k });
+    if (SND.on) SND.eng.plunk(SND.ac.currentTime + 0.01);
+  });
+  $('#replay').addEventListener('click', () => { st.started = true; if (st.t > 0) st.rewind = true; });
+
+  // 没有 WebGL2：画一张安静的蓝调时刻，字是暖色的灯
+  function fallback() {
+    const o = glc.getContext('2d');
+    if (!o) return;
+    o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const g = o.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#141a3c');
+    g.addColorStop(SY(G.yH) / H, '#7a5a86');
+    g.addColorStop(SY(G.yH) / H + 0.001, '#1a1830');
+    g.addColorStop(1, '#07080f');
+    o.fillStyle = g;
+    o.fillRect(0, 0, W, H);
+    o.font = signFont(H * 0.24);
+    o.textAlign = 'center';
+    o.fillStyle = 'rgba(255,214,150,.9)';
+    o.fillText(brand, SX((G.TB.x0 + G.TB.x1) / 2), SY(G.deck) - 4);
+    o.globalAlpha = 0.3;
+    o.scale(1, -1);
+    o.fillText(brand, SX((G.TB.x0 + G.TB.x1) / 2), -SY(G.yw1) * 2 + SY(G.deck) - 4);
+  }
+
+  function build() {
+    layout();
+    buildFar();
+    buildLetters();
+    buildProps();
+    // 太阳从哪条线落下去：电脑上是右边的山；手机上字铺满一行，先被字挡住
+    const ridge = G.ridgeAt(G.sunX);
+    G.setY = mobile ? Math.max(ridge, G.letters.top) : ridge;
+    G.sunV = 2 * G.sunR / (mobile ? 9 : 6);   // 几秒落下一个太阳的直径：手机上起点不能太高，落得慢一点
+    if (glOK) uploadAll();
+    else fallback();
+    ready = true;
+  }
+
+  let visible = false, ready = false, last = performance.now();
+  new IntersectionObserver(es => es.forEach(e => {
+    visible = e.isIntersecting;
+    // 页脚滚出去了，声音也跟着淡掉；滚回来再淡进来
+    if (SND.on && SND.ac) SND.master.gain.setTargetAtTime(visible && !document.hidden ? 1 : 0, SND.ac.currentTime, 0.4);
+  })).observe(scene);
+  function loop(now) {
+    requestAnimationFrame(loop);
+    const dt = Math.min(now - last, 50) / 1000;
+    last = now;
+    if (!visible || !ready) return;
+    const r = scene.getBoundingClientRect();
+    if (!st.started && (r.top < innerHeight * 0.72 || r.bottom <= innerHeight + 4)) st.started = true;
+    frame(dt);
+    st.dt = dt;
+    const T = REDUCED ? 7.3 : now / 1000;
+    let e;
+    try { render(T); } catch (err) { console.error(err); }
+    e = env(st.t);
+    drawOverlay(T, e);
+    soundTick(e);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!SND.ac || !SND.on) return;
+    SND.master.gain.setTargetAtTime(document.hidden || !visible ? 0 : 1, SND.ac.currentTime, 0.3);
+  });
+
+  const fontsReady = () => Promise.all([
+    isCJK(brand) ? document.fonts.load('900 100px "Noto Serif SC"', brand) : document.fonts.load('400 100px "Alfa Slab One"', brand),
+  ]).catch(() => {});
+  function rebuildLetters() {
+    buildLetters();
+    G.setY = mobile ? Math.max(G.ridgeAt(G.sunX), G.letters.top) : G.ridgeAt(G.sunX);
+    if (glOK) uploadLetters(); else fallback();
+  }
+  try { glOK = initGL(); } catch (err) { console.error(err); glOK = false; }
+  // 先用手头有的字体画出来，网页字体到了再把字重做一遍：网慢的时候画面不会一直黑着
+  const hadFont = document.fonts.check(signFont(100), brand);
+  build();
+  requestAnimationFrame(loop);
+  if (!hadFont) fontsReady().then(rebuildLetters);
+  let tmr, lastW = innerWidth;
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(tmr);
+    tmr = setTimeout(build, 250);
+  });
+</script>
+</body>
+</html>

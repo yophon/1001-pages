@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星球 · 一千零一页</title>
+<meta name="description" content="从轨道上看一颗行星，品牌名是大陆，夜里是城市灯光，开场是一次轨道日出。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@900&family=Space+Grotesk:wght@400;500;700&family=Unbounded:wght@800&display=swap">
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --line: #26262b;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --grot: "Space Grotesk", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    /* 页脚：深空的蓝黑，日出的橙，夜灯的暖黄 */
+    --f-bg: #04060b;
+    --f-text: #e4e9f2;
+    --f-muted: #8590a3;
+    --f-faint: #535c6d;
+    --f-line: #151b27;
+    --sun: #ffa057;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 角落的页码，点了回目录；用反色混合，深浅底上都看得见 */
+  .folio {
+    position: absolute; top: 12px; right: 16px; z-index: 20;
+    font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em;
+    color: #fff; mix-blend-mode: difference; opacity: .5; text-decoration: none; transition: opacity .2s;
+  }
+  .folio:hover, .folio:focus-visible { opacity: 1; }
+
+  /* ---------- 页脚 ---------- */
+  .foot { background: var(--f-bg); color: var(--f-text); border-top: 1px solid var(--f-line); }
+  .foot-top {
+    display: grid; grid-template-columns: minmax(260px, 1.5fr) repeat(3, minmax(120px, 1fr)); gap: 40px 48px;
+    max-width: 1320px; margin: 0 auto; padding: 64px clamp(16px, 4vw, 48px) 40px;
+  }
+  .brand .name { font: 700 36px/1 var(--grot); letter-spacing: -0.02em; }
+  .brand .tag { margin: 14px 0 22px; color: var(--f-muted); font-size: 14px; max-width: 32ch; text-wrap: pretty; }
+  .status { display: inline-flex; align-items: center; gap: 9px; font: 12.5px/1 var(--grot); color: var(--f-muted); padding: 8px 12px 8px 10px; border: 1px solid var(--f-line); border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--f-faint); flex: none; transition: background .6s, box-shadow .6s; }
+  .status[data-on="night"] i { background: #ffc36b; box-shadow: 0 0 10px 1px rgb(255 195 107 / .6); }
+  .status[data-on="dawn"] i { background: var(--sun); box-shadow: 0 0 12px 2px rgb(255 160 87 / .7); }
+  .status[data-on="day"] i { background: #9cc8ff; box-shadow: 0 0 10px 1px rgb(156 200 255 / .55); }
+  .col h3 { margin: 4px 0 14px; font: 500 12px/1 var(--grot); letter-spacing: .14em; color: var(--f-faint); text-transform: uppercase; }
+  .col a { display: block; color: var(--f-text); opacity: .84; text-decoration: none; font-size: 14.5px; padding: 3px 0; }
+  .col a:hover { opacity: 1; }
+
+  .scene { position: relative; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+  .scene.drag { cursor: grabbing; }
+  .scene canvas { display: block; width: 100%; }
+  .scene .over { position: absolute; inset: 0; height: 100%; pointer-events: none; }
+
+  .foot-legal {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px;
+    max-width: 1320px; margin: 0 auto; padding: 18px clamp(16px, 4vw, 48px) 22px;
+    font-size: 12.5px; color: var(--f-faint);
+  }
+  .foot-legal a { color: var(--f-muted); text-decoration: none; }
+  .foot-legal a:hover { color: var(--f-text); }
+  .foot-legal .ctl { margin-left: auto; display: flex; gap: 8px; }
+  .foot-legal button {
+    font: 12.5px/1 var(--sans); color: var(--f-muted); cursor: pointer;
+    background: transparent; border: 1px solid var(--f-line); border-radius: 999px; padding: 8px 12px;
+  }
+  .foot-legal button:hover { color: var(--f-text); border-color: #2a3446; }
+
+  @media (max-width: 760px) {
+    .foot-top { grid-template-columns: 1fr 1fr; padding-top: 48px; gap: 32px 24px; }
+    .brand { grid-column: 1 / -1; }
+    .foot-legal .ctl { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<a class="folio" href="index.html" title="回到目录">一千零一页 · 002</a>
+
+<footer class="foot">
+  <div class="foot-top">
+    <div class="brand">
+      <div class="name" id="f-name">Lumen</div>
+      <p class="tag">夜光遥感。我们从轨道上看城市的灯光，替你读懂夜里发生了什么。</p>
+      <div class="status" id="status" data-on="off"><i></i><span id="status-text">正在入轨</span></div>
+    </div>
+    <nav class="col" aria-label="产品"><h3>产品</h3><a href="#">夜光影像</a><a href="#">变化监测</a><a href="#">开发者接口</a><a href="#">价格</a></nav>
+    <nav class="col" aria-label="公司"><h3>公司</h3><a href="#">关于我们</a><a href="#">任务日志</a><a href="#">招聘</a><a href="#">媒体</a></nav>
+    <nav class="col" aria-label="联系"><h3>联系</h3><a href="#">商务合作</a><a href="#">邮件订阅</a><a href="#">X</a><a href="#">GitHub</a></nav>
+  </div>
+  <div class="scene" id="scene">
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <canvas id="over" class="over" aria-label="一颗行星，品牌名是大陆；按住左右拖可以转动"></canvas>
+  </div>
+  <div class="foot-legal">
+    <span>© 2026 <span class="bn">Lumen</span> 夜光遥感</span>
+    <a href="#">隐私</a><a href="#">条款</a>
+    <div class="ctl"><button type="button" id="ffwd">快进一天</button></div>
+  </div>
+</footer>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  // 品牌名默认 Lumen，网址加 ?name=星河 这样的参数可以换
+  const brand = (new URLSearchParams(location.search).get('name') || '').trim().slice(0, 16) || 'Lumen';
+  $('#f-name').textContent = brand;
+  document.querySelectorAll('.bn').forEach(b => { b.textContent = brand; });
+
+  /* ---------- 噪声：二维、三维值噪声，带周期的版本给细节纹理用 ---------- */
+  function hash2(x, y) {
+    let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  }
+  function hash3(x, y, z) {
+    let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(z | 0, 1440662683)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  }
+  const fade = t => t * t * (3 - 2 * t);
+  function noise2(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), u = fade(x - xi), v = fade(y - yi);
+    const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function noise3(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), u = fade(x - xi), v = fade(y - yi), w = fade(z - zi);
+    const l = (a, b, t) => a + (b - a) * t;
+    return l(l(l(hash3(xi, yi, zi), hash3(xi + 1, yi, zi), u), l(hash3(xi, yi + 1, zi), hash3(xi + 1, yi + 1, zi), u), v),
+             l(l(hash3(xi, yi, zi + 1), hash3(xi + 1, yi, zi + 1), u), l(hash3(xi, yi + 1, zi + 1), hash3(xi + 1, yi + 1, zi + 1), u), v), w);
+  }
+  const fbm2 = (x, y) => noise2(x, y) * 0.5 + noise2(x * 2.03 + 17, y * 2.03 + 9) * 0.27 + noise2(x * 4.1 + 41, y * 4.1 + 23) * 0.15 + noise2(x * 8.3 + 7, y * 8.3 + 61) * 0.08;
+  const ridge = (x, y) => { const n = 1 - Math.abs(noise2(x, y) * 2 - 1); return n * n; };
+
+  const scene = $('#scene'), glc = $('#gl'), ovc = $('#over'), octx = ovc.getContext('2d');
+  const statusEl = $('#status'), statusText = $('#status-text');
+
+  /* ---------- 构图：正交相机，屏幕坐标 y ∈ [-1, 1]，星球的上沿是一道弧 ---------- */
+  let W, H, DPR, ASP, mobile, R, C, TB, TILT;
+  function layout() {
+    W = scene.clientWidth;
+    DPR = Math.min(devicePixelRatio || 1, 2);
+    mobile = W < 680;
+    H = Math.round(mobile ? clamp(W * 0.82, 280, 420) : clamp(W * 0.5, 340, 680));
+    ASP = W / H;
+    R = Math.max(mobile ? 2.2 : 2.5, ASP * 1.62);
+    C = [0, (mobile ? 0.36 : 0.44) - R];
+    // 字放在弧下面、星球正对着相机的那一片
+    TB = { cx: 0, cy: mobile ? -0.32 : -0.42, hw: ASP * (mobile ? 0.8 : 0.66), hh: mobile ? 0.34 : 0.4 };
+    TILT = -0.16;
+    glc.style.height = ovc.style.height = H + 'px';
+    glc.width = ovc.width = Math.round(W * DPR);
+    glc.height = ovc.height = Math.round(H * DPR);
+  }
+  // 星球朝向：先绕自己的轴转 spin，再往后仰 TILT。返回按列存的 3×3（星球本地 → 相机）
+  function rotM(spin) {
+    const cs = Math.cos(spin), ss = Math.sin(spin), ct = Math.cos(TILT), st = Math.sin(TILT);
+    // Rx(tilt) · Ry(spin)
+    return [cs, st * ss, -ct * ss, 0, ct, st, ss, -st * cs, ct * cs];
+  }
+  const mul = (m, v) => [m[0] * v[0] + m[3] * v[1] + m[6] * v[2], m[1] * v[0] + m[4] * v[1] + m[7] * v[2], m[2] * v[0] + m[5] * v[1] + m[8] * v[2]];
+  const mulT = (m, v) => [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]];
+  const norm = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
+
+  /* ---------- 地图：只在品牌名所在的那一块经纬度里存高精度数据 ---------- */
+  // 品牌名先按相机视角画在屏幕上，再把每个地图格子投到屏幕上取样：正对着看时，字形一点不走样
+  let MAP = null, ELEV = null, MW = 0, MH = 0, PATCH = null;
+  function buildMap() {
+    const sw = mobile ? 900 : 1400, sh = Math.round(sw / ASP);
+    const toPx = (x, y) => [(x + ASP) / (2 * ASP) * sw, (1 - y) / 2 * sh];
+    const mc = canvas(sw, sh), m = mc.getContext('2d', { willReadFrequently: true });
+    const font = s => `800 ${s}px Unbounded, "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif`;
+    m.font = font(100);
+    const mt = m.measureText(brand), tw = (mt.actualBoundingBoxLeft + mt.actualBoundingBoxRight) || 1, th = (mt.actualBoundingBoxAscent + mt.actualBoundingBoxDescent) || 1;
+    const [bx0, by0] = toPx(TB.cx - TB.hw, TB.cy + TB.hh), [bx1, by1] = toPx(TB.cx + TB.hw, TB.cy - TB.hh);
+    const size = Math.min(100 * (bx1 - bx0) / tw, 100 * (by1 - by0) / th), k = size / 100;
+    m.font = font(size);
+    m.fillStyle = '#fff';
+    m.filter = `blur(${Math.max(1.5, size * 0.018)}px)`;   // 糊一点，海岸线附近就有一圈渐变，好让噪声咬出海湾和小岛
+    m.fillText(brand, (bx0 + bx1) / 2 - tw * k / 2 + mt.actualBoundingBoxLeft * k, (by0 + by1) / 2 - th * k / 2 + mt.actualBoundingBoxAscent * k);
+    const md = m.getImageData(0, 0, sw, sh).data, mask = new Float32Array(sw * sh);
+    for (let i = 0; i < mask.length; i++) mask[i] = md[i * 4 + 3] / 255;
+    const sample = (px, py) => {   // 双线性取样
+      if (px < 0 || py < 0 || px >= sw - 1 || py >= sh - 1) return 0;
+      const x0 = Math.floor(px), y0 = Math.floor(py), fx = px - x0, fy = py - y0, i = y0 * sw + x0;
+      return (mask[i] * (1 - fx) + mask[i + 1] * fx) * (1 - fy) + (mask[i + sw] * (1 - fx) + mask[i + sw + 1] * fx) * fy;
+    };
+    // 字框（放大一圈）投回球面，得到这块地图要覆盖的经纬度范围
+    const M0 = rotM(0);
+    let lon0 = 9, lon1 = -9, lat0 = 9, lat1 = -9;
+    for (let a = 0; a <= 1; a += 0.05) for (let b = 0; b <= 1; b += 0.05) {
+      const x = TB.cx + (a * 2 - 1) * TB.hw * 1.12, y = TB.cy + (b * 2 - 1) * TB.hh * 1.25;
+      const qx = (x - C[0]) / R, qy = (y - C[1]) / R, r2 = qx * qx + qy * qy;
+      if (r2 >= 1) continue;
+      const L = mulT(M0, [qx, qy, Math.sqrt(1 - r2)]);
+      const lon = Math.atan2(L[0], L[2]), lat = Math.asin(clamp(L[1], -1, 1));
+      lon0 = Math.min(lon0, lon); lon1 = Math.max(lon1, lon); lat0 = Math.min(lat0, lat); lat1 = Math.max(lat1, lat);
+    }
+    PATCH = [lon0, lat0, lon1, lat1];
+    MW = mobile ? 1280 : 2048;
+    // 行数按屏幕上的实际密度定：纬度方向既要乘 1/cos(纬度)，又被透视压扁了 nz，两边的格子在屏幕上差不多一样大
+    const latc = (lat0 + lat1) / 2, qc = (TB.cy - C[1]) / R, nzc = Math.sqrt(Math.max(0.05, 1 - qc * qc));
+    MH = clamp(Math.round(MW * (lat1 - lat0) / ((lon1 - lon0) * Math.cos(latc)) * nzc), 160, 1024);
+    // 噪声的坐标用这个格子投到屏幕上的位置，单位大约是一个地图格：这样山和海岸在屏幕上看是各向同性的
+    const ns = MW / ((bx1 - bx0) * 1.12);
+    const N = MW * MH, land = new Uint8Array(N), soft = new Float32Array(N), NX = new Float32Array(N), NY = new Float32Array(N);
+    for (let v = 0; v < MH; v++) {
+      const lat = lat1 - (v + 0.5) / MH * (lat1 - lat0), cl = Math.cos(lat), sl = Math.sin(lat);
+      for (let u = 0; u < MW; u++) {
+        const lon = lon0 + (u + 0.5) / MW * (lon1 - lon0);
+        const P = mul(M0, [cl * Math.sin(lon), sl, cl * Math.cos(lon)]);
+        if (P[2] <= 0) continue;
+        const [px, py] = toPx(C[0] + P[0] * R, C[1] + P[1] * R), i = v * MW + u, X = px * ns, Y = py * ns;
+        NX[i] = X;
+        NY[i] = Y;
+        // 海岸线：取样位置先被噪声推一下，再加一层噪声去比阈值
+        const wx = (noise2(X * 0.012, Y * 0.012) - 0.5) * 14, wy = (noise2(X * 0.012 + 31, Y * 0.012 + 7) - 0.5) * 14;
+        const mv = sample(px + wx / ns, py + wy / ns);
+        if (mv < 0.02) continue;
+        const val = mv + (fbm2(X * 0.02, Y * 0.02) - 0.5) * 0.5;
+        soft[i] = smooth((val - 0.47) / 0.06);
+        land[i] = val > 0.5 ? 1 : 0;
+      }
+    }
+    // 离海岸多远：陆地里决定海拔，海里决定大陆架（海拔最后整体模糊两遍，把距离场在中轴线上的折痕磨平）
+    const dIn = dist(land, MW, MH, 1), dOut = dist(land, MW, MH, 0);
+    MAP = new Uint8Array(N * 4);
+    ELEV = new Float32Array(N);   // 海拔单独存浮点：8 位的话，相邻两行的梯度在 0 和 1/255 之间跳，打光以后是一条条横纹
+    for (let v = 0; v < MH; v++) for (let u = 0; u < MW; u++) {
+      const i = v * MW + u, o = i * 4, X = NX[i], Y = NY[i];
+      let g, b = 0, a = 0;
+      if (land[i]) {
+        const d = dIn[i];
+        const e = clamp(smooth(d / 26) * 0.3 + ridge(X * 0.011, Y * 0.011) * 0.44 * smooth((d - 6) / 34) + (noise2(X * 0.03, Y * 0.03) * 0.6 + noise2(X * 0.061 + 17, Y * 0.061 + 9) * 0.4) * 0.16 - 0.05, 0, 1);
+        g = 0.5 + 0.5 * e;
+        b = fbm2(X * 0.004 + 50, Y * 0.004 + 20);   // 干湿：决定是沙漠还是森林
+        // 城市灯光：沿海密、内陆成团，中间用几条“公路”连起来
+        const coast = Math.exp(-d / 9), metro = smooth((noise2(X * 0.03, Y * 0.03) - 0.38) / 0.35);
+        const p = (0.06 + 0.5 * coast) * (0.25 + 0.75 * metro), h = hash2(u, v);
+        if (h < p * 0.55) a = 0.45 + 0.55 * hash2(u + 7, v) * (0.5 + 0.5 * metro);
+        const road = 1 - Math.abs(noise2(X * 0.018 + 9, Y * 0.018 + 3) * 2 - 1);
+        if (road > 0.965 && h < 0.35) a = Math.max(a, 0.35);
+      } else {
+        g = 0.5 - 0.5 * smooth(dOut[i] / (14 + 40 * noise2(u * 0.01 + 3, v * 0.01 * MW / MH * 0.5 + 8)));
+        b = 0;
+      }
+      MAP[o] = soft[i] * 255;
+      ELEV[i] = g;
+      MAP[o + 1] = g * 255;
+      MAP[o + 2] = b * 255;
+      MAP[o + 3] = a * 255;
+    }
+    blur(ELEV, MW, MH, 3);
+    blur(ELEV, MW, MH, 3);
+  }
+  // 横竖各一遍的滑动平均
+  function blur(a, w, h, r) {
+    const t = new Float32Array(a.length), n = r * 2 + 1;
+    for (let y = 0; y < h; y++) {
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += a[y * w + clamp(k, 0, w - 1)];
+      for (let x = 0; x < w; x++) { t[y * w + x] = s / n; s += a[y * w + Math.min(w - 1, x + r + 1)] - a[y * w + Math.max(0, x - r)]; }
+    }
+    for (let x = 0; x < w; x++) {
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += t[clamp(k, 0, h - 1) * w + x];
+      for (let y = 0; y < h; y++) { a[y * w + x] = s / n; s += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x]; }
+    }
+  }
+  // 两遍倒角距离（单位：格）
+  function dist(mask, w, h, want) {
+    const d = new Float32Array(w * h), R2 = Math.SQRT2;
+    for (let i = 0; i < d.length; i++) d[i] = mask[i] === want ? 1e9 : 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!d[i]) continue;
+      let v = d[i];
+      if (x > 0) v = Math.min(v, d[i - 1] + 1);
+      if (y > 0) { v = Math.min(v, d[i - w] + 1); if (x > 0) v = Math.min(v, d[i - w - 1] + R2); if (x < w - 1) v = Math.min(v, d[i - w + 1] + R2); }
+      d[i] = v;
+    }
+    for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+      const i = y * w + x;
+      if (!d[i]) continue;
+      let v = d[i];
+      if (x < w - 1) v = Math.min(v, d[i + 1] + 1);
+      if (y < h - 1) { v = Math.min(v, d[i + w] + 1); if (x < w - 1) v = Math.min(v, d[i + w + 1] + R2); if (x > 0) v = Math.min(v, d[i + w - 1] + R2); }
+      d[i] = v;
+    }
+    return d;
+  }
+
+  /* ---------- 云：整颗球一张经纬度贴图，用三维噪声在球面上算，接缝和两极都不会裂 ---------- */
+  let CLOUD = null, CW = 0, CH = 0, DETAIL = null;
+  function buildClouds() {
+    CW = mobile ? 640 : 1152;
+    CH = CW / 2;
+    CLOUD = new Uint8Array(CW * CH);
+    const raw = new Float32Array(CW * CH);
+    for (let v = 0; v < CH; v++) {
+      const lat = Math.PI / 2 - (v + 0.5) / CH * Math.PI, cl = Math.cos(lat), sl = Math.sin(lat);
+      const band = 0.55 + 0.25 * Math.cos(lat * 2.6) + 0.2 * Math.exp(-(((lat - 0.08) / 0.12) ** 2));   // 中纬度多云、赤道一条云带
+      for (let u = 0; u < CW; u++) {
+        const lon = (u + 0.5) / CW * Math.PI * 2 - Math.PI;
+        let x = cl * Math.sin(lon) * 2.6, y = sl * 2.6, z = cl * Math.cos(lon) * 2.6;
+        // 扭一下坐标，云就有了卷曲的形状
+        const wx = noise3(x * 1.3, y * 1.3, z * 1.3) - 0.5, wy = noise3(x * 1.3 + 5, y * 1.3, z * 1.3) - 0.5, wz = noise3(x * 1.3, y * 1.3 + 9, z * 1.3) - 0.5;
+        x += wx * 1.9; y += wy * 1.9; z += wz * 1.9;
+        let s = 0, a = 0.5, f = 1.6;
+        for (let k = 0; k < 5; k++) { s += a * noise3(x * f + k * 3.1, y * f, z * f); f *= 2.13; a *= 0.52; }
+        raw[v * CW + u] = (s / 0.97) * band;
+      }
+    }
+    // 按分位数重新映射成“云量”：六成面积是晴空，剩下的从薄到厚
+    const sorted = Float32Array.from(raw).sort(), q = p => sorted[Math.floor(p * (sorted.length - 1))];
+    const lo = q(0.58), hi = q(0.97);
+    for (let i = 0; i < raw.length; i++) CLOUD[i] = smooth((raw[i] - lo) / (hi - lo)) * 255;
+    // 细节纹理：256×256 可平铺的噪声，放大以后给地面加点肌理
+    const P = 256;
+    DETAIL = new Uint8Array(P * P);
+    const ph = (x, y, p) => hash2(((x % p) + p) % p, ((y % p) + p) % p);
+    const pn = (x, y, p) => { const xi = Math.floor(x), yi = Math.floor(y), u = fade(x - xi), v = fade(y - yi); const a = ph(xi, yi, p), b = ph(xi + 1, yi, p), c = ph(xi, yi + 1, p), d = ph(xi + 1, yi + 1, p); return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; };
+    for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) DETAIL[y * P + x] = clamp(pn(x / 16, y / 16, 16) * 0.55 + pn(x / 4, y / 4, 64) * 0.3 + hash2(x, y) * 0.15, 0, 1) * 255;
+  }
+
+  /* ---------- 着色器：整屏一个三角带，逐像素算球、云、大气、星空和太阳 ---------- */
+  const VS = `#version 300 es
+in vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }`;
+  const FS = `#version 300 es
+precision highp float;
+uniform vec2 uRes, uC, uPar;
+uniform float uAsp, uR, uTime, uCloudT, uFlare;
+uniform mat3 uRot;
+uniform vec4 uPatch;
+uniform vec3 uSun;
+uniform vec2 uFlarePos;
+uniform sampler2D uMap, uCloud, uDetail, uElev;
+out vec4 o;
+const float PI = 3.14159265;
+
+float hash(vec2 p) { p = fract(p * vec2(443.8975, 397.2973)); p += dot(p, p.yx + 19.19); return fract(p.x * p.y); }
+float vnoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y); }
+// B 样条双三次采样（四次双线性拼出来）：云贴图放大好几倍，再过一道阈值也不会出菱形和方块
+vec4 cubic(float v) { vec4 n = vec4(1., 2., 3., 4.) - v, s = n * n * n; float x = s.x, y = s.y - 4. * s.x, z = s.z - 4. * s.y + 6. * s.x; return vec4(x, y, z, 6. - x - y - z) / 6.; }
+float bicubic(sampler2D t, vec2 uv) {
+  vec2 ts = vec2(textureSize(t, 0));
+  uv = uv * ts - .5;
+  vec2 f = fract(uv);
+  uv -= f;
+  vec4 xc = cubic(f.x), yc = cubic(f.y), c = uv.xxyy + vec2(-.5, 1.5).xyxy, s = vec4(xc.xz + xc.yw, yc.xz + yc.yw);
+  vec4 off = (c + vec4(xc.yw, yc.yw) / s) / ts.xxyy;
+  float a = texture(t, off.xz).r, b = texture(t, off.yz).r, d = texture(t, off.xw).r, e = texture(t, off.yw).r;
+  float sx = s.x / (s.x + s.y), sy = s.z / (s.z + s.w);
+  return mix(mix(e, d, sx), mix(b, a, sx), sy);
+}
+vec3 aces(vec3 x) { return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+
+// 星空：一层随机星点（会闪），一条淡淡的银河
+vec3 stars(vec2 p) {
+  vec2 g = floor(gl_FragCoord.xy / 2.2);
+  float h = hash(g), s = step(.9968, h) * (.25 + .75 * hash(g + 7.)) * (.75 + .25 * sin(uTime * (1.5 + 3. * hash(g + 3.)) + h * 60.));
+  vec2 q = vec2(p.x * .8 + p.y * .6, -p.x * .6 + p.y * .8) - uPar * .5;
+  float mw = exp(-pow((q.y - .55) / .35, 2.)) * (vnoise(q * 3.) * .6 + vnoise(q * 7.) * .4);
+  return vec3(.85, .9, 1.) * s + vec3(.05, .055, .08) * mw * .5;
+}
+// 大气的颜色：太阳那边蓝，晨昏线附近橙，背光一侧几乎黑
+vec3 skyCol(float lit) {
+  vec3 day = vec3(.3, .55, 1.), dusk = vec3(1., .45, .18);
+  return mix(dusk, day, smoothstep(-.05, .45, lit)) * smoothstep(-.4, .02, lit);
+}
+
+void main() {
+  vec2 p = gl_FragCoord.xy / uRes * 2. - 1.;
+  p.x *= uAsp;
+  vec2 q = (p - uC - uPar) / uR;
+  float r2 = dot(q, q), d = sqrt(r2);
+  vec3 col;
+  if (r2 < 1.) {
+    vec3 N = vec3(q, sqrt(1. - r2));
+    vec3 L = transpose(uRot) * N;
+    float lon = atan(L.x, L.z), lat = asin(clamp(L.y, -1., 1.));
+    vec2 uv = vec2((lon - uPatch.x) / (uPatch.z - uPatch.x), (uPatch.w - lat) / (uPatch.w - uPatch.y));
+    float inP = step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.);
+    vec4 m = texture(uMap, uv) * inP;
+    float land = m.r, elev = inP > 0. ? texture(uElev, uv).r * 2. - 1. : -1.;
+    // 两极的冰盖
+    float ice = smoothstep(.0, .06, abs(lat) - 1.22 - .05 * vnoise(vec2(lon * 6., lat * 6.)));
+    // 起伏：按海拔的梯度把法线掰一掰，山的阴影、坡向就有了
+    vec2 tx = 1.5 / vec2(textureSize(uElev, 0));
+    float gE = (texture(uElev, uv + vec2(tx.x, 0)).r - texture(uElev, uv - vec2(tx.x, 0)).r) * inP / 1.5;
+    float gN = (texture(uElev, uv - vec2(0, tx.y)).r - texture(uElev, uv + vec2(0, tx.y)).r) * inP / 1.5;
+    vec3 eastL = vec3(cos(lon), 0., -sin(lon)), northL = vec3(-sin(lat) * sin(lon), cos(lat), -sin(lat) * cos(lon));
+    vec3 E = uRot * eastL, Nn = uRot * northL;
+    vec2 dsc = vec2(28., 28. * (uPatch.w - uPatch.y) * N.z / ((uPatch.z - uPatch.x) * cos(lat)));   // 按屏幕上的实际长度放大，透视压扁也算进去，纹理才是方的
+    float det = texture(uDetail, uv * dsc).r;
+    vec3 n = normalize(N - (gE * E + gN * Nn) * 17. * land);
+    // 地表颜色：海拔、干湿、纬度
+    float wet = m.b, e = max(elev, 0.);
+    vec3 sand = vec3(.6, .51, .37), grass = vec3(.26, .31, .155), forest = vec3(.075, .14, .065), rock = vec3(.35, .32, .285), snow = vec3(.92, .94, .97);
+    vec3 g = mix(sand, mix(grass, forest, smoothstep(.45, .7, wet)), smoothstep(.3, .52, wet));
+    g = mix(sand * 1.05, g, smoothstep(.0, .05, e));                    // 海边一圈沙滩
+    g = mix(g, rock, smoothstep(.4, .62, e));
+    g = mix(g, snow, smoothstep(.6, .7, e + .07 * det + .06 * abs(sin(lat))));
+    g *= .74 + .5 * det * (.7 + .6 * texture(uDetail, uv * dsc * .27 + .31).r);   // 两个尺度的肌理
+    float depth = clamp(-elev, 0., 1.);
+    vec3 sea = mix(vec3(.03, .16, .2), vec3(.008, .03, .085), smoothstep(.0, .38, depth));
+    vec3 alb = mix(sea, g, land);
+    alb = mix(alb, vec3(.9, .93, .97), ice);
+    // 云和云影
+    vec2 cuv = vec2(lon / (2. * PI) + .5 + uCloudT, (PI * .5 - lat) / PI);
+    float c1 = bicubic(uCloud, cuv), c2 = texture(uCloud, cuv * 4. + vec2(uCloudT * .7, .37)).r;   // 放大倍数得是整数，经度 ±180° 那里才接得上
+    float cl = smoothstep(.04, .85, c1 * .75 + c2 * .25 * step(.02, c1)) * (1. - .5 * land);   // 字上的云薄一点，免得盖住
+    vec3 sunT = uSun - N * dot(uSun, N);
+    vec2 sh = vec2(dot(sunT, E), -dot(sunT, Nn)) * .006;
+    float cs = smoothstep(.04, .85, bicubic(uCloud, cuv + sh)) * (1. - .5 * land);
+    // 光照：漫反射 + 晨昏线一条橙带
+    float ndl = dot(n, uSun), nd0 = dot(N, uSun);
+    float diff = max(ndl, 0.), twi = exp(-pow((nd0 + .03) / .09, 2.));
+    vec3 sunC = mix(vec3(1., .5, .25), vec3(1., .97, .93), smoothstep(.0, .3, nd0));
+    vec3 lit = sunC * diff * 1.35 * (1. - cs * .45) + vec3(1., .42, .16) * twi * .14 + vec3(.012, .016, .03);
+    col = alb * lit;
+    // 海面上的太阳反光
+    vec3 Hh = normalize(uSun + vec3(0, 0, 1));
+    // 太阳在海面上的反光：指数固定，只用平滑的噪声调亮度（风大的地方碎一点）
+    float nh = max(dot(N, Hh), 0.), wind = .65 + .7 * vnoise(vec2(lon, lat) * 9. + uTime * .03);
+    float glint = (pow(nh, 300.) * .55 + pow(nh, 40.) * .035) * wind;
+    col += vec3(1., .9, .75) * glint * (1. - land) * (1. - ice) * (1. - cl) * smoothstep(.05, .35, nd0);   // 太阳很低时贴着地平线的反光会变成怪团，跟着淡掉
+    // 云：白天白、晨昏线附近染橙、夜里只剩一点
+    vec3 cloudC = vec3(1.) * (max(nd0, 0.) * 1.3 + .015) + vec3(1., .5, .25) * twi * .35;
+    col = mix(col, cloudC, cl * .94);
+    // 夜面：城市灯光，再用缩小的贴图叠两层光晕
+    float night = smoothstep(.1, -.12, nd0);
+    float lights = m.a + textureLod(uMap, uv, 3.).a * .9 + textureLod(uMap, uv, 5.).a * .55;
+    col += vec3(1., .68, .32) * lights * inP * night * (1. - cl * .75) * 1.35;
+    // 大气：越靠近边缘，看穿的空气越厚
+    // 大气：只在靠近边缘、太阳照得到的那一侧起雾；夜里只剩一道很淡的气辉
+    float rim = pow(1. - N.z, 4.5) * smoothstep(-.12, .2, nd0);
+    col = mix(col, skyCol(nd0) * 1.1, rim * .6);
+    col += skyCol(nd0) * pow(1. - N.z, 10.) * .7;
+    col += vec3(.05, .11, .09) * pow(1. - N.z, 14.) * .5;
+  } else {
+    // 星空 + 边缘外面那一圈大气光
+    vec3 ln = vec3(q / d, 0.);
+    float lit = dot(ln, uSun), h = (d - 1.) * uR / .07;
+    float glow = exp(-h * 3.) * (.25 + .75 * smoothstep(-.4, .3, lit)) + exp(-h * 12.) * .6 * smoothstep(-.25, .2, lit);
+    float air = exp(-h * 14.) * .55;   // 夜里也有的一道气辉，星球的轮廓不会消失
+    col = stars(p) * (1. - min(1., glow * 2. + air)) + skyCol(lit) * glow * 1.1 + vec3(.05, .11, .09) * air;
+  }
+  // 太阳：贴着地平线升起时最亮，带一道横向的光条和几根光芒
+  if (uFlare > 0.) {
+    vec2 dv = p - uFlarePos;
+    float l = length(dv), an = atan(dv.y, dv.x);
+    float core = exp(-l / .02) * 2.4 + exp(-l / .12) * .5 + exp(-l / .5) * .18;
+    float streak = exp(-abs(dv.y) / .006) * exp(-abs(dv.x) / .9) * .55;
+    float rays = pow(abs(cos(an * 3. + .3)), 40.) * exp(-l / .25) * .35 + pow(abs(cos(an * 4. - .2)), 60.) * exp(-l / .18) * .25;
+    col += vec3(1., .82, .6) * (core + streak + rays) * uFlare;
+  }
+  o = vec4(aces(col * 1.05), 1.);
+}`;
+  let gl = null, U = {}, tex = {}, glOK = false;
+  function initGL() {
+    gl = glc.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
+    if (!gl) return false;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'a');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    ['uRes', 'uC', 'uPar', 'uAsp', 'uR', 'uTime', 'uCloudT', 'uFlare', 'uRot', 'uPatch', 'uSun', 'uFlarePos', 'uMap', 'uCloud', 'uDetail', 'uElev'].forEach(k => { U[k] = gl.getUniformLocation(prog, k); });
+    ['map', 'cloud', 'detail', 'elev'].forEach((k, i) => {
+      tex[k] = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0 + i);
+      gl.bindTexture(gl.TEXTURE_2D, tex[k]);
+      gl.uniform1i(U['u' + k[0].toUpperCase() + k.slice(1)], i);
+    });
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    return true;
+  }
+  function uploadAll() {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex.map);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, MW, MH, 0, gl.RGBA, gl.UNSIGNED_BYTE, MAP);
+    gl.generateMipmap(gl.TEXTURE_2D);   // 灯光的光晕靠取缩小几级的贴图
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, tex.elev);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, MW, MH, 0, gl.RED, gl.FLOAT, ELEV);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, tex.cloud);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, CW, CH, 0, gl.RED, gl.UNSIGNED_BYTE, CLOUD);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, tex.detail);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 256, 256, 0, gl.RED, gl.UNSIGNED_BYTE, DETAIL);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  }
+
+  /* ---------- 昼夜：太阳从星球正后方，经过左上方那个地平线点，转到相机这边 ---------- */
+  // 角度 a = 0 时太阳在正后方（正面全是夜），a 稍大于 0 时太阳刚从左上的地平线后面探出来：
+  // 只有地平线边上一道细月牙被照亮，光芒最亮；之后晨昏线往字这边扫过来，a = π 是正午，再从另一边落下
+  const PERIOD = 50;   // 一圈昼夜多少秒
+  let S0;
+  function sunPath() {
+    const x = -ASP * (mobile ? 0.45 : 0.55), y = C[1] + Math.sqrt(Math.max(0, R * R - x * x));
+    S0 = norm([(x - C[0]) / R, (y - C[1]) / R, 0]);   // 那个地平线点的法线
+  }
+  const sunAt = a => [S0[0] * Math.sin(a), S0[1] * Math.sin(a), -Math.cos(a)];
+  const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+  const st = { phi: -0.6, speed: 1, ffwd: 0, spin: 0, vspin: 0, drag: false, par: [0, 0], parT: [0, 0], cloudT: 0, started: false, t: 0, sat: null, satT: 4 };
+
+  function setStatus(S) {
+    // 看品牌名中心那一点：太阳在不在头顶上
+    const qx = (TB.cx - C[0]) / R, qy = (TB.cy - C[1]) / R, n = [qx, qy, Math.sqrt(Math.max(0, 1 - qx * qx - qy * qy))];
+    const nd = n[0] * S[0] + n[1] * S[1] + n[2] * S[2];
+    const on = !st.started ? 'off' : nd < -0.08 ? 'night' : nd < 0.18 ? 'dawn' : 'day';
+    const rising = Math.sin(st.phi) > 0;
+    const txt = !st.started ? '正在入轨' : on === 'night' ? '夜面 · 城市灯光亮着' : on === 'dawn' ? (rising ? '日出 · 晨昏线正扫过' : '黄昏 · 灯一盏盏亮起来') : '白昼';
+    if (statusText.textContent !== txt) statusText.textContent = txt;
+    if (statusEl.dataset.on !== on) statusEl.dataset.on = on;
+  }
+
+  /* ---------- 叠加层：偶尔一颗卫星划过星空 ---------- */
+  function drawOverlay(s) {
+    const o = octx;
+    o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    o.clearRect(0, 0, W, H);
+    st.satT -= s;
+    if (!st.sat && st.satT <= 0 && st.started && !REDUCED) {
+      const y0 = H * (0.05 + Math.random() * 0.15);
+      st.sat = { x: -20, y: y0, vx: W / (9 + Math.random() * 5), vy: H * 0.012 * (Math.random() - 0.3), t: 0 };
+    }
+    if (st.sat) {
+      const a = st.sat;
+      a.t += s;
+      a.x += a.vx * s;
+      a.y += a.vy * s;
+      // 只在星空里画：算一下这一点在不在星球上
+      const px = a.x / W * 2 * ASP - ASP, py = 1 - a.y / H * 2, qx = (px - C[0] - st.par[0]) / R, qy = (py - C[1] - st.par[1]) / R;
+      if (qx * qx + qy * qy > 1.004) {
+        const blink = Math.sin(a.t * 9) > 0.6 ? 1 : 0.55;
+        o.fillStyle = `rgba(235,240,255,${0.85 * blink})`;
+        o.beginPath(); o.arc(a.x, a.y, 1.1, 0, 7); o.fill();
+        const g = o.createLinearGradient(a.x, a.y, a.x - a.vx * 0.35, a.y - a.vy * 0.35);
+        g.addColorStop(0, 'rgba(235,240,255,.18)');
+        g.addColorStop(1, 'rgba(235,240,255,0)');
+        o.strokeStyle = g;
+        o.lineWidth = 0.8;
+        o.beginPath(); o.moveTo(a.x, a.y); o.lineTo(a.x - a.vx * 0.35, a.y - a.vy * 0.35); o.stroke();
+      }
+      if (a.x > W + 30) { st.sat = null; st.satT = 9 + Math.random() * 12; }
+    }
+    if (!st.touched && !mobile) {
+      o.font = '12px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+      o.fillStyle = 'rgba(228,233,242,.38)';
+      o.textBaseline = 'bottom';
+      o.fillText('按住左右拖，星球会跟着转', 16, H - 10);
+    }
+  }
+
+  /* ---------- 交互：拖着转，松手转回来；鼠标让相机轻轻偏一点 ---------- */
+  let lastX = 0;
+  scene.addEventListener('pointerdown', e => {
+    st.drag = true;
+    st.touched = true;
+    lastX = e.clientX;
+    scene.classList.add('drag');
+    scene.setPointerCapture(e.pointerId);
+  });
+  scene.addEventListener('pointermove', e => {
+    const r = scene.getBoundingClientRect();
+    st.parT = [((e.clientX - r.left) / r.width - 0.5) * 0.035, -((e.clientY - r.top) / r.height - 0.5) * 0.02];
+    if (st.drag) {
+      const dx = e.clientX - lastX;
+      lastX = e.clientX;
+      st.spin += dx / W * 1.6;
+      st.vspin = dx / W * 1.6 * 60;
+    }
+  });
+  const up = () => { st.drag = false; scene.classList.remove('drag'); };
+  scene.addEventListener('pointerup', up);
+  scene.addEventListener('pointercancel', up);
+  scene.addEventListener('pointerleave', () => { st.parT = [0, 0]; });
+  $('#ffwd').addEventListener('click', () => { st.ffwd = Math.PI * 2; st.started = true; });
+
+  function frame(dt) {
+    const s = dt / 1000;
+    if (st.started && !REDUCED) {
+      const boost = st.ffwd > 0 ? 7 : 1;
+      const near = wrap(st.phi);   // 日出前后放慢一点，让那道光多停一会儿
+      const dphi = s * Math.PI * 2 / PERIOD * boost * (1 - 0.55 * Math.exp(-(((near - 0.15) / 0.3) ** 2)));
+      st.phi += dphi;
+      if (st.ffwd > 0) st.ffwd = Math.max(0, st.ffwd - dphi);
+      st.cloudT += s * 0.0035 * boost;
+      st.t += s;
+    }
+    if (!st.drag) {   // 松手后带一点惯性，再被弹簧拉回原位
+      st.vspin += (-st.spin * 9 - st.vspin * 4.2) * s;
+      st.spin += st.vspin * s;
+    }
+    st.par = st.par.map((v, i) => v + (st.parT[i] - v) * Math.min(1, s * 3));
+  }
+  function render(now) {
+    const S = sunAt(st.phi);
+    setStatus(S);
+    if (!glOK) return;
+    // 太阳刚从地平线后面探出来时最亮，之后一边升高一边淡下去
+    const a = wrap(st.phi), flare = Math.exp(-(((a - 0.13) / 0.12) ** 2));
+    const dir = S0, lift = 1.004 + Math.max(0, a - 0.13) * 0.45;
+    gl.viewport(0, 0, glc.width, glc.height);
+    gl.uniform2f(U.uRes, glc.width, glc.height);
+    gl.uniform2f(U.uC, C[0], C[1]);
+    gl.uniform2f(U.uPar, st.par[0], st.par[1]);
+    gl.uniform1f(U.uAsp, ASP);
+    gl.uniform1f(U.uR, R);
+    gl.uniform1f(U.uTime, now / 1000);
+    gl.uniform1f(U.uCloudT, st.cloudT);
+    gl.uniform1f(U.uFlare, flare);
+    gl.uniformMatrix3fv(U.uRot, false, rotM(st.spin));
+    gl.uniform4f(U.uPatch, PATCH[0], PATCH[1], PATCH[2], PATCH[3]);
+    gl.uniform3f(U.uSun, S[0], S[1], S[2]);
+    gl.uniform2f(U.uFlarePos, C[0] + st.par[0] + dir[0] * R * lift, C[1] + st.par[1] + dir[1] * R * lift);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  // 没有 WebGL2：画一张安静的夜景剪影，字是暖色的灯
+  function fallback() {
+    const o = glc.getContext('2d');
+    o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    o.fillStyle = '#03050a';
+    o.fillRect(0, 0, W, H);
+    const cx = W / 2, cy = (1 - C[1]) / 2 * H, rr = R / 2 * H;
+    const g = o.createRadialGradient(cx, cy, rr * 0.9, cx, cy, rr * 1.04);
+    g.addColorStop(0, '#071022');
+    g.addColorStop(0.96, '#0b1b3a');
+    g.addColorStop(1, 'rgba(60,120,255,0)');
+    o.fillStyle = g;
+    o.beginPath(); o.arc(cx, cy, rr * 1.04, 0, 7); o.fill();
+    o.font = `800 ${H * 0.3}px Unbounded, "Noto Sans SC", sans-serif`;
+    o.textAlign = 'center';
+    o.fillStyle = 'rgba(255,190,110,.75)';
+    o.fillText(brand, W / 2, (1 - TB.cy) / 2 * H + H * 0.1);
+  }
+
+  function build() {
+    layout();
+    buildMap();
+    buildClouds();
+    sunPath();
+    if (glOK) uploadAll();
+    else fallback();
+    if (REDUCED) { st.phi = 1.4; st.started = true; }   // 停在上午：大陆看得清
+  }
+
+  let visible = false, last = performance.now();
+  new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; })).observe(scene);
+  function loop(now) {
+    requestAnimationFrame(loop);
+    const dt = Math.min(now - last, 50);
+    last = now;
+    if (!visible) return;
+    const r = scene.getBoundingClientRect();
+    if (!st.started && (r.top < innerHeight * 0.72 || r.bottom <= innerHeight + 4)) st.started = true;
+    frame(dt);
+    try { render(now); } catch (err) { console.error(err); }
+    drawOverlay(dt / 1000);
+  }
+
+  const fontsReady = () => Promise.all([
+    document.fonts.load('800 100px Unbounded', brand), document.fonts.load('900 100px "Noto Sans SC"', brand), document.fonts.load('700 36px "Space Grotesk"'),
+  ]).catch(() => {});
+  try { glOK = initGL(); } catch (err) { console.error(err); glOK = false; }
+  fontsReady().then(() => { build(); requestAnimationFrame(loop); });
+  let tmr, lastW = innerWidth;
+  addEventListener('resize', () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(tmr);
+    tmr = setTimeout(build, 250);
+  });
+</script>
+</body>
+</html>

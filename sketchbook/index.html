@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨字页脚演示</title>
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --panel: #151518;
+    --text: #ececef;
+    --muted: #9a9aa3;
+    --line: #26262b;
+    --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --serif: Georgia, "Times New Roman", "SimSun", serif;
+    --mono: "Cascadia Code", Consolas, "SFMono-Regular", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); }
+
+  /* 顶栏 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 10px 16px;
+    background: rgb(11 11 13 / .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar strong { font-size: 14px; white-space: nowrap; }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .bar input {
+    width: 150px; padding: 5px 9px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  .bar nav { display: flex; gap: 2px; overflow-x: auto; margin-left: auto; max-width: 100%; scrollbar-width: none; }
+  .bar nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .bar nav a:hover { color: var(--text); background: var(--panel); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 112px 16px 24px; }
+  .hero h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p { color: var(--muted); margin: 0; }
+
+  /* 每一节的“正文” */
+  .intro { position: relative; z-index: 1; background: var(--bg); padding: 96px 16px 80px; }
+  .intro > * { max-width: 720px; margin-inline: auto; }
+  .num { font: 900 64px/1 var(--sans); color: transparent; -webkit-text-stroke: 1px #44444c; }
+  .intro h2 { font-size: 28px; line-height: 1.3; margin-top: 12px; margin-bottom: 12px; }
+  .intro p { color: var(--muted); margin-top: 0; margin-bottom: 16px; }
+  .note { font-size: 14px; color: #f0b35a !important; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .btns button, .btn {
+    font: 13px/1 var(--sans); color: var(--text); cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px;
+  }
+  .btns button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  details summary { cursor: pointer; font-size: 14px; color: var(--text); }
+  pre {
+    margin: 12px 0 0; padding: 16px; overflow-x: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    font: 13px/1.6 var(--mono); color: #cfcfd6;
+  }
+  .tips { padding-left: 20px; color: var(--muted); }
+  .tips li { margin-bottom: 10px; }
+  .tips b { color: var(--text); }
+
+  /* 页脚公共部分 */
+  .demo { position: relative; overflow: hidden; padding-top: 56px; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 28px 64px;
+    padding: 0 clamp(16px, 4vw, 48px); font-size: 14px;
+  }
+  .links div { display: flex; flex-direction: column; gap: 4px; }
+  .links b { font-size: 12px; font-weight: 600; letter-spacing: .08em; opacity: .55; margin-bottom: 4px; }
+  .links span { opacity: .85; }
+  .links .copy { margin-left: auto; align-self: flex-end; font-size: 13px; opacity: .55; }
+  .mark-wrap { container-type: inline-size; padding-inline: clamp(8px, 2vw, 24px); margin-top: 48px; }
+  .mark {
+    display: block;
+    font: 900 22cqw/0.8 var(--sans);   /* 字号由脚本按字数改写 */
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    margin-bottom: -0.15em;            /* 往下沉，字底被页脚边缘裁掉 */
+  }
+  .mark > span { display: inline-block; }
+
+  /* 01 铺满裁切 */
+  .f1 { background: #111114; color: #8a8a93; }
+  .f1 .mark { color: #26262c; transition: color .3s; }
+  .f1[data-mode="loud"] .mark { color: #f4f4f6; }
+
+  /* 02 幕布 */
+  .c2 { background: #ebe6dc; }   /* 垫在正文圆角后面，页脚停稳后圆角处也是页脚色 */
+  .c2 .intro { min-height: 100vh; border-radius: 0 0 28px 28px; box-shadow: 0 30px 60px rgb(0 0 0 / .5); }
+  .f2 { position: sticky; bottom: 0; background: #ebe6dc; color: #4a4640; }
+  .f2 .mark { color: #1c1a17; }
+
+  /* 03 渐隐 / 描边 */
+  .f3 { background: #0f1d16; color: #9fbfae; }
+  .f3 .mark { font-family: var(--serif); font-style: italic; font-weight: 700; letter-spacing: -0.03em; color: #cfe6d8; }
+  .f3[data-mode="fade"] .mark,
+  .f3[data-mode="both"] .mark {
+    -webkit-mask-image: linear-gradient(to bottom, #000 15%, transparent 90%);
+    mask-image: linear-gradient(to bottom, #000 15%, transparent 90%);
+  }
+  .f3[data-mode="stroke"] .mark,
+  .f3[data-mode="both"] .mark { color: transparent; -webkit-text-stroke: 1.5px rgb(207 230 216 / .55); }
+
+  /* 04 手电筒 */
+  .f4 { background: #070708; color: #77777f; }
+  .f4 .mark > span {
+    color: transparent;
+    background: radial-gradient(circle 18cqw at var(--x, 50%) var(--y, 50%), #fff, #1e1e22 70%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  /* 05 升起：时间线挂在 footer 上，滚到页面底时刚好走完 */
+  @keyframes rise { from { transform: translateY(45%); opacity: 0; } }
+  .rise { view-timeline: --foot block; }
+  @media (prefers-reduced-motion: no-preference) {
+    .rise .mark {
+      animation: rise linear both;
+      animation-timeline: --foot;
+      animation-range: entry 30% entry 100%;
+    }
+  }
+  .f5 { background: #2433ff; color: #c9cdff; }
+  .f5 .mark { color: #eef0ff; }
+
+  /* 06 透图 */
+  .f6 { background: #120d0b; color: #a8968c; }
+  .f6 .mark > span {
+    color: transparent;
+    background-image:
+      radial-gradient(at 18% 30%, #ff7a3d 0, transparent 50%),
+      radial-gradient(at 72% 18%, #ffd166 0, transparent 45%),
+      radial-gradient(at 62% 82%, #e63973 0, transparent 50%),
+      radial-gradient(at 8% 92%, #7b2ff7 0, transparent 50%),
+      radial-gradient(at 96% 75%, #ff9a5a 0, transparent 45%),
+      linear-gradient(#6a2a1c, #6a2a1c);
+    background-size: cover;
+    background-position: center;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  /* 最底下的真页脚：01 + 05 组合 */
+  .f-end { background: var(--bg); color: #7a7a83; border-top: 1px solid var(--line); }
+  .f-end .mark { color: #1f1f24; }
+</style>
+</head>
+<body id="top">
+
+<div class="bar">
+  <strong>巨字页脚</strong>
+  <label>品牌名 <input id="brand" value="Lumen" maxlength="24" spellcheck="false"></label>
+  <nav>
+    <a href="overview.html">总览</a>
+    <a href="#c1">01 裁切</a><a href="#c2">02 幕布</a><a href="#c3">03 渐隐</a><a href="#c4">04 手电筒</a><a href="#c5">05 升起</a><a href="#c6">06 透图</a><a href="#tips">要点</a><a href="more.html">进阶八种 →</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <h1>巨字页脚，六种低成本做法</h1>
+  <p>每一节上半部分是“正文”，往下滚就是那一种页脚。顶栏可以换成你自己的品牌名（中文也行），所有大字会自动重新铺满。效果本身都只靠 CSS，04 和 06 各加了几行 JS；页面里另外那段脚本只是按品牌名算字号。</p>
+</header>
+
+<section class="chapter c1" id="c1">
+  <div class="intro">
+    <div class="num">01</div>
+    <h2>铺满整行，底边裁掉一截</h2>
+    <p>字比容器略宽、底部沉到页脚外面，被边缘切断的那一刀就是冲击力的来源。下面两个按钮对比一下“颜色只比背景亮一点”和“纯白硬顶”。</p>
+    <div class="btns" data-toggle=".f1">
+      <button data-mode="quiet" aria-pressed="true">低对比（推荐）</button>
+      <button data-mode="loud" aria-pressed="false">高对比</button>
+    </div>
+    <details><summary>看代码</summary><pre><code>footer     { overflow: hidden; }
+.mark-wrap { container-type: inline-size; }
+.mark {
+  font-size: 22cqw;         /* 按字数调到刚好铺满 */
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 0.8;
+  margin-bottom: -0.15em;   /* 往下沉，字底被裁掉 */
+  white-space: nowrap;
+  color: #26262c;           /* 只比背景 #111114 亮一点 */
+}</code></pre></details>
+  </div>
+  <footer class="demo f1" data-mode="quiet"></footer>
+</section>
+
+<section class="chapter c2" id="c2">
+  <div class="intro">
+    <div class="num">02</div>
+    <h2>幕布揭开</h2>
+    <p>正文盖在页脚上面，往下滚时像幕布一样拉开，露出一直垫在底下的页脚。这一节的正文故意做成一整屏高，继续往下滚就能看到。</p>
+    <p>前提：正文要有背景色，页脚不能高过一屏。圆角和阴影是可选的，加上之后“幕布”的感觉更明显。</p>
+    <details><summary>看代码</summary><pre><code>main {
+  position: relative; z-index: 1;
+  background: var(--bg);
+  border-radius: 0 0 28px 28px;           /* 可选 */
+  box-shadow: 0 30px 60px rgb(0 0 0 / .5); /* 可选 */
+}
+footer { position: sticky; bottom: 0; }</code></pre></details>
+  </div>
+  <footer class="demo f2"></footer>
+</section>
+
+<section class="chapter c3" id="c3">
+  <div class="intro">
+    <div class="num">03</div>
+    <h2>往下渐隐，或者空心描边</h2>
+    <p>比硬裁切柔和，适合偏安静、偏杂志感的品牌。这一节顺便换成了衬线斜体，可以看看换个字体气质差多少。</p>
+    <div class="btns" data-toggle=".f3">
+      <button data-mode="fade" aria-pressed="true">渐隐</button>
+      <button data-mode="stroke" aria-pressed="false">描边</button>
+      <button data-mode="both" aria-pressed="false">两个都要</button>
+    </div>
+    <details><summary>看代码</summary><pre><code>/* 渐隐 */
+.mark { mask-image: linear-gradient(to bottom, #000 15%, transparent 90%); }
+
+/* 描边 */
+.mark { color: transparent; -webkit-text-stroke: 1.5px rgb(207 230 216 / .55); }</code></pre></details>
+  </div>
+  <footer class="demo f3" data-mode="fade"></footer>
+</section>
+
+<section class="chapter c4" id="c4">
+  <div class="intro">
+    <div class="num">04</div>
+    <h2>鼠标手电筒</h2>
+    <p>字平时是暗的，鼠标经过的地方被照亮。把鼠标移到下面的大字上试试（手机上按住拖动）。</p>
+    <details><summary>看代码</summary><pre><code>.mark > span {
+  color: transparent;
+  background: radial-gradient(circle 18cqw at var(--x, 50%) var(--y, 50%), #fff, #1e1e22 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+const lit = document.querySelector('.mark > span');
+footer.addEventListener('pointermove', e => {
+  const r = lit.getBoundingClientRect();
+  lit.style.setProperty('--x', e.clientX - r.left + 'px');
+  lit.style.setProperty('--y', e.clientY - r.top + 'px');
+});</code></pre></details>
+  </div>
+  <footer class="demo f4"></footer>
+</section>
+
+<section class="chapter c5" id="c5">
+  <div class="intro">
+    <div class="num">05</div>
+    <h2>滚到时从底下升起</h2>
+    <p>CSS 原生的滚动驱动动画，不写 JS。时间线挂在 footer 上而不是大字本身：大字底部被裁掉了一截，它自己永远“进不完”视口，挂在它身上的话，页面滚到底时动画会停在半路。</p>
+    <p class="note" id="no-sda" hidden>你的浏览器不支持滚动驱动动画，这里显示的是静态的最终效果（这也正是它的降级方式）。</p>
+    <p class="note" id="reduced" hidden>你的系统开了“减少动画”，这一节显示静态效果。Windows 里在“设置 → 辅助功能 → 视觉效果 → 动画效果”。</p>
+    <details><summary>看代码</summary><pre><code>@keyframes rise { from { transform: translateY(45%); opacity: 0; } }
+footer { view-timeline: --foot block; }
+@media (prefers-reduced-motion: no-preference) {
+  .mark {
+    animation: rise linear both;
+    animation-timeline: --foot;            /* 必须写在 animation 后面 */
+    animation-range: entry 30% entry 100%;
+  }
+}</code></pre></details>
+  </div>
+  <footer class="demo f5 rise"></footer>
+</section>
+
+<section class="chapter c6" id="c6">
+  <div class="intro">
+    <div class="num">06</div>
+    <h2>字里透出照片</h2>
+    <p>文字当窗口，后面放团队照、产品图或者渐变，一张图就让页脚有了内容。默认是纯 CSS 渐变，可以换成你自己的照片试试（只在本地预览，不会上传）。</p>
+    <div class="btns">
+      <label class="btn">换成你的照片<input id="photo" type="file" accept="image/*" hidden></label>
+      <button id="photo-reset" type="button">恢复渐变</button>
+    </div>
+    <details><summary>看代码</summary><pre><code>.mark > span {
+  background: url(photo.jpg) center / cover;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}</code></pre></details>
+  </div>
+  <footer class="demo f6"></footer>
+</section>
+
+<section class="chapter" id="tips">
+  <div class="intro">
+    <div class="num">✓</div>
+    <h2>通用要点</h2>
+    <ul class="tips">
+      <li><b>颜色和背景只差一点。</b>让它当纹理，别用纯白大字硬顶。01 的两个按钮就是这个对比。</li>
+      <li><b>字要少。</b>品牌名太长就只放缩写或首字。中文两三个字铺满一行也很有冲击力，顶栏输进去看看。</li>
+      <li><b>中文别为几个字加载整套字体。</b>中文字体动辄几 MB，把这几个字导出成 SVG，或者只抽出这几个字做字体子集。</li>
+      <li><b>用 cqw 而不是 vw。</b>vw 在 Windows 上会把滚动条宽度也算进去，“铺满”时会多出一截被裁掉。</li>
+      <li><b>纯装饰就加 aria-hidden="true"。</b>页脚通常已经有正常的 logo 和文字，读屏软件不用再读一遍巨型重复字。</li>
+    </ul>
+    <p>页面最底下这个是 01 + 05 的组合：低对比、底边裁切、滚到底时升起。</p>
+  </div>
+</section>
+
+<footer class="demo f-end rise"></footer>
+
+<script>
+  const FALLBACK = 'Lumen';
+  const LINKS = `
+    <div class="links">
+      <div><b>产品</b><span>功能</span><span>价格</span><span>更新日志</span></div>
+      <div><b>公司</b><span>关于我们</span><span>招聘</span><span>联系</span></div>
+      <div><b>资源</b><span>文档</span><span>博客</span><span>社区</span></div>
+      <div class="copy">© 2026 <span class="bn"></span></div>
+    </div>
+    <div class="mark-wrap"><div class="mark" aria-hidden="true"><span></span></div></div>`;
+
+  document.querySelectorAll('footer.demo').forEach(f => { f.innerHTML = LINKS; });
+  const marks = [...document.querySelectorAll('.mark')];
+  const input = document.querySelector('#brand');
+
+  // 在 100px 下量一次宽度，换算成刚好铺满容器的 cqw；之后窗口怎么缩放都不用重算
+  function fit(mark) {
+    const span = mark.firstElementChild;
+    mark.style.fontSize = '100px';
+    const w = span.getBoundingClientRect().width;
+    if (w) mark.style.fontSize = `min(${(10000 / w).toFixed(3)}cqw, 75vh)`;
+  }
+
+  function render() {
+    const text = input.value.trim() || FALLBACK;
+    marks.forEach(m => { m.firstElementChild.textContent = text; });
+    document.querySelectorAll('.bn').forEach(el => { el.textContent = text; });
+    marks.forEach(fit);
+  }
+  input.addEventListener('input', render);
+  render();
+  document.fonts.ready.then(() => marks.forEach(fit));
+
+  // 按钮组切换 data-mode
+  document.querySelectorAll('[data-toggle]').forEach(group => {
+    const target = document.querySelector(group.dataset.toggle);
+    group.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+      target.dataset.mode = btn.dataset.mode;
+    });
+  });
+
+  // 04 手电筒
+  const f4 = document.querySelector('.f4');
+  const lit = f4.querySelector('.mark > span');
+  f4.addEventListener('pointermove', e => {
+    const r = lit.getBoundingClientRect();
+    lit.style.setProperty('--x', e.clientX - r.left + 'px');
+    lit.style.setProperty('--y', e.clientY - r.top + 'px');
+  });
+
+  // 05 兼容性提示
+  if (!CSS.supports('animation-timeline: view()')) document.querySelector('#no-sda').hidden = false;
+  else if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelector('#reduced').hidden = false;
+
+  // 06 换照片
+  const photo = document.querySelector('#photo');
+  const lit6 = document.querySelector('.f6 .mark > span');
+  let photoUrl;
+  photo.addEventListener('change', () => {
+    const file = photo.files[0];
+    if (!file) return;
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    photoUrl = URL.createObjectURL(file);
+    lit6.style.backgroundImage = `url("${photoUrl}")`;
+  });
+  document.querySelector('#photo-reset').addEventListener('click', () => {
+    lit6.style.backgroundImage = '';
+    photo.value = '';
+  });
+</script>
+</body>
+</html>
