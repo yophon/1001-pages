@@ -4,17 +4,17 @@
 
 **在线看：<https://yophon.github.io/1001-pages/>**
 
-![第 001 页 暗房：红色安全灯下，显影盘里的相纸正在显影](covers/darkroom.webp)
+![第 001 页 倒影：金色时刻的湖，栈道上的大字和水里的倒影](covers/lake.webp)
 
 ## 目录
 
 | 页 | 名字 | 是什么 |
 | --- | --- | --- |
-| 001 | [暗房](https://yophon.github.io/1001-pages/darkroom.html) | 红灯下，品牌名作为一张黑白照片在显影液里慢慢浮出来，最后拉灯绳开灯 |
-| 002 | [星球](https://yophon.github.io/1001-pages/planet.html) | 从轨道上看一颗行星，品牌名是大陆，开场是一次轨道日出 |
-| 003 | [倒影](https://yophon.github.io/1001-pages/lake.html) | 黄昏的湖，栈道上的大字和实时算的倒影，天黑以后灯泡一盏盏亮起来 |
-| 004 | [地铁图](https://yophon.github.io/1001-pages/metro.html) | 品牌名自动画成一张地铁线路图，有列车、站卡和换乘路线规划 |
-| 005 | [镭射闪卡](https://yophon.github.io/1001-pages/holo.html) | 一张镭射收藏卡，颜色按衍射光栅实时算，倾斜时彩虹顺着刻槽流动 |
+| 001 | [倒影](https://yophon.github.io/1001-pages/lake.html) | 黄昏的湖，栈道上的大字和实时算的倒影，天黑以后灯泡一盏盏亮起来 |
+| 002 | [镭射闪卡](https://yophon.github.io/1001-pages/holo.html) | 一张镭射收藏卡，颜色按衍射光栅实时算，倾斜时彩虹顺着刻槽流动 |
+| 003 | [地铁图](https://yophon.github.io/1001-pages/metro.html) | 品牌名自动画成一张地铁线路图，有列车、站卡和换乘路线规划 |
+| 004 | [暗房](https://yophon.github.io/1001-pages/darkroom.html) | 红灯下，品牌名作为一张黑白照片在显影液里慢慢浮出来，最后拉灯绳开灯 |
+| 005 | [星球](https://yophon.github.io/1001-pages/planet.html) | 从轨道上看一颗行星，品牌名是大陆，开场是一次轨道日出 |
 
 [速写本](https://yophon.github.io/1001-pages/sketchbook/overview.html)里是一开始的十一批练习：官网底部那行占满整宽的品牌大字，一共 86 种做法。上面有几页就是从这里挑出来重做的。
 
