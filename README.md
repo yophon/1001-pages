@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | 001 | [倒影](https://yophon.github.io/1001-pages/lake.html) | 黄昏的湖，栈道上的大字和实时算的倒影，天黑以后灯泡一盏盏亮起来 |
 | 002 | [镭射闪卡](https://yophon.github.io/1001-pages/holo.html) | 一张镭射收藏卡，颜色按衍射光栅实时算；下面拆成一套 WebGL 元素库，另有 CSS 平替，能复制代码 |
-| 003 | [地铁图](https://yophon.github.io/1001-pages/metro.html) | 品牌名自动画成一张地铁线路图，有列车、站卡和换乘路线规划 |
+| 003 | [地铁图](https://yophon.github.io/1001-pages/metro.html) | 品牌名自动画成一张地铁线路图，有列车、站卡和换乘路线规划；下面拆出 16 格导视元素：线路字标、LED 到站屏、运营屏、闸机、导向牌、导视图标、时刻表、站名查询等，能复制代码 |
 | 004 | [暗房](https://yophon.github.io/1001-pages/darkroom.html) | 红灯下，品牌名作为一张黑白照片在显影液里慢慢浮出来，最后拉灯绳开灯 |
 | 005 | [星球](https://yophon.github.io/1001-pages/planet.html) | 从轨道上看一颗行星，品牌名是大陆，开场是一次轨道日出 |
 | 006 | [枯山水](https://yophon.github.io/1001-pages/zen.html) | 一方枯山水，品牌名是白砂里的苔岛，鼠标是一把五齿耙 |
